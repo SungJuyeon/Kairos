@@ -52,8 +52,6 @@ public class MemberController {
         }
     }
 
-    // Add this to your MemberController class
-
     @PostMapping("/find/pw")
     public ResponseEntity<?> findPw(@RequestBody @Validated MemberFindDto member) {
         MemberEntity memberEntity = memberService.findById(member.getName(), member.getEmail());
