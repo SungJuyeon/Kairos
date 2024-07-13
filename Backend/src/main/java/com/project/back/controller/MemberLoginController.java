@@ -12,9 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.back.dto.LoginRequestDto;
 import com.project.back.entity.MemberEntity;
 import com.project.back.service.LoginService;
 import com.project.back.service.MemberService;
@@ -32,12 +32,13 @@ public class MemberLoginController {
     private BCryptPasswordEncoder encoder;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestParam String loginId, @RequestParam String password,
-    HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequestDto loginRequest,
+     HttpServletRequest request) {
                 
         Map<String, String> response = new HashMap<>();
-        System.out.println("로그인 시도: loginId=" + loginId + ", pw=" + password);
-
+        //System.out.println("로그인 시도: loginId=" + loginId + ", pw=" + password);
+        String loginId = loginRequest.getLoginId();
+        String password = loginRequest.getPassword();
         try {
             MemberEntity member = loginService.login(loginId, password);
 
