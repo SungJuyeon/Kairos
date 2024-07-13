@@ -10,7 +10,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.project.back.controller.HomeController;
 import com.project.back.entity.MemberEntity;
 import com.project.back.repository.MemberRepository;
 
@@ -23,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final BCryptPasswordEncoder pwEncoder;
-    private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 
     //loginId 로 계정 찾기
     @Transactional(readOnly = true)
