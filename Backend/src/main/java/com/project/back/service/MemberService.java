@@ -1,11 +1,8 @@
-
 package com.project.back.service;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,11 +26,13 @@ public class MemberService {
         return memberRepository.findByLoginId(loginId);
     }
 
-    //Id로 계정 찾기
-    public MemberEntity findById(String name, String email){
-        return memberRepository.findByEmail(email)
-        .filter(u -> u.getName().equals(name))
-        .orElse(null);
+    //email로 조회 후 이름 맞는 지 확인 
+    @Transactional(readOnly = true)
+    public MemberEntity findById(String name, String email) {
+        Optional<MemberEntity> optionalMember = memberRepository.findByEmail(email);
+        
+        return optionalMember.filter(member -> member.getName().equals(name))
+                             .orElse(null);
     }
 
     //pw 찾기
@@ -44,18 +43,19 @@ public class MemberService {
     }
 
     //name 변경
-    public String updateName(Long id, String name){
-        MemberEntity member = memberRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
-        member.updateName(name);
-        return member.getName();
+    public void updateName(String email, String name){
+        MemberEntity member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+        member.setName(name);
+        memberRepository.save(member);
     }
 
     //pw 변경
-    public String updatePw(Long id, String newPw){
-        MemberEntity member = memberRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("존재하지 않는 계정입니다."));
-        return member.updatePw(pwEncoder.encode(newPw));
+    public void updatePw(String email, String newPw){
+        MemberEntity member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다."));
+        member.setPw(pwEncoder.encode(newPw));
+        memberRepository.save(member);
     }
 
     public boolean validateUser(String loginId, String password) {

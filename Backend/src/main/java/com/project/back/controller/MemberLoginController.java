@@ -1,4 +1,3 @@
-
 package com.project.back.controller;
 
 import java.util.HashMap;
@@ -7,7 +6,6 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,16 +29,17 @@ public class MemberLoginController {
     private final LoginService loginService;
     private BCryptPasswordEncoder encoder;
 
+    ///loginId, pw 로 로그인. 2개 모두 필수 항목. 둘 중 하나라도 안맞으면 "아이디 또는 비밀번호가 맞지 않습니다."
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequestDto loginRequest,
      HttpServletRequest request) {
                 
         Map<String, String> response = new HashMap<>();
-        //System.out.println("로그인 시도: loginId=" + loginId + ", pw=" + password);
+        //System.out.println("로그인 시도: loginId=" + loginId + ", pw=" + pw);
         String loginId = loginRequest.getLoginId();
-        String password = loginRequest.getPassword();
+        String pw = loginRequest.getPw();
         try {
-            MemberEntity member = loginService.login(loginId, password);
+            MemberEntity member = loginService.login(loginId, pw);
 
             // 사용자 인증 성공
             HttpSession session = request.getSession();
@@ -64,6 +63,7 @@ public class MemberLoginController {
         }
     }
 
+    //name, email, loginId, pw로 회원가입 . loginId, email 중복 검사 / 4개 모두 필수 항목
     @PostMapping("/join")
     public ResponseEntity<String> join(@RequestBody MemberEntity member) {
         try {
@@ -77,24 +77,19 @@ public class MemberLoginController {
         }
     }
 
+    //프론트에서 구현할 필요 없음
     @GetMapping("/logoutOk")
     public ResponseEntity<Void> logoutOk() {
         System.out.println("로그아웃 성공");
         return ResponseEntity.ok().build();
     }
 
+    //아직 service 구현 안함
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request){
         HttpSession session = request.getSession(false);
         if(session != null) session.invalidate();
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/user")
-    public ResponseEntity<MemberEntity> getUserPage() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        MemberEntity memberEntity = loginService.getUserInfo(email);
-        return ResponseEntity.ok(memberEntity);
     }
 
 }
