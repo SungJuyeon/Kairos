@@ -1,15 +1,16 @@
 package com.project.back.service;
 
-import com.project.back.config.PasswordUtils;
-import com.project.back.entity.MemberEntity;
-import com.project.back.repository.MemberRepository;
+import java.util.Optional;
+
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import com.project.back.config.PasswordUtils;
+import com.project.back.entity.MemberEntity;
+import com.project.back.repository.MemberRepository;
 
 @Transactional
 @Service //spring이 관리해주는 객체
@@ -22,6 +23,7 @@ public class LoginService {
         this.pwEncoder = pwEncoder;
     }
 
+    //내 계정 정보 조회
     public MemberEntity getUserInfo(String email){
         Optional<MemberEntity> memberEntity = memberRepository.findByEmail(email);
         return memberEntity.orElse(null);

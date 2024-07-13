@@ -1,4 +1,3 @@
-
 package com.project.back.entity;
 
 import jakarta.persistence.Column;
@@ -14,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Setter //자동으로 setter 생성
+@Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -37,22 +36,6 @@ public class MemberEntity {
     @Column(name = "pw")
     private String pw;
 
-    public Long getId() {
-        return id;
-    }
-    public String getLoginId() {
-        return loginId;
-    }
-    public String getName() {  
-        return name;
-    }
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPw() {
-        return pw;
-    }
 
     public boolean isPresent() {
         return true;

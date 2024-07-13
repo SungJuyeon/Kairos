@@ -1,4 +1,3 @@
-
 package com.project.back.dto;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -11,7 +10,7 @@ public class LoginRequestDto {
     @NotEmpty
     private String loginId;
     @NotEmpty
-    private String password;
+    private String pw;
 
     private String name;
     private String email;

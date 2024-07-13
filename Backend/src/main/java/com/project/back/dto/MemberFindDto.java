@@ -10,6 +10,5 @@ import lombok.Setter;
 public class MemberFindDto {
     private String name;
     private String email;
-    private String loginId;
     
 }

@@ -24,7 +24,7 @@ public class AuthService {
         // 사용자 인증 로직 구현
         MemberEntity user = userRepository.findByName(loginRequest.getName());
         
-        if (user != null && passwordEncoder.matches(loginRequest.getPassword(), user.getPw())) {
+        if (user != null && passwordEncoder.matches(loginRequest.getPw(), user.getPw())) {
             // 비밀번호 일치 시 인증 성공 처리
             String sessionId = generateSessionId();
             // 세션 관리 로직 등...
