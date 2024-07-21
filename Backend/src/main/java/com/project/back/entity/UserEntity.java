@@ -23,6 +23,5 @@ public class UserEntity {
 
     private String role;
 
-    //private String email;
-    //private String name;
+    private String email;
 }

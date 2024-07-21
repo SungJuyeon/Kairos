@@ -9,5 +9,5 @@ public interface UserRepository extends JpaRepository<UserEntity,Long> {
     Boolean existsByUsername(String username);  //회원가입 시 username 여부 확인
 
     UserEntity findByUsername(String username); //DB에서 회원을 조회
-
+    UserEntity findByEmail(String email);
 }
