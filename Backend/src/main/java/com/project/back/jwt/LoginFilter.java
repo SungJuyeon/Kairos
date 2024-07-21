@@ -20,7 +20,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-
+////컨트롤러단에서 로그인을 구현하려면 현재 등록한 LoginFilter를 등록하지 않으면 POST : /login 경로까지 요청이 넘어온다.
 //SecurityConfig에서 formLogin 방식 disable 했기 때문에 UsernamePasswordAuthenticationFilter custom 필요
 //LoginFilter는 UsernamePasswordAuthenticationFilter를 상속 받아서 구현하였는데 이 필터가 POST : /login에서만 반응하도록 설정되어 있음
 //  엔드포인트 : "/login"
@@ -30,7 +30,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final RefreshRepository refreshRepository;
-
+    //클라이언트로부터 받은 username과 password를 추출하여 UsernamePasswordAuthenticationToken 객체를 생성
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         //client 요청의 username, password 추출
@@ -41,7 +41,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         //UsernamePasswordAuthentication 이 authenticationManager 에게 username,password 를 전달 ( 토큰 )
         // null 값은 role 자리 임시
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(username,password,null);
-
+        //AuthenticationManager를 사용하여 인증을 시도
         return authenticationManager.authenticate(usernamePasswordAuthenticationToken);
     }
     //로그인 성공했을 시 이 메서드가 실행됨
