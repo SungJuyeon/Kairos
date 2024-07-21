@@ -1,6 +1,4 @@
-import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from "./Home";
 import SearchScreen from "./Screen2";
 import StoreScreen from "./Screen3";
