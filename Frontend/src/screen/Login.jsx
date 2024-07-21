@@ -99,10 +99,7 @@ export default function Login() {
               focused={passwordFocused}
             />
             <RowContainer>
-              {/* <Button onPress={tryLogin}>
-                <ButtonText>로그인</ButtonText>
-              </Button> */}
-              <Button onPress={() => login()}>
+              <Button onPress={tryLogin}>
                 <ButtonText>로그인</ButtonText>
               </Button>
               <Button onPress={() => navigate('FindUserData')}>
