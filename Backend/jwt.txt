@@ -1,0 +1,65 @@
+
+세션 : 서버의 메모리에 유저 정보를 저장하여 동일 브라우저에서 오는 요청을 기억 -> 로그인을 했다면 매번 요청마다 인증 과정 필요 없음
+        서버에 저장되는 세션은 브라우저로 발급해준 JSESSION 이라는 쿠키를 통해 특정
+jwt  -> STATELESS 로 관리하여 서버 측 메모리에 저장하지 않기에 동일한 브라우저에서 요청해도 매번 새로운 사용자로 특정함
+
+jwt = Header + Payload + Signature
+    Header: JWT 임을 명시, 사용된 암호화 알고리즘
+    Payload: 정보
+    Signature: 암호화 알고리즘
+
+Access / Refresh Token
+Access : 권한이 필요한 모든 요청 헤더에 사용되는 JWT. 짧은 생명주기 약 10분
+Refresh : Access Token이 만료되었을 때 재발급 받는 용도로 긴 생명주기 약 1일
+-> 토큰 만료된 경우 refresh toke 으로 access token 발급
+    만료 요청이 오면 프론트 로직에 의해 refresh token을 가지고 서버의 특정 경로 (refresh token을 받는 경로)에 요청을 보내 access token 재발급
+    서버에서는 refresh token 검증 후 access token 새로 발급
+
+access token 검증하는 JWTFilter에서 access token이 만료된 경우 상태 코드 반환
+프론트에서 axios, fetch 요청 시 access token 만료 요청이 오면 예외문을 통해 refresh token 을 서버로 전송하고 access token을 발급받는 로직 수행 ( 기존 access 제거)
+프론트에서 axios, fetch로 받아 local storage에 저장하는 로직 구현
+서버에서는 refresh token을 받을 엔드포인트 구성해 refresh token 검증 후 access 응답
+
+ Access 토큰이 만료되었을때 JWTFilter에서는 특정한 상태 코드를 응답하고, 
+ 프론트측은 특정한 코드를 받으면 Access 토큰을 갱신하기 위해 Refresh를 전송하고 
+ Access/Refresh 모두를 갱신 받습니다.
+
+security filter 동작
+    client 요청이 (Servlet Container 안의)여러 개 filter를 거쳐 최종적으로 Spring boot로 전달된다. Controller 로 향하는 중간 filter에서 요청을 가로챈 후 검증을 진행
+    Servlet Container(ex. Tomcat) 에 존재하는 filter chain에 DelegatingFilter를 등록한 뒤 모든 요청을 가로챈다.
+    Servlet Filter chain 의 DelegatingFiilter -> Security Filter chain (가로챈 요청을 검증/처리 후) -> Servlet Filter chain의 DelegatingFilter
+
+
+
+로그인 요청 -> UsernamePasswordAuthenticationFilter를 통해 회원 검증 -> Authentication Manager를 통해 아이디, 비번 검증
+    -Manager 검증 방식 : DB에 저장되어 있는 정보를 가져와서 UserDetailsService가 UserDetails(=DTO) 에 담아서 검증한다.
+    -login 성공 : 기존 session방식과 다르게 jwt는 세션에 회원 정보 남기지 않고 successfulAuthentication() 을 통해 JWTUtil에서 token을 만들어 우리에게 응답을 준다.
+
+프론트                                                                                  백엔드
+                                    -> 로그인 전송 ->
+                            <- access, refresh token 응답 <-
+token 관리
+-> 특정 데이터 요청을 원할 때 access token을 요청 헤더에 넣어 API Client 를 통해 서버로 보냄 ->
+        서버에서 JWTFilter 에서 access token을 검증해 데이터를 받을 수 있는 controller 에서 요청
+access token이 만료된 경우, 프론트에서 예외 핸들러를 등록 (ex. Axios Interceptor)
+401같은 예외 경우, 핸들러 실행해 refresh token을 서버로 전송 ->
+        <- 서버에서 refresh token을 받으면 검증, 새 access token을 응답 (=reissue 로직) <-
+
+
+ADMIN 경로 접근 시 : token을 헤더에 넣어 요청을 진행해야 한다.
+Security Authentication Filter 에서 1차 검증 -> JWT Filter 에서 CustomFilter 만들어서 검증(token 존재 여부, token 정보 일치 여부)
+-> 통과되면 일시적인 session을 만든다: SecurityContextHolder 가 관리. 서버에 도착한 뒤 ~ 나가기 까지만 SecurityContext에 Authentication 객체로 들어간다.
+    -요청 1개에 1개 세션, 세션 요청이 끝나면 소멸
+
+회원가입
+    POST /join으로 회원가입 -> DTO로 받아서 JoinController에서 매핑 -> JoinService -> UserEntity -> UserRepository -> DB 테이블 UserEntity에 저장
+
+
+로그아웃
+    프론트 : local storage에 존재하는 access 토큰 삭제 , 서버측 로그아웃 경로로 refresh token 전송
+    백엔드 : 로그아웃 로직에 refresh token을 받아 cookie 초기화하고 refresh Database에서 해당 refresh token 삭제
+
+
+refresh roatate : /reissue 에서 refresh token을 받아 access token 갱신 시 refresh token 도 함께 갱신
+                    보안 강화, 로그인 지속시간 길어짐
+                    발급했던 refresh token을 모두 기억한 뒤, 사용된 refresh token 사용하지 않도록
