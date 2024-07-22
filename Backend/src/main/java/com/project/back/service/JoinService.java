@@ -30,7 +30,7 @@ public class JoinService {
         UserEntity user = new UserEntity();
         user.setUsername(username);
         user.setPassword(bCryptPasswordEncoder.encode(password));   //암호화 진행
-        user.setRole("USER");  //권한 설정 (관리자 계정 필요없으면 USER로 바꾸기)
+        user.setRole("ADMIN");  //권한 설정 (관리자 계정 필요없으면 USER로 바꾸기)
         user.setEmail(email);
 
         userRepository.save(user);
