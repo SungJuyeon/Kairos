@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, Alert } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import axios from 'axios';
@@ -13,10 +13,10 @@ export default function SignIn() {
     const [password, setPassword] = useState('');
     const [conformPW, setConformPW] = useState('');
     const [email, setEmail] = useState('');
-    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
 
     // TextInput이 포커싱 되었을 때 색상 변경
-    const [nameFocused, setNameFocused] = useState(false);
+    const [usernameFocused, setUsernameFocused] = useState(false);
     const [idFocused, setIdFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [conformPWFocused, setConformPWFocused] = useState(false);
@@ -25,14 +25,27 @@ export default function SignIn() {
     // 회원가입 버튼 클릭 시
     const createMember = async () => {
         try {
-          const newMember = { name: name, loginId: id, pw: password, email: email };
-          const response = await axios.post('http://localhost:8080/join', newMember)
-          .then(response => {
-            // 회원가입 성공 처리
-            console.log(response.data);
-        });
+            const response = await fetch('http://localhost:8080/join', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                    email,
+                }),
+            });
+
+            const data = await response.text();
+            if (response.ok) {
+                Alert.alert('회원가입 성공', data);
+            } else {
+                Alert.alert('회원가입 실패', data);
+            }
         } catch (error) {
-            console.error('회원 가입이 실패했습니다.', error);
+            console.error(error);
+            Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
       };
 
@@ -42,11 +55,11 @@ export default function SignIn() {
             <InputContainer>
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
                 <StyledTextInput
-                    onChangeText={text => setName(text)}
-                    value={name}
-                    onFocus={() => setNameFocused(true)}
-                    onBlur={() => setNameFocused(false)}
-                    focused={nameFocused}
+                    onChangeText={text => setUsername(text)}
+                    value={username}
+                    onFocus={() => setUsernameFocused(true)}
+                    onBlur={() => setUsernameFocused(false)}
+                    focused={usernameFocused}
                     //placeholder="이름"
                 />
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>아이디</Text>

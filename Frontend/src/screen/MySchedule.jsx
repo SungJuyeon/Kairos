@@ -66,7 +66,7 @@ export default function MySchedule() {
 const Container = styled.SafeAreaView`
     background-color: #000000;
     justify-content: center;
-    align-items: center;
+    flex: 1;
 `;
 
 const Button = styled.TouchableOpacity`
@@ -119,8 +119,6 @@ const StyledText = styled.Text`
     color: white;
     font-size: ${height * 0.03}px;
     margin-top: 20px;
-    margin-bottom: 5px;
-    margin-left: 10px;
     font-weight: bold;
 `;
 
