@@ -25,7 +25,7 @@ export default function SignIn() {
     // 회원가입 버튼 클릭 시
     const createMember = async () => {
         try {
-            const response = await fetch('http://localhost:8080/join', {
+            const response = await fetch('http://172.30.1.54:8080/join', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
