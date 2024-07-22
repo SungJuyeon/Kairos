@@ -3,22 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Feed and Density</title>
+    <title>Video Stream</title>
     <style>
-        body { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            flex-direction: column; 
+        body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-        #video-container {
-            position: relative;
-            width: 640px;
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
         }
+
+        img {
+            border: 2px solid #f4f4f4; /* 비디오 스트림의 테두리 색상 */
+            border-radius: 8px; /* 모서리 둥글게 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 그림자 효과 */
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #444;
+        }
+
         #density {
-            margin-top: 20px;
-            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50; /* 밀집도 값의 색상 */
         }
     </style>
 </head>
