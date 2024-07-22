@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+<<<<<<< HEAD
+  <component name="DBNavigator.Project.DatabaseFileManager">
+    <open-files />
+  </component>
+  <component name="DBNavigator.Project.Settings">
+    <connections />
+=======
   <component name="DBNavigator.Project.DDLFileAttachmentManager">
     <mappings />
     <preferences />
@@ -134,6 +141,7 @@
         </object-filters>
       </connection>
     </connections>
+>>>>>>> main
     <browser-settings>
       <general>
         <display-mode value="TABBED" />
