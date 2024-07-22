@@ -17,7 +17,7 @@ export default function MySchedule() {
     // 각 셀의 내용 초기화
     const [calendarData, setCalendarData] = useState(
         Array.from({ length: rows }, () =>
-            Array(columns).fill({ text: "", color: "transparent" })
+            Array(columns).fill({ text: "", color: "black" }) // 초기 색상 변경
         )
     );
 
@@ -25,8 +25,8 @@ export default function MySchedule() {
     const handleCellPress = (rowIndex, colIndex) => {
         const newData = [...calendarData]; // 현재 상태 복사
         newData[rowIndex][colIndex] = {
-            text: "클릭됨", // 원하는 값으로 업데이트
-            color: "skyblue" // 원하는 색으로 변경
+            text: "클릭됨",
+            color: "skyblue" // 클릭 시 색상 변경
         };
         setCalendarData(newData); // 상태 업데이트
     };
@@ -47,8 +47,12 @@ export default function MySchedule() {
                 {Array.from({ length: rows }).map((_, rowIndex) => (
                     <Row key={rowIndex}>
                         {Array.from({ length: columns }).map((_, colIndex) => (
-                            <Cell key={colIndex} onPress={() => handleCellPress(rowIndex, colIndex)}>
-                                <CellText>{calendarData[rowIndex][colIndex]}</CellText>
+                            <Cell
+                                key={colIndex}
+                                onPress={() => handleCellPress(rowIndex, colIndex)}
+                                style={{ backgroundColor: calendarData[rowIndex][colIndex].color }} // 셀 색상 설정
+                            >
+                                <CellText>{calendarData[rowIndex][colIndex].text}</CellText>
                             </Cell>
                         ))}
                     </Row>
@@ -107,7 +111,7 @@ const Row = styled.View`
 
 const Cell = styled.TouchableOpacity`
     flex: 1;
-    width: 70px;
+    width: 100px;
     height: 40px;
     align-items: center;
     justify-content: center;
@@ -131,4 +135,3 @@ const HeaderText = styled.Text`
 const CellText = styled.Text`
     color: white;
 `;
-
