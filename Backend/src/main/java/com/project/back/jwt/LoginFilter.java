@@ -1,11 +1,16 @@
 package com.project.back.jwt;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.back.dto.LoginDTO;
 import com.project.back.entity.RefreshEntity;
 import com.project.back.repository.RefreshRepository;
+import jakarta.servlet.ServletInputStream;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +25,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.StreamUtils;
+
 ////컨트롤러단에서 로그인을 구현하려면 현재 등록한 LoginFilter를 등록하지 않으면 POST : /login 경로까지 요청이 넘어온다.
 //SecurityConfig에서 formLogin 방식 disable 했기 때문에 UsernamePasswordAuthenticationFilter custom 필요
 //LoginFilter는 UsernamePasswordAuthenticationFilter를 상속 받아서 구현하였는데 이 필터가 POST : /login에서만 반응하도록 설정되어 있음
@@ -35,8 +42,23 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         //client 요청의 username, password 추출
         //multipart/form-data 형식
-        String username = obtainUsername(request);  //=loginId
-        String password = obtainPassword(request);
+//        String username = obtainUsername(request);  //=loginId
+//        String password = obtainPassword(request);
+
+        LoginDTO loginDTO = new LoginDTO();
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ServletInputStream inputStream = request.getInputStream();
+            String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+            loginDTO = objectMapper.readValue(messageBody, LoginDTO.class);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        String username = loginDTO.getUsername();
+        String password = loginDTO.getPassword();
 
         //UsernamePasswordAuthentication 이 authenticationManager 에게 username,password 를 전달 ( 토큰 )
         // null 값은 role 자리 임시

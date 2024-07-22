@@ -24,13 +24,14 @@ public class JoinService {
         Boolean isExist = userRepository.existsByUsername(username);
 
         if (isExist) {  //이미 존재하는 login id
-            return;
+            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
         }
         //회원가입 진행
         UserEntity user = new UserEntity();
         user.setUsername(username);
         user.setPassword(bCryptPasswordEncoder.encode(password));   //암호화 진행
-        user.setRole("USER");  //권한 설정 (관리자 계정 필요없으면 USER로 바꾸기)
+        user.setRole("ADMIN");  //권한 설정 (관리자 계정 필요없으면 USER로 바꾸기)
+
         user.setEmail(email);
 
         userRepository.save(user);
