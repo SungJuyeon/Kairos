@@ -77,7 +77,7 @@ async def update_frame():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-        await asyncio.sleep(0.1)  # 프레임 간 간격
+        await asyncio.sleep(0.0)  # 프레임 간 간격
 
 # 프로그램 종료 시 실행될 함수
 def cleanup():

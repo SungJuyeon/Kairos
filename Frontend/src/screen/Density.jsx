@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView, Image } from "react-native"; // Image를 여기서 import
 import { useNavigation } from "@react-navigation/native";
 import styled from 'styled-components/native';
 import axios from 'axios';
@@ -75,6 +75,10 @@ export default function Density() {
                     <Status>{getDensityStatus(densities.restaurant)}</Status>
                 </DensityItem>
             </DensityContainer>
+            <Image
+                source={{ uri: 'http://localhost:8000/video_feed' }} // source 속성으로 수정
+                style={{ width: 640, height: 480 }} // 스타일 속성으로 width와 height 설정
+            />
         </Container>
     );
 }
