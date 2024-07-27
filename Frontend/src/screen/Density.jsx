@@ -1,84 +1,127 @@
-import React, { useState, useEffect } from "react";
-import { SafeAreaView, Image } from "react-native"; // Image를 여기서 import
-import { useNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
+import { SafeAreaView, Image, View, TouchableOpacity } from "react-native";
 import styled from 'styled-components/native';
-import axios from 'axios';
 
 export default function Density() {
-    const { navigate } = useNavigation();
+    const [isUpPressed, setIsUpPressed] = useState(false);
+    const [isLeftPressed, setIsLeftPressed] = useState(false);
+    const [isRightPressed, setIsRightPressed] = useState(false);
+    const [isDownPressed, setIsDownPressed] = useState(false);
+    const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
+    const [isOn, setIsOn] = useState(false); // on/off 상태 추가
 
-    // 각 장소의 밀집도 저장
-    const [densities, setDensities] = useState({
-        ssPark: 30,
-        ssBase: 30,
-        ssCommons: 30,
-        creativeRoom: 50,
-        focusRoom: 80,
-        restaurant: 10
-    });
-
-    // 서버로부터 밀집도 데이터를 요청 후 저장
-    const fetchDensityData = async () => {
-        try {
-            const response = await axios.get('[REST API를 만족하는 주소]');
-            // 임시로 주석 처리
-            // setDensities(response.data); // 서버에서 받은 데이터로 상태 업데이트
-        } catch (error) {
-            console.error("데이터 요청 실패:", error);
+    // 방향키 버튼을 누르고 있을 때
+    const handleButtonPressIn = (direction) => {
+        switch (direction) {
+            case 'up':
+                setIsUpPressed(true);
+                break;
+            case 'left':
+                setIsLeftPressed(true);
+                break;
+            case 'right':
+                setIsRightPressed(true);
+                break;
+            case 'down':
+                setIsDownPressed(true);
+                break;
+        }
+    };
+    
+    // 방향키 버튼을 누르다가 땔 때
+    const handleButtonPressOut = (direction) => {
+        switch (direction) {
+            case 'up':
+                setIsUpPressed(false);
+                break;
+            case 'left':
+                setIsLeftPressed(false);
+                break;
+            case 'right':
+                setIsRightPressed(false);
+                break;
+            case 'down':
+                setIsDownPressed(false);
+                break;
         }
     };
 
-    // 컴포넌트가 마운트 될 때 혹은 1분마다 데이터 요청
-    useEffect(() => {
-        fetchDensityData(); // 컴포넌트가 마운트될 때 데이터 요청
-
-        const interval = setInterval(() => {
-            fetchDensityData(); // 1분마다 데이터 요청
-        }, 60000);
-
-        return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 클리어
-    }, []);
-
-    // 밀집도에 따라 여유, 보통, 혼잡으로 출력
-    const getDensityStatus = (density) => {
-        if (density < 30) return '여유';
-        else if (density < 70) return '보통';
-        else return '혼잡';
+    // 사진 촬영 버튼 클릭 시
+    const handleCapturePhoto = () => {
+        // 사진 촬영 기능 구현
     };
+
+    // 동영상 촬영 버튼 클릭 시
+    const handleCaptureVideo = () => {
+        setIsCaptureVideoPressed(!isCaptureVideoPressed);
+        // 동영상 촬영 기능 구현
+    };
+
+    // on/off 버튼 클릭 시
+    const handleOnOffPress = () => {
+        setIsOn(!isOn);
+    };
+    
 
     return (
         <Container>
-            <Title>밀집도 현황</Title>
-            <DensityContainer>
-                <DensityItem>
-                    <Location>상상 파크:</Location>
-                    <Status>{getDensityStatus(densities.ssPark)}</Status>
-                </DensityItem>
-                <DensityItem>
-                    <Location>상상 베이스:</Location>
-                    <Status>{getDensityStatus(densities.ssBase)}</Status>
-                </DensityItem>
-                <DensityItem>
-                    <Location>상상 커먼스:</Location>
-                    <Status>{getDensityStatus(densities.ssCommons)}</Status>
-                </DensityItem>
-                <DensityItem>
-                    <Location>창의 열람실:</Location>
-                    <Status>{getDensityStatus(densities.creativeRoom)}</Status>
-                </DensityItem>
-                <DensityItem>
-                    <Location>집중 열람실:</Location>
-                    <Status>{getDensityStatus(densities.focusRoom)}</Status>
-                </DensityItem>
-                <DensityItem>
-                    <Location>학식당:</Location>
-                    <Status>{getDensityStatus(densities.restaurant)}</Status>
-                </DensityItem>
-            </DensityContainer>
             <Image
-                source={{ uri: 'http://localhost:8000/video_feed' }} // source 속성으로 수정
-                style={{ width: 640, height: 480 }} // 스타일 속성으로 width와 height 설정
+                source={{ uri: '라즈베리파이 주소' }}
+                style={{ width: 640, height: 230 }}
             />
+            <ButtonContainer>
+                <UpButtonContainer>
+                    <ButtonStyle
+                        onPressIn={() => handleButtonPressIn('up')}
+                        onPressOut={() => handleButtonPressOut('up')}
+                    >
+                        <ButtonText>{isUpPressed ? '↑' : '↑'}</ButtonText>
+                    </ButtonStyle>
+                </UpButtonContainer>
+                <DirectionButtonContainer>
+                    <ButtonStyle
+                        onPressIn={() => handleButtonPressIn('left')}
+                        onPressOut={() => handleButtonPressOut('left')}
+                    >
+                        <ButtonText>{isLeftPressed ? '←' : '←'}</ButtonText>
+                    </ButtonStyle>
+                    <ButtonStyle
+                        onPressIn={() => handleButtonPressIn('right')}
+                        onPressOut={() => handleButtonPressOut('right')}
+                    >
+                        <ButtonText>{isRightPressed ? '→' : '→'}</ButtonText>
+                    </ButtonStyle>
+                </DirectionButtonContainer>
+                <DownButtonContainer>
+                    <ButtonStyle
+                        onPressIn={() => handleButtonPressIn('down')}
+                        onPressOut={() => handleButtonPressOut('down')}
+                    >
+                        <ButtonText>{isDownPressed ? '↓' : '↓'}</ButtonText>
+                    </ButtonStyle>
+                </DownButtonContainer>
+            </ButtonContainer>
+            <CaptureButtonContainer>
+                <CaptureButtonStyle
+                    onPress={handleCapturePhoto}
+                >
+                    <CaptureButtonText>사진 촬영</CaptureButtonText>
+                </CaptureButtonStyle>
+                <CaptureButtonStyle
+                    isCaptureVideoPressed={isCaptureVideoPressed}
+                    onPress={handleCaptureVideo}
+                >
+                    <CaptureButtonText>{isCaptureVideoPressed ? '동영상 촬영 중...' : '동영상 촬영'}</CaptureButtonText>
+                </CaptureButtonStyle>
+            </CaptureButtonContainer>
+            <RemoveContainer>
+            <StyledText>인물 제거 모드 : </StyledText>
+            <OnOffButton
+                onPress={handleOnOffPress}
+                isOn={isOn}>
+                <OnOffButtonText isOn={isOn}>{isOn ? '적용 중' : '적용'}</OnOffButtonText>
+            </OnOffButton>
+            </RemoveContainer>
         </Container>
     );
 }
@@ -90,6 +133,18 @@ const Title = styled.Text`
     font-weight: bold;
 `;
 
+const StyledText = styled.Text`
+    color: white; 
+    font-size: 18px;
+    font-weight: bold;
+`;
+
+const RemoveContainer = styled.View`
+    flex-direction: row;
+    align-items: center;
+    margin-top: 25px;
+`;
+
 const Container = styled.SafeAreaView`
     background-color: #000000;
     flex: 1;
@@ -97,23 +152,70 @@ const Container = styled.SafeAreaView`
     align-items: center;
 `;
 
-const DensityContainer = styled.View`
-    align-items: flex-start;
-`;
-
-const DensityItem = styled.View`
-    flex-direction: row;
+const ButtonContainer = styled.View`
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    margin-top: 20px;
     margin-bottom: 20px;
 `;
 
-const Location = styled.Text`
-    color: white;
-    font-size: 30px;
-    margin-right: 10px;
+const UpButtonContainer = styled.View`
+    margin-bottom: 20px;
 `;
 
-const Status = styled.Text`
-    color: white;
-    font-size: 30px;
+const DirectionButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    width: 300px;
+`;
+
+const DownButtonContainer = styled.View`
+    margin-top: 0px;
+`;
+
+const ButtonStyle = styled.TouchableOpacity`
+  background-color: white;
+  border-radius: 10px;
+  padding: 10px 20px;
+  margin: 0 40px;
+`;
+
+const ButtonText = styled.Text`
+    color: black;
+    font-size: 25px;
+    font-weight: bold;
+`;
+
+const CaptureButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`;
+
+const CaptureButtonStyle = styled.TouchableOpacity`
+    background-color: ${({isCaptureVideoPressed}) => (isCaptureVideoPressed ? '#AAAAAA' : 'white')};
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 0 10px;
+`;
+
+const CaptureButtonText = styled.Text`
+    color: black;
+    font-size: 18px;
+    font-weight: bold;
+`;
+
+const OnOffButton = styled.TouchableOpacity`
+    background-color: ${({ isOn }) => (isOn ? 'gray' : 'white')};
+    border-radius: 10px;
+    padding: 10px 20px;
+`;
+
+const OnOffButtonText = styled.Text`
+    color: ${({ isOn }) => (isOn ? 'white' : 'black')};
+    font-size: 18px;
+    font-weight: bold;
 `;

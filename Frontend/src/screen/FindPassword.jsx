@@ -1,5 +1,5 @@
 import React, { useState }  from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Alert } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 
@@ -9,12 +9,15 @@ export default function FindPassword() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
 
+    // 백엔드에서는 username을 사용하기에
+    const [username, setUsername] = useState('');
+
     // TextInput이 포커싱 되었을 때 색상 변경
     const [nameFocused, setNameFocused] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
 
     // 아이디 찾기 버튼 클릭 시
-    const findPassword = async () => {
+    const findPassword123 = async () => {
         try {
             const userData = { name: name, email: email }
             const response = await axios.post('http://localhost:8080/find/pw', userData, {
@@ -30,6 +33,35 @@ export default function FindPassword() {
         } catch (error) {   
             console.error('비밀번호를 찾을 수 없습니다.', error);
         }
+        };
+
+
+        // 비밀번호 찾기 버튼 클릭 시 실행
+        const findPassword = async () => {
+            setUsername(name);
+
+            try {
+                const response = await fetch('http://localhost:8080/find/password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                    }),
+                });
+                
+                const data = await response.text();
+                if (response.ok) {
+                    Alert.alert(data);
+                } else {
+                    Alert.alert(data);
+                }
+            } catch (error) {
+                console.error(error);
+                Alert.alert('오류 발생', '다시 시도해 주세요.');
+            }
         };
 
     return (

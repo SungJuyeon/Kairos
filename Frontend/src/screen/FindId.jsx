@@ -1,5 +1,5 @@
 import React, { useState }  from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Alert } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 
@@ -13,37 +13,37 @@ export default function FindId() {
     const [nameFocused, setNameFocused] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
 
-    // 아이디 찾기 버튼 클릭 시
+    // 아이디 찾기 버튼 클릭 시 실행
     const findId = async () => {
+        setUsername(name);
+
         try {
-            const userData = { name: name, email: email }
-            const response = await axios.post('http://localhost:8080/find/id', userData, {
+            const response = await fetch('http://localhost:8080/find/username', {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                // 아이디 찾기 성공 처리
-                console.log(response.data);
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                }),
             });
-        // 아이디 찾기 실패
-        } catch (error) {   
-            console.error('아이디를 찾을 수 없습니다.', error);
-        }
+            
+            const data = await response.text();
+            if (response.ok) {
+                Alert.alert(data);
+            } else {
+                Alert.alert(data);
+            }
+            } catch (error) {
+                console.error(error);
+                Alert.alert('오류 발생', '다시 시도해 주세요.');
+            }
         };
 
     return (
         <Container>
             <Title>아이디 찾기</Title>
             <InputContainer>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
-            <StyledTextInput
-                onChangeText={text => setName(text)}
-                value={name}
-                onFocus={() => setNameFocused(true)}
-                onBlur={() => setNameFocused(false)}
-                focused={nameFocused}
-                />
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
             <StyledTextInput
                 onChangeText={text => setEmail(text)}
