@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from 'axios';
-import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions, Alert } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,9 @@ export default function Login() {
 
     const [idFocused, setIdFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+
+    // 백엔드에서는 id 말고 username을 사용하기에
+    const [username, setUsername] = useState('');
 
     const { isLoggedIn, login, logout } = useContext(AuthContext);
     
@@ -36,26 +39,34 @@ export default function Login() {
         checkLoginStatus();
       }, []);
     
+
+    // 로그인 버튼 클릭시 실행
     const tryLogin = async () => {
+        setUsername(id);
+
         try {
-            const userData = { loginId: id, pw: password }
-            const response = await axios.post('http://localhost:8080/join', userData, {
+            const response = await fetch('http://localhost:8080/login', {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
             });
             
-            const onLoginSuccess = async (userData) => {
-                try {
-                    await AsyncStorage.setItem('userInfo', JSON.stringify(userData));
-                    login();
-                } catch (error) {
-                    console.error('로그인 정보 저장 실패', error);
-                }
-            };
-            console.log(response.data);
+            const data = await response.text();
+            if (response.ok) {
+                login();
+                Alert.alert('로그인 성공', data);
+            } else {
+                console.log(data);
+                Alert.alert('로그인 실패', data);
+            }
         } catch (error) {
-            console.error('로그인이 실패했습니다.', error);
+            console.error(error);
+            Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
 
@@ -70,7 +81,7 @@ export default function Login() {
                         onChangeText={setId}
                         value={id}
                         placeholderTextColor="gray"
-                        placeholder="아이디"
+                        placeholder="이름"
                         onFocus={() => setIdFocused(true)}
                         onBlur={() => setIdFocused(false)}
                         focused={idFocused}

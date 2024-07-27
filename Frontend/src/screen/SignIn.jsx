@@ -7,9 +7,6 @@ import axios from 'axios';
 export default function SignIn() {
     const { navigate } = useNavigation();
 
-    const [member, setMember] = useState([]);
-
-    const [id, setId] = useState('');
     const [password, setPassword] = useState('');
     const [conformPW, setConformPW] = useState('');
     const [email, setEmail] = useState('');
@@ -24,8 +21,16 @@ export default function SignIn() {
 
     // 회원가입 버튼 클릭 시
     const createMember = async () => {
+
+        // 비밀번호 입력과 비밀번호 확인입력 비교
+        if (password != conformPW) {
+            Alert.alert('비밀번호가 일치하지 않습니다.')
+            return;
+        }
+
+
         try {
-            const response = await fetch('http://172.30.1.54:8080/join', {
+            const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -61,15 +66,6 @@ export default function SignIn() {
                     onBlur={() => setUsernameFocused(false)}
                     focused={usernameFocused}
                     //placeholder="이름"
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>아이디</Text>
-                <StyledTextInput
-                    onChangeText={text => setId(text)}
-                    value={id}
-                    onFocus={() => setIdFocused(true)}
-                    onBlur={() => setIdFocused(false)}
-                    focused={idFocused}
-                    //placeholder="아이디"
                 />
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호</Text>
                 <StyledTextInput
