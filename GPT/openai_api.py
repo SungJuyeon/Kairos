@@ -3,13 +3,13 @@ import os
 from dotenv import load_dotenv
 from weather_info import get_weather_info
 
-# Load environment variables from a .env file
+# secret API 키를 가져오기 위해 .env file 로드
 load_dotenv()
 
-# Set your API key
+# API key
 openai.api_key = os.getenv("GPT_API_KEY")
 
-# Start with a system message
+# AI에게 역할을 부여
 messages = [
     {"role": "system", "content": (
         "Your name is Herobot and you are a personal assistant AI. "
@@ -18,7 +18,7 @@ messages = [
     )}
 ]
 
-# Function to determine forecast day based on user input
+# 날씨 관련 질문은 weather_info.py 함수 이용
 def determine_forecast_day(user_input):
     if "오늘" in user_input or "today" in user_input:
         return 0
@@ -29,22 +29,22 @@ def determine_forecast_day(user_input):
     else:
         return None
 
-# Conversation loop
+
 while True:
-    # Get user input
+    # 사용자에게 질문을 받음
     user_content = input("user: ")
 
-    # Check for weather-related queries and determine forecast day
+    # forecast day
     forecast_day = determine_forecast_day(user_content)
     if forecast_day is not None:
         weather_info = get_weather_info(forecast_day)
         print(f"assistant: {weather_info}")
         continue
 
-    # Add user message to conversation
+    # 사용자 메시지 저장
     messages.append({"role": "user", "content": user_content})
 
-    # Generate a response from the GPT model
+    # GPT model 생성
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
@@ -52,14 +52,14 @@ while True:
         max_tokens=1024
     )
 
-    # Get the assistant's message and add it to the conversation
+    # gpt 답변을 assistant 에 저장
     ai_message = completion.choices[0].message["content"].strip()
     messages.append({"role": "assistant", "content": ai_message})
 
-    # Print the AI's response
+    # gpt 답변 출력
     print(f"assistant: {ai_message}")
 
-    # Optional: add a condition to break the loop
+    # exit , bye 를 입력하면 대화 끝
     if user_content.lower() in ['exit', 'bye']:
         print("! bye !")
         break
