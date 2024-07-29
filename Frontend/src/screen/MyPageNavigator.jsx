@@ -9,7 +9,7 @@ import React from "react";
 
 const MyPageStack = createNativeStackNavigator();
 
-export default function MyPageStackNavigator() {
+export default function MyPageNavigator() {
   return (
     <MyPageStack.Navigator screenOptions={{ headerShown: false }}>
         <MyPageStack.Screen name="Login" component={LoginScreen} />
