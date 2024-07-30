@@ -1,2 +1,6 @@
 
 .DS_Store
+/.gradle/8.8/executionHistory
+/.gradle/8.8/fileHashes
+/.gradle/buildOutputCleanup
+/.gradle
