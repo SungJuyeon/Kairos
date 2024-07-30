@@ -9,27 +9,32 @@ export default function Density() {
     const [isDownPressed, setIsDownPressed] = useState(false);
     const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
+    const BASE_URL = 'http://172.30.1.36:5000/move'; // 라즈베리파이 서버 URL
 
     // 방향키 버튼을 누르고 있을 때
-    const handleButtonPressIn = (direction) => {
+    const handleButtonPressIn = async (direction) => {
         switch (direction) {
             case 'up':
                 setIsUpPressed(true);
+                await fetch(`${BASE_URL}/up`, { method: 'POST' });
                 break;
             case 'left':
                 setIsLeftPressed(true);
+                await fetch(`${BASE_URL}/left`, { method: 'POST' });
                 break;
             case 'right':
                 setIsRightPressed(true);
+                await fetch(`${BASE_URL}/right`, { method: 'POST' });
                 break;
             case 'down':
                 setIsDownPressed(true);
+                await fetch(`${BASE_URL}/down`, { method: 'POST' });
                 break;
         }
     };
-    
+
     // 방향키 버튼을 누르다가 땔 때
-    const handleButtonPressOut = (direction) => {
+    const handleButtonPressOut = async (direction) => {
         switch (direction) {
             case 'up':
                 setIsUpPressed(false);
@@ -44,6 +49,8 @@ export default function Density() {
                 setIsDownPressed(false);
                 break;
         }
+        // 모터 정지 요청
+        await fetch(`${BASE_URL}/stop`, { method: 'POST' });
     };
 
     // 사진 촬영 버튼 클릭 시
