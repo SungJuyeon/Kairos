@@ -9,7 +9,7 @@ export default function Chat() {
   const { navigate } = useNavigation();
 
   // 다시 inputText를 포커싱하기 위해
-  const inputText = document.getElementById('inputText');
+  //const inputText = document.getElementById('inputText');
 
   // 서버에 메세지를 보내는 함수
   const sendMessage = async () => {
@@ -60,7 +60,7 @@ export default function Chat() {
   const handleSubmit = () => {
     if (message.trim() !== '') {
       sendMessage();
-      inputText.focus();
+      //inputText.focus();
     }
   };
 
