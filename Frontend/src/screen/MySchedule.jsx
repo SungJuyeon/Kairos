@@ -1,38 +1,36 @@
 import React, { useState } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, Dimensions, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styled from 'styled-components/native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function MySchedule() {
     const { navigate } = useNavigation();
 
-    // 캘린더에 필요한 변수들
-    const daysOfWeek = ["월", "화", "수", "목", "금"];
-    const rows = 10; // 행의 수
-    const columns = daysOfWeek.length; // 열의 수 (요일 수)
+    const daysOfWeek = ["/", "월", "화", "수", "목", "금"];
+    const rows = 10;
+    const columns = daysOfWeek.length;
 
-    // 추천하는 빈 강의실
     const [lecterRoom, setLectureRoom] = useState("공학관 202호");
-
-    // 각 셀의 내용 초기화
     const [calendarData, setCalendarData] = useState(
         Array.from({ length: rows }, () =>
-            Array(columns).fill({ text: "", color: "black" }) // 초기 색상 변경
+            Array.from({ length: columns }, () => ({ text: "", color: "black" })) // 각 셀에 대해 새로운 객체 생성
         )
     );
 
-    // 셀을 클릭할 때 셀의 값을 수정
     const handleCellPress = (rowIndex, colIndex) => {
-        const newData = [...calendarData]; // 현재 상태 복사
+        const newData = [...calendarData];
         newData[rowIndex][colIndex] = {
             text: "클릭됨",
-            color: "skyblue" // 클릭 시 색상 변경
+            color: "#0CDAE0"
         };
-        setCalendarData(newData); // 상태 업데이트
+        setCalendarData(newData);
     };
 
     return (
         <Container>
+            <ScrollView>
             <Button onPress={() => navigate("InputMySchedule")}>
                 <ButtonText>나의 시간표 추가하기</ButtonText>
             </Button>
@@ -50,7 +48,7 @@ export default function MySchedule() {
                             <Cell
                                 key={colIndex}
                                 onPress={() => handleCellPress(rowIndex, colIndex)}
-                                style={{ backgroundColor: calendarData[rowIndex][colIndex].color }} // 셀 색상 설정
+                                style={{ backgroundColor: calendarData[rowIndex][colIndex].color }}
                             >
                                 <CellText>{calendarData[rowIndex][colIndex].text}</CellText>
                             </Cell>
@@ -60,27 +58,27 @@ export default function MySchedule() {
             </Calendar>
             <StyledText>현재 추천드리는 빈 강의실은</StyledText>
             <StyledText>{lecterRoom} 입니다!</StyledText>
+            </ScrollView>
         </Container>
     );
 }
 
 const Container = styled.SafeAreaView`
     background-color: #000000;
-    flex: 1;
     justify-content: center;
-    align-items: center;
+    flex: 1;
 `;
 
 const Button = styled.TouchableOpacity`
     background-color: #FFFFFF;
-    padding: 10px 20px;
+    padding: ${height * 0.02}px ${width * 0.05}px;
     border-radius: 5px;
     margin: 5px;
 `;
 
 const ButtonText = styled.Text`
     color: black;
-    font-size: 16px;
+    font-size: ${height * 0.025}px;
     font-weight: bold;
 `;
 
@@ -98,7 +96,7 @@ const Header = styled.View`
 
 const HeaderCell = styled.View`
     flex: 1;
-    padding: 10px;
+    padding: ${height * 0.02}px;
     align-items: center;
     justify-content: center;
     border-bottom-width: 1px;
@@ -111,8 +109,7 @@ const Row = styled.View`
 
 const Cell = styled.TouchableOpacity`
     flex: 1;
-    width: 100px;
-    height: 40px;
+    height: ${height * 0.05}px;
     align-items: center;
     justify-content: center;
     border: 1px solid #444444;
@@ -120,10 +117,8 @@ const Cell = styled.TouchableOpacity`
 
 const StyledText = styled.Text`
     color: white;
-    font-size: 30px;
+    font-size: ${height * 0.03}px;
     margin-top: 20px;
-    margin-bottom: 5px;
-    margin-left: 10px;
     font-weight: bold;
 `;
 
@@ -135,3 +130,4 @@ const HeaderText = styled.Text`
 const CellText = styled.Text`
     color: white;
 `;
+
