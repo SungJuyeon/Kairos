@@ -8,6 +8,7 @@ from add_schedule import add_schedule
 from delete_schedule import delete_schedule
 from select_schedule import select_schedule
 from weather_info import get_weather_info
+from speaker import speak
 
 # secret API 키를 가져오기 위해 .env file 로드
 load_dotenv()
@@ -137,7 +138,11 @@ def is_schedule_request(user_input):
 
 while True:
     #사용자에게 입력을 받음
-    user_content = input("user: ")
+    user_content = speak()
+    if user_content is None:
+        print("Please try speaking again.")
+        continue
+
     #날씨 요청을 처리
     if "날씨" in user_content:    #입력에 "날씨"가 있으면
         forecast_day = determine_forecast_day(user_content) #날짜를 return
