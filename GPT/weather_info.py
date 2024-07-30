@@ -127,7 +127,7 @@ def get_weather_info(forecast_day=0):
         weather_msg = (
             f"{date_of_today} 날씨를 알려드리겠습니다.\n"
             f"현재 날씨는 {weather_of_today}\n"
-            f"최고 기온은 {highest_temp_of_today}도 입니다.\n"
+            f"최고 기온은 {highest_temp_of_today}도, "
             f"최저 기온은 {lowest_temp_of_today}도 입니다.\n"
         )
 
