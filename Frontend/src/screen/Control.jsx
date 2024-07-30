@@ -66,7 +66,7 @@ export default function Density() {
     return (
         <Container>
             <Image
-                source={{ uri: '라즈베리파이 주소' }}
+                source={{ uri: 'http://localhost:8000/video_feed' }}
                 style={{ width: 640, height: 230 }}
             />
             <ButtonContainer>
