@@ -170,19 +170,6 @@ while True:
                 response = f"{user_name}의 {date} 일정이 없습니다."
             print(f"assistant: {response}")
             continue
-    # #GPT에게 사용자 입력을 전달해 응답을 받음
-    # messages.append({"role": "user", "content": user_content})
-    #
-    # completion = openai.ChatCompletion.create(
-    #     model="gpt-3.5-turbo",
-    #     messages=messages,
-    #     temperature=0.7,
-    #     max_tokens=1024
-    # )
-    #
-    # ai_message = completion.choices[0].message["content"].strip()
-    # messages.append({"role": "assistant", "content": ai_message}) # 생성된 응답을 대화 내역에 추가하고 출력
-    # print(f"assistant: {ai_message}")
 
     # GPT 모델에 사용자 입력을 전달하여 응답을 생성
     prompt = user_content  # 사용자 입력을 프롬프트로 사용
