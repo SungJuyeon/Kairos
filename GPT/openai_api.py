@@ -9,6 +9,9 @@ from delete_schedule import delete_schedule
 from select_schedule import select_schedule
 from weather_info import get_weather_info
 from speaker import speak
+from control_home import control_led
+from control_home import control_induction
+from control_home import control_air_conditioner
 
 # secret API 키를 가져오기 위해 .env file 로드
 load_dotenv()
@@ -22,27 +25,28 @@ messages = [
         "You are an advanced personal assistant AI. "
         "Your tasks include managing user schedules and providing weather information. "
         "For managing schedules, you will handle requests such as adding, deleting, and showing schedules. "
-        "For weather information, you will provide current weather and forecasts."
+        "For weather information, you will provide current weather and forecasts. "
+        "Additionally, you are responsible for controlling the electrical appliances in the house. "
+        "This includes turning on or off the lights, air conditioning, and induction cooktop."
     )}
 ]
 
-#GPT 모델에 prompt를 전달해 response 생성
+# GPT 모델에 prompt를 전달해 response 생성
 def generate_gpt_response(prompt):
     completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  #GPT 모델
-        messages=[{"role": "user", "content": prompt}], # 사용자 입력을 포함한 메시지
+        model="gpt-3.5-turbo",  # GPT 모델
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.7,    # 응답의 창의성 정도
         max_tokens=100  # 응답의 최대 길이
     )
-    response = completion.choices[0].message["content"].strip() #응답에서 내용 추출, 양쪽 공백 제거
+    response = completion.choices[0].message["content"].strip() # 응답에서 내용 추출, 양쪽 공백 제거
     return response
 
-#GPT 응답에서 user name, date, time, task 추출
 def parse_gpt_schedule_instruction(user_input):
     prompt = (
         f"다음 문장에서 '사용자 이름', '날짜', '시간', '일정 내용'을 각각 추출하세요:\n"
         f"'{user_input}'\n"
-        f"출력 형식: '사용자 이름: 유리, 날짜: 2024-08-05, 시간: 10:30, 일정 내용: 인형 사기' 이런 형식으로 출력하세요."
+        f"출력 형식: '사용자 이름: 유리, 날짜: 2024-08-05, 시간: 10:30:00, 일정 내용: 인형 사기' 이런 형식으로 출력하세요."
     )
     response = generate_gpt_response(prompt)
 
@@ -68,21 +72,22 @@ def parse_gpt_schedule_instruction(user_input):
 
         # 시간 처리
         if "시" in time:
-            time = time.replace("시", ":").replace("분", "").replace(" ", "")
+            time = time.replace("시", ":").replace("분", "").replace("초", "").replace(" ", "")  # 공백 제거
             time_parts = time.split(":")
             if len(time_parts) == 1:
-                time = f"{time_parts[0]}:00:00"
+                time = f"{time_parts[0].zfill(2)}:00:00"
             elif len(time_parts) == 2:
-                time = f"{time_parts[0]}:{time_parts[1]}:00"
+                time = f"{time_parts[0].zfill(2)}:{time_parts[1].zfill(2)}:00"
             else:
-                time = f"{time_parts[0]}:{time_parts[1]}:{time_parts[2]}"
+                time = f"{time_parts[0].zfill(2)}:{time_parts[1].zfill(2)}:{time_parts[2].zfill(2)}"
 
         # 일정 내용에서 불필요한 단어 제거
-        task = re.sub(r"(추가해줘|해줘|하세요|해)", "", task).strip()
+        task = re.sub(r"(추가|해줘|하세요|해)", "", task).strip()
 
         return user_name, date, time, task
     else:
         return None, None, None, None
+
 
 # 날씨 예보를 제공할 날짜
 def determine_forecast_day(user_input):
@@ -141,12 +146,59 @@ def is_weather_request(user_input):
 def is_schedule_request(user_input):
     return "일정" in user_input or "추가" in user_input or "삭제" in user_input or "알려줘" in user_input or "말해줘" in user_input
 
+# 사용자의 입력이 스마트홈 제어 요청인지 확인
+def is_smart_home_control_request(user_input):
+    return any(keyword in user_input for keyword in ["전등", "조명", "불", "에어컨", "인덕션"])
+
+# 스마트홈 제어 요청을 처리
+def handle_smart_home_control(user_input):
+    # 전등/조명/불 제어 요청 처리
+    if "전등" in user_input or "조명" in user_input or "불" in user_input:
+        if "켜" in user_input:
+            action = "켜줘"
+        elif "꺼" in user_input:
+            # "끄다"가 포함된 경우
+            action = "꺼줘"
+        else:
+            return
+        # 전등을 켜거나 끄기 위한 함수
+        control_led(action)
+
+    # 인덕션 제어 요청 처리
+    elif "인덕션" in user_input:
+        if "꺼" in user_input:
+            control_induction("꺼줘")
+        else:
+            return
+        control_induction("꺼줘")
+
+    # 에어컨 제어 요청 처리
+    elif "에어컨" in user_input:
+        if "켜" in user_input:
+            action = "켜줘"
+        elif "꺼" in user_input:
+            # "끄다"가 포함된 경우
+            action = "꺼줘"
+        else:
+            return
+        # 에어컨을 켜거나 끄기 위한 함수
+        control_air_conditioner(action)
+
+# 히어로봇 호출 대기
+def wait_herobot():
+    while True:
+        user_input = speak()
+        if user_input and "히어로" in user_input:
+            return
+
 while True:
-    # 사용자에게 입력을 받음
+    # "히어로봇" 호출 대기
+    wait_herobot()
+    # 사용자에게 응답
+    print("assistant: 네, 무엇을 도와드릴까요?")
+    # 사용자 입력을 받음
     user_content = speak()
-    if user_content is None:
-        print("Please try speaking again.")
-        continue
+    # user_content = input("user: ")
 
     # 날씨 요청을 처리
     if is_weather_request(user_content):
@@ -175,10 +227,14 @@ while True:
                 else:   # 그 날, 사용자 일정이 없다면
                     response = f"{user_name}의 {date} 일정이 없습니다."
                 print(f"assistant: {response}")
-            continue
         else:
             print("assistant: 사용자 이름, 날짜, 시간, 일정 내용을 모두 입력해 주세요.")
-            continue
+        continue
+
+    # 스마트홈 제어 요청을 처리
+    if is_smart_home_control_request(user_content):
+        handle_smart_home_control(user_content)
+        continue
 
     # GPT 모델에 사용자 입력을 전달하여 응답을 생성
     prompt = user_content  # 사용자 입력을 프롬프트로 사용

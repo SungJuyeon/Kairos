@@ -4,10 +4,7 @@ def speak():
     recognizer = sr.Recognizer()
 
     with sr.Microphone() as source:
-        # 마이크의 샘플 레이트 확인
-        sample_rate = source.SAMPLE_RATE
-        print(f"Using sample rate: {sample_rate}")
-
+        recognizer.adjust_for_ambient_noise(source)
         print("Listening... Please speak into the microphone.")
         audio = recognizer.listen(source)
 
