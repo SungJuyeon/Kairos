@@ -1,17 +1,12 @@
 import os
-
+import pygame
 import speech_recognition as sr
 from gtts import gTTS
-from playsound import playsound
 
 def listen():
     recognizer = sr.Recognizer()
-
     with sr.Microphone() as source:
-        # 마이크의 샘플 레이트 확인
-        sample_rate = source.SAMPLE_RATE
-        print(f"Using sample rate: {sample_rate}")
-
+        recognizer.adjust_for_ambient_noise(source)
         print("Listening... Please speak into the microphone.")
         audio = recognizer.listen(source)
 
@@ -20,16 +15,38 @@ def listen():
         print("[User] " + text)
         return text
     except sr.UnknownValueError:
-        print("Google Speech Recognition could not understand audio")
+        #print("Google Speech Recognition could not understand audio")
+        return ""
     except sr.RequestError as e:
-        print(f"Could not request results from Google Speech Recognition service; {e}")
+        #print(f"Could not request results from Google Speech Recognition service; {e}")
+        return ""
 
+def speak(text, always_speak=False):
+    if not text and not always_speak:
+        return
 
-def speak(text):
     print(f"assistant: {text}")
     tts = gTTS(text=text, lang='ko')
-    if os.path.exists('assistant.mp3'): #음성 파일이 존재한다면
-        os.remove('assistant.mp3') #원래 있던 파일 지우기
-    tts.save("assistant.mp3")
-    playsound("assistant.mp3")
+    file_path = 'temp_assistant.mp3'
 
+    # Save the new audio file
+    tts.save(file_path)
+
+    # Initialize pygame mixer
+    pygame.mixer.init()
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
+
+    # Wait until the audio file is done playing
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+
+    # Ensure the file is no longer being used
+    pygame.mixer.quit()
+
+    # Remove the file after playing
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print(f"Error deleting file: {e}")
