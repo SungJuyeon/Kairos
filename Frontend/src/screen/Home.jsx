@@ -22,7 +22,7 @@ export default function Home() {
             // 두 번째 애니메이션 실행
             Animated.timing(contentOpacity, {
                 toValue: 1, // 최종값
-                duration: 1000, // 애니메이션 지속 시간
+                duration: 2000, // 애니메이션 지속 시간
                 useNativeDriver: true, // 네이티브 드라이버 사용
             }).start();
         });
@@ -60,7 +60,7 @@ const Title = styled.Text`
     font-weight: bold;
 `;
 
-const Container = styled.View`
+const Container = styled(Animated.View)`
     flex: 1;
     justify-content: center;
     align-items: center;
