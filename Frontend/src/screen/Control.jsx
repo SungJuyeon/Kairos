@@ -9,26 +9,28 @@ export default function Density() {
     const [isDownPressed, setIsDownPressed] = useState(false);
     const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
-    const BASE_URL = 'http://172.30.1.36:5000/move'; // 라즈베리파이 서버 URL
+    //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
+    //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
+    const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
 
     // 방향키 버튼을 누르고 있을 때
     const handleButtonPressIn = async (direction) => {
         switch (direction) {
             case 'up':
                 setIsUpPressed(true);
-                await fetch(`${BASE_URL}/up`, { method: 'POST' });
+                await fetch(`${BASE_URL}/move/up`, { method: 'POST' });
                 break;
             case 'left':
                 setIsLeftPressed(true);
-                await fetch(`${BASE_URL}/left`, { method: 'POST' });
+                await fetch(`${BASE_URL}/move/left`, { method: 'POST' });
                 break;
             case 'right':
                 setIsRightPressed(true);
-                await fetch(`${BASE_URL}/right`, { method: 'POST' });
+                await fetch(`${BASE_URL}/move/right`, { method: 'POST' });
                 break;
             case 'down':
                 setIsDownPressed(true);
-                await fetch(`${BASE_URL}/down`, { method: 'POST' });
+                await fetch(`${BASE_URL}/move/down`, { method: 'POST' });
                 break;
         }
     };
@@ -74,7 +76,7 @@ export default function Density() {
     return (
         <Container>
             <Image
-                source={{ uri: 'http://localhost:8000/video_feed' }}
+                source={{ uri: `${BASE_URL}/video_feed` }}
                 style={{ width: 640, height: 230 }}
             />
             <ButtonContainer>
