@@ -167,10 +167,11 @@ while True:
             if "추가" in user_content:
                 response = add_schedule(user_name, date, time, task)
                 print(f"assistant: {response}")
-
+                speak(response)
             elif "삭제" in user_content:
                 response = delete_schedule(user_name, date, time)
                 print(f"assistant: {response}")
+                speak(response)
             elif "알려줘" in user_content or "말해줘" in user_content:
                 schedules = select_schedule(user_name, date)
                 if schedules:   # user_name, date 받아서 그 날, 그 사용자에게 일정이 있다면
@@ -180,6 +181,7 @@ while True:
                 else:   # 그 날, 사용자 일정이 없다면
                     response = f"{user_name}의 {date} 일정이 없습니다."
                 print(f"assistant: {response}")
+                speak(response)
             continue
         else:
             print("assistant: 사용자 이름, 날짜, 시간, 일정 내용을 모두 입력해 주세요.")
@@ -192,7 +194,7 @@ while True:
     # 생성된 응답을 대화 내역에 추가하고 출력
     messages.append({"role": "assistant", "content": ai_message})
     print(f"assistant: {ai_message}")
-
+    speak(ai_message)
     # 사용자가 exit, bye라고 입력하면 종료
     if user_content.lower() in ['exit', 'bye']:
         print("! bye !")
