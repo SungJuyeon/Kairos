@@ -1,6 +1,10 @@
-import speech_recognition as sr
+import os
 
-def speak():
+import speech_recognition as sr
+from gtts import gTTS
+from playsound import playsound
+
+def listen():
     recognizer = sr.Recognizer()
 
     with sr.Microphone() as source:
@@ -19,3 +23,13 @@ def speak():
         print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:
         print(f"Could not request results from Google Speech Recognition service; {e}")
+
+
+def speak(text):
+    print(f"assistant: {text}")
+    tts = gTTS(text=text, lang='ko')
+    if os.path.exists('assistant.mp3'): #음성 파일이 존재한다면
+        os.remove('assistant.mp3') #원래 있던 파일 지우기
+    tts.save("assistant.mp3")
+    playsound("assistant.mp3")
+
