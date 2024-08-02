@@ -9,7 +9,8 @@ def listen():
         recognizer.adjust_for_ambient_noise(source)
         print("Listening... Please speak into the microphone.")
         try:
-            # Adjust the timeout and phrase_time_limit
+            # timeout: 음성을 인식하기 전 최대 대기 시간
+            # phrase_time_limit: 음성 인식을 위한 최대 음성 길이
             audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
             text = recognizer.recognize_google(audio, language='ko')
             print("[User] " + text)
