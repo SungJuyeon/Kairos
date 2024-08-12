@@ -5,6 +5,7 @@ import re
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
+from GPT.youtube import play_music_on_youtube, close_browser
 from add_schedule import add_schedule
 from delete_schedule import delete_schedule
 from select_schedule import select_schedule
@@ -148,7 +149,9 @@ def handle_smart_home_control(user_input):
 def wait_herobot():
     while True:
         user_input = listen()
-        if "here 로봇" in user_input:
+        #user_content = input("user: ")
+
+        if "here 로봇" in user_input or "히어로봇" in user_input or "히어 로봇" in user_input:
             return
 while True:
     wait_herobot()
@@ -156,12 +159,14 @@ while True:
 
     while True:
         user_content = listen()
+        #user_content = input("user: ")
 
         if "종료해" in user_content:
             speak("종료합니다")
+            close_browser()  # 유튜브 창 닫기
             break
+
         if not user_content:
-            # Skip processing if no content is recognized
             continue
 
         if is_weather_request(user_content):
@@ -209,6 +214,11 @@ while True:
 
         elif is_smart_home_control_request(user_content):
             handle_smart_home_control(user_content)
+            continue
+
+        elif "틀어 줘" in user_content or "틀어줘" in user_content:
+            music = re.sub(r"(틀어줘)", "", user_content).strip()
+            play_music_on_youtube(music)
             continue
 
         prompt = user_content
