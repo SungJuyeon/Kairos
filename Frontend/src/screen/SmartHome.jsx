@@ -1,30 +1,28 @@
 import React, { useContext }from "react";
-import { View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, Image, SafeAreaView, TouchableOpacity } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 
-export default function MyPage() {
+export default function SmartHome() {
     const { navigate } = useNavigation();
 
-    // 로그인 관련
-    const { logout } = useContext(AuthContext);
-
+    //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
+    //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
+    const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
 
     return (
         <Container>
-          <Title>안녕하세요!</Title>
-            <Button onPress={() => logout()}>
-              <ButtonText>로그 아웃</ButtonText>
-            </Button>
+            <Title>Smart Home</Title>
+
         </Container>
     );
 }
 
 const Title = styled.Text`
     color: white;
-    font-size: 50px;
-    margin-bottom: 40px;
+    font-size: 30px;
+    margin-bottom: 10px;
     font-weight: bold;
 `;
 

@@ -12,6 +12,19 @@ export default function Control() {
     const [isDownPressed, setIsDownPressed] = useState(false);
     const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
+
+    // 속도 조절
+    const [value, setValue] = useState(1);
+
+    const increment = () => {
+      setValue(prevValue => Math.min(prevValue + 1, 10)); // 최대값 10으로 제한
+    };
+  
+    const decrement = () => {
+      setValue(prevValue => Math.max(prevValue - 1, 1)); // 최소값 1으로 제한
+    };
+
+    
     //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
     //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
     const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
@@ -117,16 +130,26 @@ export default function Control() {
     const handleOnOffPress = () => {
         setIsOn(!isOn);
     };
-    
-
-
 
     return (
         <Container>
            <Image
                 source={{ uri: `${BASE_URL}/video_feed` }}
-                style={{ width: 640, height: 230 }}
+                style={{ width: 640, height: 360 }}
             />
+
+            <BorderContainer>
+            <ControlPadContainer>
+            <SpeedButtonContainer>
+                <ValueText>속도: {value}</ValueText>
+                <SpeedButton onPress={increment}>
+                <ButtonText>증가</ButtonText>
+                </SpeedButton>
+                <SpeedButton onPress={decrement}>
+                <ButtonText>감소</ButtonText>
+                </SpeedButton>
+            </SpeedButtonContainer>
+
             <ButtonContainer>
                 <UpButtonContainer>
                     <ButtonStyle
@@ -159,6 +182,8 @@ export default function Control() {
                     </ButtonStyle>
                 </DownButtonContainer>
             </ButtonContainer>
+            </ControlPadContainer>
+            
             <CaptureButtonContainer>
                 <CaptureButtonStyle
                     onPress={handleCapturePhoto}
@@ -171,15 +196,18 @@ export default function Control() {
                 >
                     <CaptureButtonText>{isCaptureVideoPressed ? '동영상 촬영 중...' : '동영상 촬영'}</CaptureButtonText>
                 </CaptureButtonStyle>
+                <RemoveContainer>
+                    <StyledText>인물 제거 모드 : </StyledText>
+                    <OnOffButton
+                        onPress={handleOnOffPress}
+                        isOn={isOn}>
+                        <OnOffButtonText isOn={isOn}>{isOn ? '적용 중...' : '적용'}</OnOffButtonText>
+                    </OnOffButton>
+                </RemoveContainer>
             </CaptureButtonContainer>
-            <RemoveContainer>
-            <StyledText>인물 제거 모드 : </StyledText>
-            <OnOffButton
-                onPress={handleOnOffPress}
-                isOn={isOn}>
-                <OnOffButtonText isOn={isOn}>{isOn ? '적용 중' : '적용'}</OnOffButtonText>
-            </OnOffButton>
-            </RemoveContainer>
+            </BorderContainer>
+
+
         </Container>
     );
 }
@@ -200,22 +228,27 @@ const StyledText = styled.Text`
 const RemoveContainer = styled.View`
     flex-direction: row;
     align-items: center;
-    margin-top: 25px;
+    margin-left: 10px;
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #000000;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
 `;
 
+const BorderContainer = styled.View`
+    border: 2px solid #FFF;
+    border-radius: 10px;
+    padding: 20px;
+;`
+
 const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-left: 30px;
 `;
 
 const UpButtonContainer = styled.View`
@@ -253,10 +286,33 @@ const CaptureButtonContainer = styled.View`
     margin-top: 20px;
 `;
 
+const ControlPadContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+`;
+
+const SpeedButtonContainer = styled.View`
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #FFF;
+    border-radius: 10px;
+    padding: 20px;
+`;
+
+// border: 2px solid #000; // 테두리 두께와 색상
+// border-radius: 10px; // 모서리 둥글기 (선택 사항)
+// padding: 20px; // 내부 여백 (선택 사항)
+
 const CaptureButtonStyle = styled.TouchableOpacity`
+    width: 120px;
+    height: 50px;
+    justify-content: center;
+    align-items: center;
     background-color: ${({isCaptureVideoPressed}) => (isCaptureVideoPressed ? '#AAAAAA' : 'white')};
     border-radius: 10px;
-    padding: 20px 20px;
+    padding: 10px 10px;
     margin: 0 10px;
 `;
 
@@ -267,13 +323,31 @@ const CaptureButtonText = styled.Text`
 `;
 
 const OnOffButton = styled.TouchableOpacity`
-    background-color: ${({ isOn }) => (isOn ? 'gray' : 'white')};
+    width: 80px;
+    height: 50px;
+    justify-content: center;
+    align-items: center;
+    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : 'white')};
     border-radius: 10px;
-    padding: 10px 20px;
+    padding: 10px 10px;
+    margin-left: 10px;
 `;
 
 const OnOffButtonText = styled.Text`
-    color: ${({ isOn }) => (isOn ? 'white' : 'black')};
+    color: 'black';
     font-size: 18px;
     font-weight: bold;
+`;
+
+const ValueText = styled.Text`
+    color: white;
+    font-size: 24px;
+    margin-bottom: 20px;
+`;
+
+const SpeedButton = styled.TouchableOpacity`
+  background-color: white;
+  border-radius: 10px;
+  padding: 10px 20px;
+  margin: 10px;
 `;

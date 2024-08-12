@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ControlNavigator from "./src/screen/ControlNavigator";
 import MyPageNavigator from "./src/screen/MyPageNavigator";
 import ChatNavigator from "./src/screen/ChatNavigator";
+import HighlightNavigator from "./src/screen/HighlightNavigator";
 import { StatusBar } from 'react-native';
 import React from "react";
 import { AuthProvider } from './src/screen/AuthContext';
@@ -21,13 +22,13 @@ export default function App() {
                 screenOptions={({ route }) => ({
                   headerShown: false,
                   tabBarStyle: {
-                    backgroundColor: 'black',
-                    activeTintColor: 'white',
+                    backgroundColor: '#222222',
+                    activeTintColor: '#FFFFFF',
                     inactiveTintColor: 'gray'
                   },
                   tabBarIcon: ({ color, size, focused }) => {
                     let iconName;
-                    const iconColor = 'white'
+                    const iconColor = '#FFFFFF'
               
                     if (route.name === 'Control') {
                       iconName = focused ? 'camera' : 'camera-outline';
@@ -35,6 +36,8 @@ export default function App() {
                       iconName = focused ? 'person' : 'person-outline';
                     } else if (route.name === 'Chat') {
                       iconName = focused ? 'chatbox' : 'chatbox-outline';
+                    } else if (route.name === 'Highlight') {
+                      iconName = focused ? 'star' : 'star-outline';
                     }
                     return <Ionicons name={iconName} size={size} color={iconColor} />;
                   },
@@ -42,6 +45,7 @@ export default function App() {
                 })}>
         <BottomTab.Screen name="Control" component={ControlNavigator} />
         <BottomTab.Screen name="Chat" component={ChatNavigator} />
+        <BottomTab.Screen name="Highlight" component={HighlightNavigator} />
         <BottomTab.Screen name="MyPage" component={MyPageNavigator} />
       </BottomTab.Navigator>
     </NavigationContainer>

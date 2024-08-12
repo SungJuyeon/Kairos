@@ -97,9 +97,9 @@ export default function Login() {
                         focused={passwordFocused}
                     />
                     <RowContainer>
-                        <Button onPress={tryLogin}>
+                        <LoginButton onPress={tryLogin}>
                             <ButtonText>로그인</ButtonText>
-                        </Button>
+                        </LoginButton>
                         <Button onPress={() => navigate('FindUserData')}>
                             <ButtonText>내 정보 찾기</ButtonText>
                         </Button>
@@ -115,7 +115,7 @@ export default function Login() {
 }
 
 const StyledText = styled.Text`
-    color: white;
+    color: #FFFFFF;
     font-size: ${height * 0.025}px;
     margin-top: ${height * 0.07}px;
     margin-bottom: 5px;
@@ -125,25 +125,25 @@ const StyledText = styled.Text`
 
 const StyledTextInput = styled.TextInput`
     height: ${height * 0.06}px;
-    width: ${width * 0.65}px;
-    border-color: ${({ focused }) => (focused ? '#0CDAE0' : 'white')};
+    width: ${width * 0.5}px;
+    border-color: ${({ focused }) => (focused ? '#FFB0F9' : 'white')};
     border-bottom-width: 3px;
     padding: 10px;
     margin: 10px 0;
     color: white;
     font-size: ${height * 0.022}px;
-    background-color: #000000;
+    background-color: #222222;
 `;
 
 const Title = styled.Text`
-    color: white;
+    color: #FFFFFF;
     font-size: ${height * 0.065}px;
     margin-bottom: ${height * 0.05}px;
     font-weight: bold;
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #000000;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -154,6 +154,13 @@ const RowContainer = styled.View`
     justify-content: center;
     align-items: center;
     margin-top: ${height * 0.02}px;
+`;
+
+const LoginButton = styled.TouchableOpacity`
+    background-color: #FFB0F9;
+    padding: ${height * 0.02}px ${width * 0.06}px;
+    border-radius: 10px;
+    margin: 0 10px;
 `;
 
 const Button = styled.TouchableOpacity`

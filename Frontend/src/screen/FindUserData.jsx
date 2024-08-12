@@ -15,15 +15,12 @@ export default function FindUserData() {
                 <Button onPress={() => navigate("FindPassword")}>
                     <ButtonText>비밀번호 찾기</ButtonText>
                 </Button>
-                <BackButton onPress={() => navigate("Login")}>
-                    <ButtonText>뒤로 가기</ButtonText>
-                </BackButton>
         </Container>
     )
 }
 
 const Container = styled.SafeAreaView`
-    background-color: #000000;
+    background-color: #222222;
     flex: 1;
     padding: 5%;
     justify-content: center;

@@ -3,7 +3,7 @@ import { ImageBackground, Animated } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 
-export default function Home() {
+export default function Home( { navigation } ) {
     const opacity = useRef(new Animated.Value(0)).current; // 초기값 0, 인트로 애니메이션을 위함
     const contentOpacity = useRef(new Animated.Value(0)).current; // 나머지 UI의 초기값
     const [isAnimationFinished, setIsAnimationFinished] = useState(false); // 애니메이션 완료 상태
@@ -14,7 +14,7 @@ export default function Home() {
         // 첫 번째 애니메이션 실행
         Animated.timing(opacity, {
             toValue: 1, // 최종값
-            duration: 2000, // 애니메이션 지속 시간
+            duration: 2500, // 애니메이션 지속 시간
             useNativeDriver: true, // 네이티브 드라이버 사용
         }).start(() => {
             setIsAnimationFinished(true); // 애니메이션이 끝나면 상태 업데이트
@@ -40,10 +40,10 @@ export default function Home() {
                     <Container style={{ opacity: contentOpacity }}>
                         <Title>Welcome!</Title>
                         <CaptureButtonContainer>
-                            <CaptureButtonStyle onPress={() => navigate('Control')}>
+                            <ControlButton onPress={() => navigate('Control')}>
                                 <CaptureButtonText>Herobot 제어하기</CaptureButtonText>
-                            </CaptureButtonStyle>
-                            <CaptureButtonStyle>
+                            </ControlButton>
+                            <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                                 <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                             </CaptureButtonStyle>
                         </CaptureButtonContainer>
@@ -64,12 +64,21 @@ const Container = styled(Animated.View)`
     flex: 1;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.8);
 `;
 
 const CaptureButtonContainer = styled.View`
     justify-content: center;
     align-items: center;
+    margin-top: 20px;
+`;
+
+const ControlButton = styled.TouchableOpacity`
+    background-color: #FFB0F9;
+    width: 300px;
+    height: 60px;
+    border-radius: 10px;
+    padding: 20px 20px;
     margin-top: 20px;
 `;
 

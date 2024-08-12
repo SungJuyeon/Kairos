@@ -11,13 +11,19 @@ const MyPageStack = createNativeStackNavigator();
 
 export default function MyPageNavigator() {
   return (
-    <MyPageStack.Navigator screenOptions={{ headerShown: false }}>
-        <MyPageStack.Screen name="Login" component={LoginScreen} />
-        <MyPageStack.Screen name="SignIn" component={SignInScreen} />
-        <MyPageStack.Screen name="MyPage" component={MyPageScreen} />
-        <MyPageStack.Screen name="FindUserData" component={FindUserDataScreen} />
-        <MyPageStack.Screen name="FindId" component={FindIdScreen} />
-        <MyPageStack.Screen name="FindPassword" component={FindPasswordScreen} />
+    <MyPageStack.Navigator screenOptions={{
+      headerStyle: {
+        backgroundColor: 'transparent', // 배경색을 투명으로 설정
+      },
+      headerTintColor: '#fff', // 헤더의 텍스트 색상
+      headerTransparent: true, // 헤더를 투명하게 설정
+    }}>
+        <MyPageStack.Screen name="Login" component={LoginScreen} options={{ title: '' }} />
+        <MyPageStack.Screen name="SignIn" component={SignInScreen} options={{ title: '' }} />
+        <MyPageStack.Screen name="MyPage" component={MyPageScreen} options={{ title: '' }} />
+        <MyPageStack.Screen name="FindUserData" component={FindUserDataScreen} options={{ title: '' }} />
+        <MyPageStack.Screen name="FindId" component={FindIdScreen} options={{ title: '' }} />
+        <MyPageStack.Screen name="FindPassword" component={FindPasswordScreen} options={{ title: '' }} />
     </MyPageStack.Navigator>
   );
 }
