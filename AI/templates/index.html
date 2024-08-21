@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Stream</title>
+    <title>Video Stream with Emotion Detection</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -36,25 +36,42 @@
             font-weight: bold;
             color: #4CAF50; /* 밀집도 값의 색상 */
         }
+
+        #emotion {
+            font-weight: bold;
+            color: #FF5722; /* 감정 텍스트 색상 */
+        }
     </style>
 </head>
 <body>
-    <h1>Video Stream</h1>
-    <img src="/video_feed" width="640" height="480">
-    <h2>Density: <span id="density">Loading...</span></h2>
+<h1>Video Stream with Emotion Detection</h1>
+<img id="video" src="/video_feed" width="640" height="480" alt="Video Stream">
+<h2>Density: <span id="density">Loading...</span></h2>
+<h2>Detected Emotion: <span id="emotion">None</span></h2>
 
-    <script>
-        async function fetchDensity() {
-            try {
-                const response = await fetch('/density');
-                const data = await response.json();
-                document.getElementById('density').innerText = (data.density * 100).toFixed(2) + '%';
-            } catch (error) {
-                console.error('Error fetching density:', error);
-            }
+<script>
+    async function fetchDensity() {
+        try {
+            const response = await fetch('/density');
+            const data = await response.json();
+            document.getElementById('density').innerText = (data.density * 100).toFixed(2) + '%';
+        } catch (error) {
+            console.error('Error fetching density:', error);
         }
+    }
 
-        setInterval(fetchDensity, 1000); // 1초마다 밀집도 값을 가져옴
-    </script>
+    async function fetchEmotion() {
+        try {
+            const response = await fetch('/current_emotion');
+            const data = await response.json();
+            document.getElementById('emotion').innerText = data.emotion;
+        } catch (error) {
+            console.error('Error fetching emotion:', error);
+        }
+    }
+
+    setInterval(fetchDensity, 1000); // 1초마다 밀집도 값을 가져옴
+    setInterval(fetchEmotion, 1000); // 1초마다 감정 값을 가져옴
+</script>
 </body>
 </html>

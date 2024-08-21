@@ -50,7 +50,7 @@ async def update_frame():
             await asyncio.sleep(0.1)
             continue
 
-       # YOLOv8 모델 추론
+        # YOLOv8 모델 추론
         results = model(frame)
         detections = []
         for result in results:
@@ -118,10 +118,10 @@ async def read_index(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     config = uvicorn.Config("main:app", host="0.0.0.0", port=8000)
     server = uvicorn.Server(config)
-    
+
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(server.serve())
