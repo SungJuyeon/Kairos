@@ -37,15 +37,11 @@ GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
 # 카메라 설정
 cap = cv2.VideoCapture(0)
 
-
-
 # 현재 모터 상태를 저장하는 변수
 current_direction = None
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
-
-
 
 
 async def motor_control(direction):
@@ -58,6 +54,7 @@ async def motor_control(direction):
         await asyncio.sleep(0.1)
 
     stop()
+
 
 def set_motor_state(direction):
     GPIO.output(MOTOR_PINS['ENA'], GPIO.HIGH)
@@ -85,6 +82,7 @@ def set_motor_state(direction):
         GPIO.output(MOTOR_PINS['IN3'], GPIO.LOW)
         GPIO.output(MOTOR_PINS['IN4'], GPIO.HIGH)
 
+
 def stop():
     logging.info("Stopping motors")
     global current_direction
@@ -95,14 +93,20 @@ def stop():
 
     logging.info("Motors stopped")
 
+
 async def send_distance(client):
     while True:
-        distance = measure_distance()
-        if distance is not None:
-            distance_message = json.dumps({"distance": distance})  # JSON 형식으로 전송
-            client.publish(MQTT_TOPIC_DISTANCE, distance_message)  # await 제거
-            logging.info(f"Published distance: {distance}")
-        await asyncio.sleep(1) #전송주기
+        try:
+            distance = measure_distance()
+            if distance is not None:
+                distance_message = json.dumps({"distance": distance})  # JSON 형식으로 전송
+                client.publish(MQTT_TOPIC_DISTANCE, distance_message)
+                # logging.info(f"거리 발행: {distance}")
+            await asyncio.sleep(0.1)  # 전송 주기
+        except Exception as e:
+            logging.error(f"Error in send_distance: {e}")
+            await asyncio.sleep(1)  # 오류 발생 시 대기
+
 
 def measure_distance():
     try:
@@ -125,19 +129,24 @@ def measure_distance():
         logging.error(f"Error measuring distance: {e}")
         return None
 
+
 async def generate_frames(client):
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            logging.warning("Failed to capture frame")
-            continue
+        try:
+            ret, frame = cap.read()
+            if not ret:
+                logging.warning("Failed to capture frame")
+                await asyncio.sleep(1)  # 프레임 캡처 실패 시 대기
+                continue
 
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame_data = buffer.tobytes()
-        client.publish(MQTT_TOPIC_VIDEO, frame_data)
-        logging.info("Sent a video frame")
-        await asyncio.sleep(0.2)  # 전송 주기 조정
-
+            _, buffer = cv2.imencode('.jpg', frame)
+            frame_data = buffer.tobytes()
+            client.publish(MQTT_TOPIC_VIDEO, frame_data)
+            # logging.info("Sent a video frame")
+            await asyncio.sleep(0.1)  # 전송 주기 조정
+        except Exception as e:
+            logging.error(f"Error in generate_frames: {e}")
+            await asyncio.sleep(1)  # 오류 발생 시 대기
 
 
 # MQTT 설정
@@ -149,11 +158,13 @@ MQTT_TOPIC_VIDEO = "robot/video"
 
 client = MQTTClient(client_id="robot_controller")
 
+
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logging.info("연결")
     client.subscribe(MQTT_TOPIC_COMMAND)
     logging.info("구독")
+
 
 async def on_message(client, topic, payload, qos, properties):
     command = json.loads(payload.decode('utf-8'))
@@ -166,24 +177,27 @@ async def on_message(client, topic, payload, qos, properties):
     else:
         logging.warning(f"Invalid command: {command}")
 
+
 @asynccontextmanager
 async def lifespan():
     client.on_message = on_message
     await on_connect()
 
     # 비동기 작업 시작
-    #asyncio.create_task(send_distance(client))
-    #asyncio.create_task(generate_frames(client))
+    asyncio.create_task(send_distance(client))
+    asyncio.create_task(generate_frames(client))
 
     yield
 
     logging.info("종료")
     await client.disconnect()
 
+
 async def main():
     async with lifespan():
         while True:
             await asyncio.sleep(1)
+
 
 if __name__ == "__main__":
     try:

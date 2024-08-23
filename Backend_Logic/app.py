@@ -3,7 +3,6 @@ import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
-
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +18,7 @@ templates = Jinja2Templates(directory="templates")
 
 # 상태 변수
 distance_data = None
-video_frames_queue = asyncio.Queue(maxsize=10)  # 비디오 프레임 큐
+video_frames_queue = asyncio.Queue(maxsize=5)  # 비디오 프레임 큐
 voice_data = None
 
 # MQTT 설정
@@ -32,6 +31,7 @@ MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="fastapi_client")
 
+
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logger.info("연결: MQTT Broker")
@@ -39,16 +39,18 @@ async def on_connect():
     client.subscribe(MQTT_TOPIC_VIDEO)
     logger.info("구독 완료")
 
+
 async def on_message(client, topic, payload, qos, properties):
-    logger.info(f"Message received on topic {topic}: {len(payload)} bytes")
+    # logger.info(f"Message received on topic {topic}: {len(payload)} bytes")
     await process_message(topic, payload)
+
 
 async def process_message(topic, payload):
     global voice_data, distance_data
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
-        logger.info("Received video frame")
+        # logger.info("Received video frame")
         try:
             await video_frames_queue.put(payload)  # 비디오 프레임 큐에 추가
             logger.info(f"Video frames count: {video_frames_queue.qsize()}")
@@ -62,11 +64,11 @@ async def process_message(topic, payload):
     # 다른 데이터 유형 처리
     try:
         message = json.loads(payload.decode('utf-8'))  # JSON 디코딩
-        logger.info(f"Decoded message: {message}")
+        # logger.info(f"Decoded message: {message}")
 
         if topic == MQTT_TOPIC_DISTANCE:
             distance_data = message["distance"]
-            logger.info(f"Received distance data: {distance_data}")
+            #logger.info(f"Received distance data: {distance_data}")
 
         elif topic == MQTT_TOPIC_COMMAND:
             voice_data = message["audio"]
@@ -79,6 +81,7 @@ async def process_message(topic, payload):
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client.on_message = on_message
@@ -86,6 +89,7 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("종료")
     await client.disconnect()
+
 
 # FastAPI 인스턴스 생성
 app = FastAPI(lifespan=lifespan)
@@ -99,6 +103,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.post("/move/{direction}")
 async def move(direction: str):
     logger.info(f"Attempting to move {direction}")
@@ -108,14 +113,16 @@ async def move(direction: str):
 
     logger.info(f"Command sent: {command}")
 
+
 @app.get("/distance")
 async def get_distance():
-    logger.info(f"Current distance data: {distance_data}")
     return {"distance": distance_data}
+
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 async def video_frame_generator():
     while True:
@@ -126,7 +133,8 @@ async def video_frame_generator():
             video_frames_queue.task_done()  # 작업 완료 표시
         except Exception as e:
             logger.error(f"Error while sending video frame: {e}")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.1)
+
 
 @app.get("/video_feed")
 async def get_video_frame():
@@ -136,20 +144,24 @@ async def get_video_frame():
         logger.error(f"Error in get_video_frame: {e}")
         return HTMLResponse(content="Error in video stream", status_code=500)
 
+
 async def voice_data_generator():
     while True:
         if voice_data:
             yield voice_data.encode('utf-8')
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
+
 
 @app.get("/get_voice_data")
 async def get_voice_data():
     return StreamingResponse(voice_data_generator(), media_type="application/octet-stream")
 
+
 async def run_fastapi():
     config = uvicorn.Config(app, port=8000)
     server = uvicorn.Server(config)
     await server.serve()
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
