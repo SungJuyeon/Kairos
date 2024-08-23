@@ -2,8 +2,8 @@ import RPi.GPIO as GPIO
 import time
 
 # GPIO 핀 설정
-TRIG = 23  # 트리거 핀
-ECHO = 24  # 에코 핀
+TRIG = 20  # 트리거 핀
+ECHO = 16  # 에코 핀
 
 # GPIO 모드 설정
 GPIO.setmode(GPIO.BCM)
