@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Kairos.iml" filepath="$PROJECT_DIR$/.idea/modules/Kairos.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.iml" filepath="$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/back.main.iml" filepath="$PROJECT_DIR$/.idea/modules/back.main.iml" />
     </modules>
   </component>
