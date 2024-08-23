@@ -64,7 +64,7 @@ export default function VoiceChat() {
 }
 
 const Container = styled.SafeAreaView`
-  background-color: #000000;
+  background-color: #222222;
   flex: 1;
   justify-content: center;
   align-items: center;
@@ -74,13 +74,13 @@ const CenterButton = styled.TouchableOpacity`
   width: 250px;
   height: 250px;
   border-radius: 150px;
-  background-color: #0CDAE0;
+  background-color: #FFB0F9;
   justify-content: center;
   align-items: center;
 `;
 
 const CenterButtonText = styled.Text`
-  color: #fff;
+  color: #000;
   font-size: 24px;
   font-weight: bold;
 `;

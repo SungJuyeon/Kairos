@@ -103,7 +103,7 @@ export default function Chat() {
 }
 
 const Container = styled.SafeAreaView`
-  background-color: #000000;
+  background-color: #222222;
   flex: 1;
 `;
 
@@ -114,7 +114,7 @@ const ChatContainer = styled.View`
 
 const MessageContainer = styled.View`
   align-self: ${props => props.isUser ? 'flex-end' : 'flex-start'};
-  background-color: ${props => props.isUser ? '#0CDAE0' : '#333'};
+  background-color: ${props => props.isUser ? '#FFB0F9' : '#333'};
   padding: 12px;
   border-radius: 16px;
   max-width: 80%;
@@ -122,7 +122,7 @@ const MessageContainer = styled.View`
 `;
 
 const MessageText = styled.Text`
-  color: ${props => props.isUser ? '#fff' : '#fff'};
+  color: ${props => props.isUser ? '#000' : '#FFF'};
   font-size: 16px;
 `;
 
@@ -141,14 +141,14 @@ const ButtonContainer = styled.View`
 `;
 
 const SendButton = styled.TouchableOpacity`
-  background-color: #007AFF;
+  background-color: #FFB0F9;
   padding: 12px 16px;
   border-radius: 16px;
   margin-right: 10px;
 `;
 
 const SendButtonText = styled.Text`
-  color: #fff;
+  color: #000;
   font-size: 16px;
 `;
 

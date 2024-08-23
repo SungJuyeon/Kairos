@@ -104,9 +104,6 @@ export default function SignIn() {
                 <Button onPress={createMember}>
                     <ButtonText>회원 가입</ButtonText>
                 </Button>
-                <BackButton onPress={() => navigate("Login")}>
-                    <ButtonText>뒤로 가기</ButtonText>
-                </BackButton>
             </RowContainer>
         </Container>
     );
@@ -121,7 +118,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #000000;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -163,7 +160,7 @@ const StyledTextInput = styled.TextInput`
     margin-bottom: 15px;
     color: white;
     font-size: 18px;
-    background-color: #000000;
+    background-color: #222222;
 `;
 
 const RowContainer = styled.View`
