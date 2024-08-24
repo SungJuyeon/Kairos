@@ -92,16 +92,13 @@ export default function FindPassword() {
                 <Button onPress={findPassword}>
                     <ButtonText>비밀번호 찾기</ButtonText>
                 </Button>
-                <BackButton onPress={() => navigate("FindUserData")}>
-                    <ButtonText>뒤로 가기</ButtonText>
-                </BackButton>
             </RowContainer>
         </Container>
     )
 }
 
 const Container = styled.SafeAreaView`
-    background-color: #000000;
+    background-color: #222222;
     flex: 1;
     padding: 5%;
     justify-content: center;
@@ -145,7 +142,7 @@ const StyledTextInput = styled.TextInput`
     margin-bottom: 15px;
     color: white;
     font-size: 18px;
-    background-color: #000000;
+    background-color: #222222;
 `;
 
 const RowContainer = styled.View`

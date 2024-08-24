@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ControlScreen from "./Control";
 import HomeScreen from "./Home";
+import SmartHomeScreen from "./SmartHome";
 import React from "react";
 
 const ControlStack = createNativeStackNavigator();
@@ -24,6 +25,11 @@ export default function ControlNavigator() {
         <ControlStack.Screen 
           name="Control" 
           component={ControlScreen} 
+          options={{ title: '' }} // 타이틀을 직접 설정
+        />
+        <ControlStack.Screen 
+          name="SmartHome" 
+          component={SmartHomeScreen} 
           options={{ title: '' }} // 타이틀을 직접 설정
         />
     </ControlStack.Navigator>

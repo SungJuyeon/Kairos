@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로봇 제어</title>
+    <style>
+        /* 비디오 크기 조절 */
+        #videoStream {
+            width: 320px; /* 원하는 너비 */
+            height: 240px; /* 원하는 높이 */
+        }
+    </style>
+</head>
+<body>
+<h1>로봇 제어 인터페이스</h1>
+
+<div>
+    <h2>거리 데이터</h2>
+    <p id="distanceResult">거리: -</p>
+</div>
+
+<div>
+    <h2>비디오 스트림</h2>
+    <img id="videoStream" src="/video_feed" alt="비디오 스트림" />
+</div>
+
+<div>
+    <h2>로봇 이동</h2>
+    <button onclick="move('forward')">앞으로 이동</button>
+    <button onclick="move('back')">뒤로 이동</button>
+    <button onclick="move('left')">왼쪽으로 이동</button>
+    <button onclick="move('right')">오른쪽으로 이동</button>
+    <button onclick="move('stop')">정지</button>
+</div>
+
+<script>
+    // 거리 데이터를 주기적으로 가져오는 함수
+    async function fetchDistance() {
+        try {
+            const response = await fetch('/distance');
+            const data = await response.json();
+            document.getElementById('distanceResult').innerText = `거리: ${data.distance}`;
+        } catch (error) {
+            console.error('Error fetching distance:', error);
+        }
+    }
+     setInterval(fetchDistance, 100);
+
+
+    async function move(direction) {
+        const response = await fetch(`/move/${direction}`, {
+            method: 'POST',
+        });
+    }
+
+
+    // 페이지 로드 시 거리 데이터를 한 번 가져오기
+    fetchDistance();
+</script>
+</body>
+</html>
