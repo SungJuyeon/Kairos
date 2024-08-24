@@ -6,8 +6,9 @@ from flask import Flask, render_template, Response, jsonify
 import time
 import os
 from datetime import datetime
-import asyncio
+import re
 
+from AI.emotion_ranking import save_emotion_result, get_emotion_ranking
 
 app = Flask(__name__)
 
@@ -23,7 +24,6 @@ current_emotion_probability = 0.0
 
 # 영상 저장을 위한 변수
 saving_video = False
-video_writer = None
 video_filename = ""
 frame_rate = 5  # 저장할 영상 프레임 설정
 video_duration = 10  # 10초간 영상 저장
@@ -35,7 +35,34 @@ def generate_video_filename():
         os.makedirs(base_dir)  # 폴더가 없으면 생성
 
     today = datetime.today().strftime('%Y%m%d')  # 오늘 날짜
-    return os.path.join(base_dir, f"{today}.avi")  # 비디오 파일 경로, 이름 반환
+
+    # 오늘 날짜에 해당하는 모든 비디오 파일 이름을 검색
+    existing_files = [f for f in os.listdir(base_dir) if f.startswith(today) and f.endswith('.avi')]
+
+    # 파일 이름에서 번호 추출
+    max_number = 0
+    for filename in existing_files:
+        match = re.match(rf"{today}(\d+).avi", filename)
+        if match:
+            number = int(match.group(1))
+            if number > max_number:
+                max_number = number
+
+    # 다음 번호 생성
+    next_number = max_number + 1
+
+    return os.path.join(base_dir, f"{today}{next_number}.avi")  # 비디오 파일 경로, 이름 반환
+
+# 비디오 파일에 프레임을 저장하는 함수
+def save_frames_to_video(filename, frames):
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    height, width, layers = frames[0].shape
+    out = cv2.VideoWriter(filename, fourcc, frame_rate, (width, height))
+
+    for frame in frames:
+        out.write(frame)
+
+    out.release()
 
 # 얼굴 감지 함수
 def detect_face(frame):
@@ -61,20 +88,13 @@ def extract_face_features(gray, detected_faces, coord, offset_coefficients=(0.07
         new_face.append(new_extracted_face)  # 새로운 얼굴 리스트에 추가
     return new_face  # 추출된 얼굴 특징 반환
 
-# 비디오 파일이 존재하면 이어서 작성할 수 있도록 VideoWriter 객체를 생성하는 함수
-def create_video_writer(filename):
-    global video_capture, frame_rate
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    video_writer = cv2.VideoWriter(filename, fourcc, frame_rate, (int(video_capture.get(3)), int(video_capture.get(4))))
-    return video_writer
-
 # 비디오 프레임 생성기
 def generate_frames():
-    global current_emotion, current_emotion_probability, saving_video, video_writer, video_filename, video_capture
+    global current_emotion, current_emotion_probability, saving_video, video_filename
     video_capture = cv2.VideoCapture(0)  # 웹캠 비디오 캡처 객체 생성
+    video_capture.set(cv2.CAP_PROP_FPS, 30)
 
-    frame_rate = 20.0  # 프레임 레이트 설정
-    frames_to_save = int(frame_rate * video_duration)  # 10초간 저장할 프레임 수
+    frames_to_save = []  # 10초 동안 저장할 프레임을 모으기 위한 리스트
     start_time = None  # 저장 시작 시간을 기록하기 위한 변수
 
     while True:
@@ -82,11 +102,10 @@ def generate_frames():
         if not ret:
             break
 
-        face_index = 0  # 첫 번째 얼굴 인덱스
         gray, detected_faces, coord = detect_face(frame)  # 얼굴 감지 및 좌표 획득
 
         if len(detected_faces) > 0 and len(coord) > 0:  # 얼굴이 감지되었고 coord 리스트가 비어있지 않을 때
-            x, y, w, h = coord[face_index]  # 얼굴 좌표 가져오기
+            x, y, w, h = coord[0]  # 첫 번째 얼굴 좌표 가져오기
 
             face_zoom = extract_face_features(gray, detected_faces, coord)  # 얼굴 특징 추출
             face_zoom = np.reshape(face_zoom[0].flatten(), (1, 48, 48, 1))  # 모델 입력 형태로 변환
@@ -101,26 +120,24 @@ def generate_frames():
 
             cv2.putText(frame, f"{current_emotion}: {current_emotion_probability}%", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)  # 감정과 확률 표시
 
-            if current_emotion_probability > 90.0 and not saving_video:  # 감정 확률이 90%를 넘고, 아직 저장 중이 아닐 때
+            # 여기서 감정 결과를 저장
+            save_emotion_result(current_emotion)
+
+            # 감정 확률이 90%를 넘으면 저장 시작
+            if current_emotion_probability > 90.0 and not saving_video:
                 video_filename = generate_video_filename()  # 비디오 파일명 생성
-
-                # 기존 파일이 존재하면 이어서 작성하기 위해 열기
-                if os.path.exists(video_filename):
-                    video_writer = create_video_writer(video_filename)
-                else:
-                    video_writer = create_video_writer(video_filename)
-
                 saving_video = True  # 저장 시작
                 start_time = time.time()  # 저장 시작 시간 기록
 
-        # 감정과 상관없이 저장 중일 때 프레임을 저장
+        # 감정 확률이 90%를 넘는 시점부터 10초 동안 프레임 저장
         if saving_video:
-            video_writer.write(frame)  # 현재 프레임 저장
+            frames_to_save.append(frame)  # 현재 프레임 저장
 
             # 10초가 경과하면 저장 종료
             if time.time() - start_time >= video_duration:
+                save_frames_to_video(video_filename, frames_to_save)  # 비디오 파일에 프레임 저장
                 saving_video = False  # 저장 종료
-                video_writer.release()  # 비디오 작성 객체 해제
+                frames_to_save = []  # 프레임 리스트 초기화
                 start_time = None  # 시작 시간 초기화
 
         # 얼굴이 감지되지 않았을 경우에도 프레임을 계속 스트리밍
@@ -129,11 +146,9 @@ def generate_frames():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # 프레임을 HTTP 응답으로 전달
 
-        cv2.waitKey(10)  # 10ms 0.01초 간격 대기
+        cv2.waitKey(1)  # 1ms 딜레이
 
     video_capture.release()  # 비디오 캡처 객체 해제
-    if video_writer is not None:
-        video_writer.release()  # 비디오 작성 객체 해제
 
 # 웹 페이지를 위한 라우트 설정
 @app.route('/')
@@ -149,6 +164,12 @@ def video_feed():
 @app.route('/current_emotion')
 def get_current_emotion():
     return jsonify(emotion=current_emotion, probability=current_emotion_probability)  # JSON 형식으로 감정 반환
+
+# 감정 순위를 반환하는 라우트 설정
+@app.route('/emotion_ranking')
+def emotion_ranking():
+    rankings = get_emotion_ranking()  # 감정 순위 가져오기
+    return jsonify(rankings)  # JSON 형식으로 감정 순위 반환
 
 # 서버 시작
 if __name__ == '__main__':
