@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 import re
 
-from AI.emotion_ranking import save_emotion_result, get_emotion_ranking
+from Backend_Logic.emotion_ranking import save_emotion_result, get_emotion_ranking
 
 app = Flask(__name__)
 
@@ -151,9 +151,9 @@ def generate_frames():
     video_capture.release()  # 비디오 캡처 객체 해제
 
 # 웹 페이지를 위한 라우트 설정
-@app.route('/')
+@app.route('/emotion')
 def index():
-    return render_template('index.html')  # index.html 렌더링
+    return render_template('emotion.html')  # index.html 렌더링
 
 # 비디오 피드를 위한 라우트 설정
 @app.route('/video_feed')
