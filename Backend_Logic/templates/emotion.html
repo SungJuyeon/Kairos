@@ -79,30 +79,26 @@
     try {
         const response = await fetch('/emotion_ranking');
         const data = await response.json();
-        console.log('Ranking data:', data); // 응답 데이터 확인
         const rankingList = document.getElementById('ranking');
         rankingList.innerHTML = ''; // 기존 리스트 초기화
 
-        if (Array.isArray(data)) {
+        if (data.length === 0) {
+            // 감정 순위 데이터가 없을 경우
+            const listItem = document.createElement('li');
+            listItem.textContent = "No data available";
+            rankingList.appendChild(listItem);
+        } else {
             // 감정 순위를 화면에 표시
             data.forEach(([emotion, count]) => {
                 const listItem = document.createElement('li');
                 listItem.textContent = `${emotion}: ${count} times`;
                 rankingList.appendChild(listItem);
             });
-        } else {
-            // 데이터 형식이 예상과 다른 경우
-            console.error('Unexpected ranking data format:', data);
-            rankingList.innerHTML = '<li>Error: Invalid ranking data format.</li>';
         }
     } catch (error) {
         console.error('Error fetching ranking:', error);
-        const rankingList = document.getElementById('ranking');
-        rankingList.innerHTML = '<li>Error: Could not fetch ranking data.</li>';
     }
 }
-
-
     setInterval(fetchEmotion, 1000); // 1초마다 감정 값을 가져옴
     setInterval(fetchRanking, 5000); // 5초마다 감정 순위를 가져옴
 </script>

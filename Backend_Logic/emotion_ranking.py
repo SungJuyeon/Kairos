@@ -4,7 +4,7 @@ from datetime import datetime
 
 # 감정 파일 경로를 생성하는 함수
 def get_emotion_file():
-    base_dir = "../AI/emotions"
+    base_dir = "../Backend_Logic/emotions"
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
 
