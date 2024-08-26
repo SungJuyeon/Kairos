@@ -37,12 +37,19 @@ for pin in ACTUATOR_PINS.values():
 GPIO.setup(ULTRASONIC_PINS['TRIG'], GPIO.OUT)
 GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
 
+# PWM 객체 생성 후 시작
+pwm_A = GPIO.PWM(WHEEL_PINS['ENA'], 100)  # 100Hz
+pwm_B = GPIO.PWM(WHEEL_PINS['ENB'], 100)  # 100Hz
+pwm_A.start(0)
+pwm_B.start(0)
+
 # 카메라 설정
 cap = cv2.VideoCapture(0)
 
 # 현재 모터 상태를 저장하는 변수
 wheel_direction = None
 actuator_direction = None
+wheel_speed = 100
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -51,19 +58,16 @@ logging.basicConfig(level=logging.INFO)
 async def wheel_control(direction):
     global wheel_direction
     wheel_direction = direction
-    logging.info(f"Setting motor state to {direction}")
+    logging.info(f"wheel {direction}, speed {wheel_speed}")
     set_wheel_state(direction)
 
     while wheel_direction == direction:
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
 
     stop_wheel()
 
 
 def set_wheel_state(direction):
-    GPIO.output(WHEEL_PINS['ENA'], GPIO.HIGH)
-    GPIO.output(WHEEL_PINS['ENB'], GPIO.HIGH)
-
     # 모터 방향 설정
     if direction == "forward":
         GPIO.output(WHEEL_PINS['IN1'], GPIO.HIGH)
@@ -85,13 +89,25 @@ def set_wheel_state(direction):
         GPIO.output(WHEEL_PINS['IN2'], GPIO.LOW)
         GPIO.output(WHEEL_PINS['IN3'], GPIO.LOW)
         GPIO.output(WHEEL_PINS['IN4'], GPIO.HIGH)
+    # PWM을 사용하여 속도 조절
+    pwm_A.ChangeDutyCycle(wheel_speed)  # ENA 핀에 속도 적용
+    pwm_B.ChangeDutyCycle(wheel_speed)  # ENB 핀에 속도 적용
 
+
+async def set_speed(speed):
+    global wheel_speed
+    wheel_speed = max(0, min(speed, 100))  # 속도를 0~100 사이로 제한
+    logging.info(f"wheel speed {wheel_speed}")
+    if wheel_direction is not None:
+        set_wheel_state(wheel_direction)  # 현재 방향에 속도 적용
 
 def stop_wheel():
     logging.info("Stopping motors")
     global wheel_direction
     wheel_direction = None
 
+    pwm_A.ChangeDutyCycle(0)
+    pwm_B.ChangeDutyCycle(0)
     for pin in WHEEL_PINS.values():
         GPIO.output(pin, GPIO.LOW)
 
@@ -214,6 +230,8 @@ async def on_message(client, topic, payload, qos, properties):
         await wheel_control(command["command"])
     elif command["command"] in ["up", "down"]:
         await actuator_control(command["command"])
+    elif command["command"] == "set_speed":
+        await set_speed(command["speed"])  # 속도 조절 명령 처리
     else:
         logging.warning(f"Invalid command: {command}")
 
