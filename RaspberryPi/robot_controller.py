@@ -178,6 +178,18 @@ async def on_message(client, topic, payload, qos, properties):
         logging.warning(f"Invalid command: {command}")
 
 
+async def on_disconnect():
+    logging.warning("Disconnected from MQTT broker, attempting to reconnect...")
+    while True:
+        try:
+            await client.connect(MQTT_BROKER, MQTT_PORT)
+            logging.info("Reconnected to MQTT broker")
+            break
+        except Exception as e:
+            logging.error(f"Reconnect failed: {e}")
+            await asyncio.sleep(5)  # 재시도 대기
+
+
 @asynccontextmanager
 async def lifespan():
     client.on_message = on_message
