@@ -1,17 +1,26 @@
+import base64
+import os
 import cv2
+from io import BytesIO
 import numpy as np
 import tensorflow as tf
+from flask import Flask, jsonify, request, send_from_directory, render_template, Response
+from werkzeug.utils import secure_filename
+from scipy.spatial.distance import cosine
 from scipy.ndimage import zoom
-from flask import Flask, render_template, Response, jsonify
 import time
-import os
-from datetime import datetime
-import asyncio
+from dotenv import load_dotenv
+from faceDB import register_face_to_db, get_registered_faces_from_db
+from emotion_ranking import get_emotion_ranking
+from emotion_video import save_frames_to_video, generate_video_filename
 
+# .env 파일에서 환경 변수 로드
+load_dotenv()
 
+# Flask 애플리케이션
 app = Flask(__name__)
 
-# 모델 로드 (Keras .h5 형식)
+# 감정 분류 모델 로드 (Keras .h5 형식)
 model = tf.keras.models.load_model('emotion_detection_model.h5')
 
 # 감정 레이블 매핑
@@ -23,132 +32,189 @@ current_emotion_probability = 0.0
 
 # 영상 저장을 위한 변수
 saving_video = False
-video_writer = None
 video_filename = ""
 frame_rate = 5  # 저장할 영상 프레임 설정
 video_duration = 10  # 10초간 영상 저장
 
-# 비디오 저장 경로 및 파일명 생성 함수
-def generate_video_filename():
-    base_dir = "videos"  # 비디오 파일 저장 폴더
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)  # 폴더가 없으면 생성
+# 얼굴 등록 함수
+def register_face(image, name):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    detected_faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6, minSize=(48, 48), flags=cv2.CASCADE_SCALE_IMAGE)
 
-    today = datetime.today().strftime('%Y%m%d')  # 오늘 날짜
-    return os.path.join(base_dir, f"{today}.avi")  # 비디오 파일 경로, 이름 반환
+    if len(detected_faces) > 0:
+        (x, y, w, h) = detected_faces[0]
+        face = gray[y:y+h, x:x+w]
+        face = cv2.resize(face, (48, 48))
+        filename = f"{secure_filename(name)}.jpg"
+
+        # 얼굴 이미지 저장
+        if not os.path.exists("registered_faces"):
+            os.makedirs("registered_faces")
+        cv2.imwrite(os.path.join("registered_faces", filename), face)
+
+        # 데이터베이스에 등록
+        if register_face_to_db(face, name):
+            return True
+    return False
+
+# 얼굴 비교 함수
+def compare_faces(face1, face2):
+    return cosine(face1.flatten(), face2.flatten())
+
+# 얼굴 인식 함수
+def recognize_face(detected_face):
+    min_distance = float('inf')
+    recognized_name = None
+    faces_info = get_registered_faces_from_db()
+
+    for face_info in faces_info:
+        face_image = np.frombuffer(face_info['image_data'], np.uint8)
+        face_image = cv2.imdecode(face_image, cv2.IMREAD_GRAYSCALE)
+        distance = compare_faces(detected_face, face_image)
+        if distance < min_distance and distance < 0.4:  # 코사인 유사도 기준
+            min_distance = distance
+            recognized_name = face_info['name']
+    return recognized_name
 
 # 얼굴 감지 함수
 def detect_face(frame):
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')  # Haarcascade 파일 로드
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # 프레임을 그레이스케일로 변환
-    detected_faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6, minSize=(48, 48), flags=cv2.CASCADE_SCALE_IMAGE)  # 얼굴 감지
-    coord = []  # 얼굴 좌표 저장
-    for (x, y, w, h) in detected_faces:  # 감지된 얼굴들을 순회
-        if w > 100:  # 특정 크기 이상의 얼굴만 선택
-            coord.append([x, y, w, h])  # 좌표 리스트에 추가
-    return gray, detected_faces, coord  # 그레이스케일 이미지, 감지된 얼굴, 좌표 반환
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    detected_faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6, minSize=(48, 48), flags=cv2.CASCADE_SCALE_IMAGE)
+    coord = []
+    for (x, y, w, h) in detected_faces:
+        if w > 100:
+            coord.append([x, y, w, h])
+    return gray, detected_faces, coord
 
 # 얼굴 특징 추출 함수
 def extract_face_features(gray, detected_faces, coord, offset_coefficients=(0.075, 0.05)):
-    new_face = []  # 새로운 얼굴 리스트
-    for det in detected_faces:  # 감지된 얼굴들을 순회
-        x, y, w, h = det  # 얼굴 좌표
-        horizontal_offset = int(np.floor(offset_coefficients[0] * w))  # 가로 오프셋 계산
-        vertical_offset = int(np.floor(offset_coefficients[1] * h))  # 세로 오프셋 계산
-        extracted_face = gray[y+vertical_offset:y+h, x+horizontal_offset:x-horizontal_offset+w]  # 얼굴 특징 추출
-        new_extracted_face = zoom(extracted_face, (48/extracted_face.shape[0], 48/extracted_face.shape[1]))  # 얼굴 이미지를 48x48로 리사이즈
-        new_extracted_face = new_extracted_face.astype(np.float32) / new_extracted_face.max()  # 이미지 정규화
-        new_face.append(new_extracted_face)  # 새로운 얼굴 리스트에 추가
-    return new_face  # 추출된 얼굴 특징 반환
-
-# 비디오 파일이 존재하면 이어서 작성할 수 있도록 VideoWriter 객체를 생성하는 함수
-def create_video_writer(filename):
-    global video_capture, frame_rate
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    video_writer = cv2.VideoWriter(filename, fourcc, frame_rate, (int(video_capture.get(3)), int(video_capture.get(4))))
-    return video_writer
+    new_face = []
+    for det in detected_faces:
+        x, y, w, h = det
+        horizontal_offset = int(np.floor(offset_coefficients[0] * w))
+        vertical_offset = int(np.floor(offset_coefficients[1] * h))
+        extracted_face = gray[y+vertical_offset:y+h, x+horizontal_offset:x-horizontal_offset+w]
+        new_extracted_face = zoom(extracted_face, (48/extracted_face.shape[0], 48/extracted_face.shape[1]))
+        new_extracted_face = new_extracted_face.astype(np.float32) / new_extracted_face.max()
+        new_face.append(new_extracted_face)
+    return new_face
 
 # 비디오 프레임 생성기
 def generate_frames():
-    global current_emotion, current_emotion_probability, saving_video, video_writer, video_filename, video_capture
-    video_capture = cv2.VideoCapture(0)  # 웹캠 비디오 캡처 객체 생성
+    global current_emotion, current_emotion_probability, saving_video, video_filename
+    video_capture = cv2.VideoCapture(0)
+    video_capture.set(cv2.CAP_PROP_FPS, 30)
 
-    frame_rate = 20.0  # 프레임 레이트 설정
-    frames_to_save = int(frame_rate * video_duration)  # 10초간 저장할 프레임 수
-    start_time = None  # 저장 시작 시간을 기록하기 위한 변수
+    frames_to_save = []
+    start_time = None
 
     while True:
-        ret, frame = video_capture.read()  # 프레임 읽기
+        ret, frame = video_capture.read()
         if not ret:
             break
 
-        face_index = 0  # 첫 번째 얼굴 인덱스
-        gray, detected_faces, coord = detect_face(frame)  # 얼굴 감지 및 좌표 획득
+        gray, detected_faces, coord = detect_face(frame)
 
-        if len(detected_faces) > 0 and len(coord) > 0:  # 얼굴이 감지되었고 coord 리스트가 비어있지 않을 때
-            x, y, w, h = coord[face_index]  # 얼굴 좌표 가져오기
+        if len(detected_faces) > 0 and len(coord) > 0:
+            x, y, w, h = coord[0]
+            face_zoom = extract_face_features(gray, detected_faces, coord)
+            face_zoom = np.reshape(face_zoom[0].flatten(), (1, 48, 48, 1))
 
-            face_zoom = extract_face_features(gray, detected_faces, coord)  # 얼굴 특징 추출
-            face_zoom = np.reshape(face_zoom[0].flatten(), (1, 48, 48, 1))  # 모델 입력 형태로 변환
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)  # 얼굴에 사각형 그리기
+            pred = model.predict(face_zoom)
+            pred_result = np.argmax(pred)
 
-            pred = model.predict(face_zoom)  # 감정 예측
-            pred_result = np.argmax(pred)  # 가장 높은 확률의 감정 인덱스 가져오기
+            current_emotion = emotion_dict[pred_result]
+            current_emotion_probability = round(pred[0][pred_result] * 100, 2)
 
-            current_emotion = emotion_dict[pred_result]  # 현재 감정 설정
-            current_emotion_probability = round(pred[0][pred_result] * 100, 2)  # 감정 확률 설정
+            cv2.putText(frame, f"{current_emotion}: {current_emotion_probability}%", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-            cv2.putText(frame, f"{current_emotion}: {current_emotion_probability}%", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)  # 감정과 확률 표시
+            recognized_name = recognize_face(face_zoom[0])
 
-            if current_emotion_probability > 90.0 and not saving_video:  # 감정 확률이 90%를 넘고, 아직 저장 중이 아닐 때
-                video_filename = generate_video_filename()  # 비디오 파일명 생성
+            if current_emotion_probability > 90.0 and not saving_video:
+                video_filename = generate_video_filename()
+                saving_video = True
+                start_time = time.time()
 
-                # 기존 파일이 존재하면 이어서 작성하기 위해 열기
-                if os.path.exists(video_filename):
-                    video_writer = create_video_writer(video_filename)
-                else:
-                    video_writer = create_video_writer(video_filename)
-
-                saving_video = True  # 저장 시작
-                start_time = time.time()  # 저장 시작 시간 기록
-
-        # 감정과 상관없이 저장 중일 때 프레임을 저장
         if saving_video:
-            video_writer.write(frame)  # 현재 프레임 저장
+            frames_to_save.append(frame)
 
-            # 10초가 경과하면 저장 종료
             if time.time() - start_time >= video_duration:
-                saving_video = False  # 저장 종료
-                video_writer.release()  # 비디오 작성 객체 해제
-                start_time = None  # 시작 시간 초기화
+                save_frames_to_video(video_filename, frames_to_save)
+                saving_video = False
+                frames_to_save = []
+                start_time = None
 
-        # 얼굴이 감지되지 않았을 경우에도 프레임을 계속 스트리밍
-        ret, buffer = cv2.imencode('.jpg', frame)  # 프레임을 JPEG 형식으로 인코딩
-        frame = buffer.tobytes()  # 프레임을 바이트 형식으로 변환
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # 프레임을 HTTP 응답으로 전달
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-        cv2.waitKey(10)  # 10ms 0.01초 간격 대기
-
-    video_capture.release()  # 비디오 캡처 객체 해제
-    if video_writer is not None:
-        video_writer.release()  # 비디오 작성 객체 해제
+        cv2.waitKey(1)
 
 # 웹 페이지를 위한 라우트 설정
-@app.route('/')
+@app.route('/emotion')
 def index():
-    return render_template('emotion.html')  # emotion.html 렌더링
+    return render_template('emotion.html')
 
 # 비디오 피드를 위한 라우트 설정
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')  # 비디오 피드 응답
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # 현재 감정을 반환하는 라우트 설정
 @app.route('/current_emotion')
 def get_current_emotion():
-    return jsonify(emotion=current_emotion, probability=current_emotion_probability)  # JSON 형식으로 감정 반환
+    return jsonify(emotion=current_emotion, probability=current_emotion_probability)
+
+# 감정 순위를 반환하는 라우트 설정
+@app.route('/emotion_ranking')
+def emotion_ranking():
+    rankings = get_emotion_ranking()  # 감정 순위 가져오기
+    return jsonify(rankings)  # JSON 형식으로 감정 순위 반환
+
+# 얼굴 등록 라우트
+@app.route('/register_face', methods=['POST'])
+def register_face_route():
+    if 'file' not in request.files or 'name' not in request.form:
+        return jsonify({'error': 'No file or name provided'}), 400
+
+    file = request.files['file']
+    name = request.form['name']
+
+    if file and name:
+        image = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+        if register_face_to_db(image, name):
+            return jsonify({'status': 'Face registered successfully'}), 200
+        else:
+            return jsonify({'error': 'Face registration failed'}), 400
+    else:
+        return jsonify({'error': 'Invalid file or name'}), 400
+
+# 모든 등록된 얼굴 정보 조회 라우트
+@app.route('/all_registered_faces', methods=['GET'])
+def get_all_registered_faces_route():
+    faces_info = get_registered_faces_from_db()
+
+    face_list = []
+    for face in faces_info:
+        # 이미지 데이터를 Base64로 인코딩
+        image_data_base64 = base64.b64encode(face['image_data']).decode('utf-8')
+        face_list.append({
+            'id': face['id'],
+            'name': face['name'],
+            'image_data': image_data_base64  # Base64 문자열로 변환된 이미지 데이터
+        })
+
+    return jsonify(face_list), 200
+
+# 얼굴 이미지 파일 제공 라우트
+@app.route('/face_images/<filename>', methods=['GET'])
+def get_face_image(filename):
+    return send_from_directory('registered_faces', filename)
 
 # 서버 시작
 if __name__ == '__main__':
