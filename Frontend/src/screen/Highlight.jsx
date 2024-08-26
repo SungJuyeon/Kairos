@@ -21,8 +21,8 @@ export default function Highlisht() {
                 style={{ width: 640, height: 360 }}
             />
 
-            <Button onPress={() => logout()}>
-              <ButtonText>저장하기</ButtonText>
+            <Button onPress={() => navigate("Emotion")}>
+              <ButtonText>감정 보러가기</ButtonText>
             </Button>
         </Container>
     );
