@@ -3,6 +3,7 @@ import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid,
 import CameraRoll from '@react-native-community/cameraroll';
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
+import { Video } from 'expo-av';
 
 
     // 스타일 컴포넌트를 위함
@@ -252,8 +253,7 @@ async function convertBlobToBase64(blob) {
 
             <ImageContainer>
                 <StyledImage
-                    //source={{ uri: `${BASE_URL}/video_feed` }}
-                    source={{ uri: 'https://img.freepik.com/premium-vector/white-texture-round-striped-surface-white-soft-cover_547648-928.jpg?w=1380' }}
+                    source={{ uri: `${BASE_URL}/video_feed` }}
                 />
             </ImageContainer>
 

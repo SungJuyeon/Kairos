@@ -11,6 +11,7 @@ export default function SignIn() {
     const [conformPW, setConformPW] = useState('');
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
+    const [nickname, setNickname] = useState('');
 
     // TextInput이 포커싱 되었을 때 색상 변경
     const [usernameFocused, setUsernameFocused] = useState(false);
@@ -18,6 +19,7 @@ export default function SignIn() {
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [conformPWFocused, setConformPWFocused] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
+    const [nicknameFocused, setNicknameFocused] = useState(false);
 
     // 회원가입 버튼 클릭 시
     const createMember = async () => {
@@ -39,6 +41,7 @@ export default function SignIn() {
                     username,
                     password,
                     email,
+                    nickname,
                 }),
             });
 
@@ -98,6 +101,15 @@ export default function SignIn() {
                     onBlur={() => setEmailFocused(false)}
                     focused={emailFocused}
                     //placeholder="이메일"
+                />
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>닉네임</Text>
+                <StyledTextInput
+                    onChangeText={text => setNickname(text)}
+                    value={nickname}
+                    onFocus={() => setNicknameFocused(true)}
+                    onBlur={() => setNicknameFocused(false)}
+                    focused={nicknameFocused}
+                    //placeholder="닉네임"
                 />
             </InputContainer>
             <RowContainer>
