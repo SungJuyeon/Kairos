@@ -248,20 +248,48 @@ async function convertBlobToBase64(blob) {
     return (
         <Container>
 
+
             <MarginContainer />
+
+
+            <Border2Container>
+            <Title>오늘의 최다감정</Title>
+            <Border3Container>
+            <CaptureButtonContainer2>
+                <CaptureButtonStyle3
+                    onPress={handleCapturePhoto}
+                >
+                    <CaptureButtonText2>1. Happy</CaptureButtonText2>
+                </CaptureButtonStyle3>
+                <CaptureButtonStyle2
+                    onPress={handleCapturePhoto}
+                >
+                    <CaptureButtonText3>🔍</CaptureButtonText3>
+                </CaptureButtonStyle2>
+            </CaptureButtonContainer2>
+            </Border3Container>
+            </Border2Container>
+
+
+            <BorderContainer />
+            
+
+
 
             <ImageContainer>
                 <StyledImage
                     //source={{ uri: `${BASE_URL}/video_feed` }}
-                    source={{ uri: 'https://img.freepik.com/premium-vector/white-texture-round-striped-surface-white-soft-cover_547648-928.jpg?w=1380' }}
+                    source={{ uri: './../assets/emotion.png' }}
                 />
             </ImageContainer>
 
-            <Margin2Container />
-            <BorderContainer></BorderContainer>
 
-            <Border2Container>
 
+            <BorderContainer />
+
+
+
+            <Border3Container>
             <CaptureButtonContainer>
                 <CaptureButtonStyle
                     onPress={handleCapturePhoto}
@@ -275,7 +303,7 @@ async function convertBlobToBase64(blob) {
                     <CaptureButtonText>{isCaptureVideoPressed ? 'Recoding' : 'Recode'}</CaptureButtonText>
                 </CaptureButtonStyle>
                 <RemoveContainer>
-                    <StyledText>__________</StyledText>
+                    <StyledText>      </StyledText>
                     <OnOffButton
                         onPress={handleOnOffPress}
                         isOn={isOn}>
@@ -283,57 +311,7 @@ async function convertBlobToBase64(blob) {
                     </OnOffButton>
                 </RemoveContainer>
             </CaptureButtonContainer>
-
-
-            <ControlPadContainer>
-
-            <SpeedButtonContainer>
-                <ValueText>Speed: {value}</ValueText>
-                <SpeedButton onPress={increment}>
-                <SpeedButtonText>UP</SpeedButtonText>
-                </SpeedButton>
-                <SpeedButton onPress={decrement}>
-                <SpeedButtonText>DOWN</SpeedButtonText>
-                </SpeedButton>
-            </SpeedButtonContainer>
-
-            <ButtonContainer>
-                <UpButtonContainer>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('up')}
-                        onPressOut={() => handleButtonPressOut('up')}
-                    >
-                        <ButtonText>{isUpPressed ? '↑' : '↑'}</ButtonText>
-                    </ButtonStyle>
-                </UpButtonContainer>
-                <DirectionButtonContainer>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('left')}
-                        onPressOut={() => handleButtonPressOut('left')}
-                    >
-                        <ButtonText>{isLeftPressed ? '←' : '←'}</ButtonText>
-                    </ButtonStyle>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('right')}
-                        onPressOut={() => handleButtonPressOut('right')}
-                    >
-                        <ButtonText>{isRightPressed ? '→' : '→'}</ButtonText>
-                    </ButtonStyle>
-                </DirectionButtonContainer>
-                <DownButtonContainer>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('down')}
-                        onPressOut={() => handleButtonPressOut('down')}
-                    >
-                        <ButtonText>{isDownPressed ? '↓' : '↓'}</ButtonText>
-                    </ButtonStyle>
-                </DownButtonContainer>
-            </ButtonContainer>
-            
-            </ControlPadContainer>
-            
-
-            </Border2Container>
+            </Border3Container>
 
 
         </Container>
@@ -342,9 +320,9 @@ async function convertBlobToBase64(blob) {
 
 const Title = styled.Text`
     color: white;
-    font-size: 50px;
-    margin-bottom: 20px;
+    font-size: 35px;
     font-weight: bold;
+    margin-left: 20px;
 `;
 
 const StyledText = styled.Text`
@@ -371,7 +349,7 @@ const MarginContainer = styled.View`
 `;
 
 const Margin2Container = styled.View`
-    margin-top: 2%;
+    margin-top: 3%;
 `;
 
 const BorderContainer = styled.View`
@@ -381,49 +359,13 @@ const BorderContainer = styled.View`
 `;
 
 const Border2Container = styled.View`
-    background-color: #2D1F80;
-    border: 2px solid #F8098B;
-    border-radius: 10px;
     padding: 10px;
     width: ${width * 0.95}px;
-    margin-top: 10px;
 `;
 
-const ButtonContainer = styled.View`
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-left: 10px;
-`;
-
-const UpButtonContainer = styled.View`
-    margin-bottom: 20px;
-    margin-left: 15px;
-`;
-
-const DirectionButtonContainer = styled.View`
-    flex-direction: row;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    width: 300px;
-`;
-
-const DownButtonContainer = styled.View`
-    margin-top: 0px;
-    margin-left: 15px;
-`;
-
-
-const ButtonText = styled.Text`
-    color: black;
-    font-size: ${scale * 25}px; 
-    font-weight: bold;
-`;
-
-const SpeedButtonText = styled.Text`
-    color: white;
-    font-size: ${scale * 25}px; 
-    font-weight: bold;
+const Border3Container = styled.View`
+    padding: 10px;
+    width: ${width * 0.95}px;
 `;
 
 const CaptureButtonContainer = styled.View`
@@ -434,32 +376,35 @@ const CaptureButtonContainer = styled.View`
     margin-bottom: 10px;
 `;
 
-const ControlPadContainer = styled.View`
+const CaptureButtonContainer2 = styled.View`
     flex-direction: row;
-    justify-content: center;
     align-items: center;
     margin-top: 10px;
     margin-bottom: 10px;
 `;
 
-const SpeedButtonContainer = styled.View`
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border: 2px solid #F8098B;
-    border-radius: 10px;
-    padding: 5px;
-`;
 
 const CaptureButtonText = styled.Text`
     color: black;
-    font-size: ${scale * 18}px; 
+    font-size: ${scale * 25}px; 
+    font-weight: bold;
+`;
+
+const CaptureButtonText2 = styled.Text`
+    color: white;
+    font-size: ${scale * 30}px; 
+    font-weight: bold;
+`;
+
+const CaptureButtonText3 = styled.Text`
+    color: white;
+    font-size: ${scale * 50}px; 
     font-weight: bold;
 `;
 
 const OnOffButton = styled.TouchableOpacity`
-    width: ${scale * 100}px; 
-    height: ${scale * 50}px;
+    width: ${scale * 150}px; 
+    height: ${scale * 100}px;
     justify-content: center;
     align-items: center;
     background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#F8098B')};
@@ -470,43 +415,39 @@ const OnOffButton = styled.TouchableOpacity`
 
 const OnOffButtonText = styled.Text`
     color: white;
-    font-size: ${scale * 18}px;
+    font-size: ${scale * 25}px;
     font-weight: bold;
 `;
 
-const ValueText = styled.Text`
-    color: white;
-    font-size: ${scale * 24}px; 
-    margin-top: 10px;
-    margin-bottom: 10px;
-`;
-
-const ButtonStyle = styled.TouchableOpacity`
-    background-color: white;
-    border-radius: 10px;
-    padding: 10px 30px;
-    margin: 0 40px;
-    width: ${scale * 100}px; 
-    justify-content: center;
-    align-items: center;
-`;
-
-const SpeedButton = styled.TouchableOpacity`
-    background-color: #F8098B;
-    border-radius: 10px;
-    padding: 10px 20px;
-    margin: 10px;
-    width: ${scale * 100}px; 
-    justify-content: center;
-    align-items: center;
-`;
 
 const CaptureButtonStyle = styled.TouchableOpacity`
-    width: ${scale * 120}px; 
-    height: ${scale * 50}px;
+    width: ${scale * 140}px; 
+    height: ${scale * 120}px;
     justify-content: center;
     align-items: center;
     background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : 'white')};
+    border-radius: 10px;
+    padding: 10px 10px;
+    margin: 0 10px;
+`;
+
+const CaptureButtonStyle2 = styled.TouchableOpacity`
+    width: ${scale * 100}px; 
+    height: ${scale * 80}px;
+    justify-content: center;
+    align-items: center;
+    background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : 'white')};
+    border-radius: 10px;
+    padding: 10px 10px;
+    margin: 0 10px;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    width: ${scale * 200}px; 
+    height: ${scale * 80}px;
+    justify-content: center;
+    align-items: center;
+    background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : '#BD81FF')};
     border-radius: 10px;
     padding: 10px 10px;
     margin: 0 10px;
@@ -526,19 +467,3 @@ const StyledImage = styled.Image`
     width: 100%;
     height: 100%;
 `;
-
-// const ImageContainer = styled.View`
-//     width: 90%;  // 이미지보다 작은 너비
-//     height: 50%; // 이미지보다 작은 높이
-//     border-width: 2px; // 테두리 두께
-//     border-color: white; // 테두리 색상
-//     background-color: #222222; // 배경 색상
-//     justify-content: center; // 내용 중앙 정렬
-//     align-items: center; // 내용 중앙 정렬
-//     border-radius: 10px; // 모서리 둥글게
-// `;
-
-// const StyledImage = styled.Image`
-//     width: 90%;  // 줄어든 이미지 크기
-//     height: 100%; // 줄어든 이미지 높이
-// `;

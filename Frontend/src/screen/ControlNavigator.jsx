@@ -15,6 +15,7 @@ export default function ControlNavigator() {
         },
         headerTintColor: '#fff', // 헤더의 텍스트 색상
         headerTransparent: true, // 헤더를 투명하게 설정
+        headerTitleAlign: 'center', // 타이틀 정렬을 가운데로 설정
       }}
     >
         <ControlStack.Screen 
@@ -25,7 +26,7 @@ export default function ControlNavigator() {
         <ControlStack.Screen 
           name="Control" 
           component={ControlScreen} 
-          options={{ title: '' }} // 타이틀을 직접 설정
+          options={{ title: 'HEROBOT REMOTE' }} // 타이틀을 직접 설정
         />
         <ControlStack.Screen 
           name="SmartHome" 
