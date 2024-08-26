@@ -138,7 +138,7 @@ def generate_frames():
 # 웹 페이지를 위한 라우트 설정
 @app.route('/')
 def index():
-    return render_template('index.html')  # index.html 렌더링
+    return render_template('emotion.html')  # emotion.html 렌더링
 
 # 비디오 피드를 위한 라우트 설정
 @app.route('/video_feed')

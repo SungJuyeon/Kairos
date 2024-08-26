@@ -46,7 +46,7 @@ async def video_feed():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("emotion.html", {"request": request})
 
 if __name__ == '__main__':
     import uvicorn
