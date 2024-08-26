@@ -1,57 +1,125 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ImageBackground, Animated } from "react-native";
+import { ImageBackground, Animated, View } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 
-export default function Home( { navigation } ) {
-    const opacity = useRef(new Animated.Value(0)).current; // 초기값 0, 인트로 애니메이션을 위함
-    const contentOpacity = useRef(new Animated.Value(0)).current; // 나머지 UI의 초기값
-    const [isAnimationFinished, setIsAnimationFinished] = useState(false); // 애니메이션 완료 상태
+export default function Home() {
+    const ball1Y = useRef(new Animated.Value(-100)).current;
+    const ball2Y = useRef(new Animated.Value(-100)).current;
+    const [isAnimationFinished, setIsAnimationFinished] = useState(false);
+    const fadeInOpacity = useRef(new Animated.Value(0)).current;
+    const welcomeOpacity = useRef(new Animated.Value(0)).current; // 추가된 코드
+    const welcomeTranslateX = useRef(new Animated.Value(-100)).current; // 추가된 코드
     const backgroundImage = { uri: '../assets/Home.jpg' };
     const { navigate } = useNavigation();
+    const circleOpacity = useRef(new Animated.Value(0)).current;
+    const circleOpacity2 = useRef(new Animated.Value(0)).current;
+    const circleOpacity3 = useRef(new Animated.Value(0)).current;
+    const circleOpacity4 = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // 첫 번째 애니메이션 실행
-        Animated.timing(opacity, {
-            toValue: 1, // 최종값
-            duration: 2500, // 애니메이션 지속 시간
-            useNativeDriver: true, // 네이티브 드라이버 사용
-        }).start(() => {
-            setIsAnimationFinished(true); // 애니메이션이 끝나면 상태 업데이트
-            
-            // 두 번째 애니메이션 실행
-            Animated.timing(contentOpacity, {
-                toValue: 1, // 최종값
-                duration: 2000, // 애니메이션 지속 시간
-                useNativeDriver: true, // 네이티브 드라이버 사용
+        Animated.parallel([
+            Animated.timing(ball1Y, {
+                toValue: 290,
+                duration: 2500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(ball2Y, {
+                toValue: 290,
+                duration: 2500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(circleOpacity, {
+                toValue: 1,
+                duration: 3000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(circleOpacity2, {
+                toValue: 1,
+                duration: 3000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(circleOpacity3, {
+                toValue: 1,
+                duration: 3000,
+                useNativeDriver: true,
+            }),
+            Animated.timing(circleOpacity4, {
+                toValue: 1,
+                duration: 3000,
+                useNativeDriver: true,
+            }),
+            // 추가된 애니메이션
+            Animated.parallel([
+                Animated.timing(welcomeOpacity, {
+                    toValue: 1,
+                    duration: 5000,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(welcomeTranslateX, {
+                    toValue: 0,
+                    duration: 2000,
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start(() => {
+            setIsAnimationFinished(true);
+            Animated.timing(fadeInOpacity, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
             }).start();
         });
-    }, [opacity]);
+    }, []);
 
     return (
         <ImageBackground source={backgroundImage} style={{ flex: 1 }} resizeMode="cover">
-            {!isAnimationFinished && ( // 애니메이션이 끝나지 않았을 때만 표시
-                <AnimatedContainer style={{ opacity }}>
-                    <WelcomeText>Hello</WelcomeText>
-                    <WelcomeText>Herobot!</WelcomeText>
-                </AnimatedContainer>
+            <Overlay />
+            {!isAnimationFinished && (
+                <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center' }}>
+                    <AnimatedBall style={{ transform: [{ translateY: ball1Y }, { translateX: -60 }], zIndex: 2 }} />
+                    <AnimatedBall style={{ transform: [{ translateY: ball2Y }, { translateX: 60 }], zIndex: 2 }} />
+                    <AnimatedCircle style={{ opacity: circleOpacity, top: '40%', left: '37%', transform: [{ translateX: -75 }, { translateY: -75 }], zIndex: 1 }} />
+                    <AnimatedCircle2 style={{ opacity: circleOpacity2, top: '56%', left: '56%', transform: [{ translateX: -75 }, { translateY: -75 }], zIndex: 1 }} />
+                    <AnimatedCircle3 style={{ opacity: circleOpacity3, top: '36%', left: '40%', transform: [{ translateX: -75 }, { translateY: -75 }], zIndex: 1 }} />
+                    <AnimatedCircle3 style={{ opacity: circleOpacity3, top: '36%', left: '65%', transform: [{ translateX: -75 }, { translateY: -75 }], zIndex: 1 }} />
+                    <AnimatedCircle4 style={{ opacity: circleOpacity4, top: '70%', left: '56%', transform: [{ translateX: -75 }, { translateY: -75 }], zIndex: 1 }} />
+                    {/* 추가된 welcome 텍스트 */}
+                    <AnimatedWelcome style={{
+                        opacity: welcomeOpacity,
+                        transform: [{ translateX: welcomeTranslateX }],
+                        zIndex: 3,
+                        position: 'absolute',
+                        top: 550, // 위치 조정
+                        fontSize: 50,
+                    }}>
+                        welcome!
+                    </AnimatedWelcome>
+                </View>
             )}
-            {isAnimationFinished && ( // 애니메이션이 끝난 후 나머지 UI 표시
-                    <Container style={{ opacity: contentOpacity }}>
-                        <Title>Welcome!</Title>
-                        <CaptureButtonContainer>
-                            <ControlButton onPress={() => navigate('Control')}>
-                                <CaptureButtonText>Herobot 제어하기</CaptureButtonText>
-                            </ControlButton>
-                            <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
-                                <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
-                            </CaptureButtonStyle>
-                        </CaptureButtonContainer>
-                    </Container>
+            {isAnimationFinished && (
+                <AnimatedContainer style={{ opacity: fadeInOpacity }}>
+                    <Title>Herobot!</Title>
+                    <CaptureButtonContainer>
+                        <ControlButton onPress={() => navigate('Control')}>
+                            <CaptureButtonText>Herobot 제어하기</CaptureButtonText>
+                        </ControlButton>
+                        <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
+                            <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
+                        </CaptureButtonStyle>
+                    </CaptureButtonContainer>
+                </AnimatedContainer>
             )}
         </ImageBackground>
     );
 }
+
+// 추가된 스타일
+const AnimatedWelcome = styled(Animated.Text)`
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+`;
 
 const Title = styled.Text`
     color: white;
@@ -60,11 +128,11 @@ const Title = styled.Text`
     font-weight: bold;
 `;
 
-const Container = styled(Animated.View)`
+const AnimatedContainer = styled(Animated.View)`
     flex: 1;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0);
 `;
 
 const CaptureButtonContainer = styled.View`
@@ -97,15 +165,53 @@ const CaptureButtonText = styled.Text`
     font-weight: bold;
 `;
 
-const AnimatedContainer = styled(Animated.View)`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
+const Overlay = styled.View`
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
 `;
 
-const WelcomeText = styled.Text`
-  font-size: 54px;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 20px;
+const AnimatedBall = styled(Animated.View)`
+    width: 50px;
+    height: 50px;
+    border-radius: 25px; 
+    background-color: #000000; 
+    position: absolute;
+`;
+
+const AnimatedCircle = styled(Animated.View)`
+    width: 300px;
+    height: 300px;
+    border-radius: 150px;
+    background-color: #FFFFFF;
+    position: absolute;
+`;
+
+const AnimatedCircle2 = styled(Animated.View)`
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
+    background-color: #000000;
+    position: absolute;
+`;
+
+const AnimatedCircle3 = styled(Animated.View)`
+    width: 120px;
+    height: 120px;
+    border-radius: 30px;
+    background-color: #FFFFFF;
+    position: absolute;
+    transform: rotate(45deg);
+`;
+
+const AnimatedCircle4 = styled(Animated.View)`
+    width: 80px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: #000000;
+    position: absolute;
+    transform: rotate(45deg);
 `;
