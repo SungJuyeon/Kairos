@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream with Emotion Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        img {
+            border: 2px solid #f4f4f4;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        h2, h3 {
+            color: #444;
+        }
+
+        #emotion {
+            font-weight: bold;
+            color: #FF5722;
+        }
+
+        #ranking {
+            width: 300px;
+            margin-top: 20px;
+        }
+
+        #ranking li {
+            background-color: #FFF;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            text-align: left;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<img id="video" src="/video_feed" width="640" height="480" alt="Video Stream">
+<h2>Detected Emotion: <span id="emotion">None</span></h2>
+
+<h3>Emotion Ranking Today:</h3>
+<ul id="ranking">
+    <!-- 감정 순위가 여기에 표시됩니다 -->
+</ul>
+
+<script>
+    async function fetchEmotion() {
+        try {
+            const response = await fetch('/current_emotion');
+            const data = await response.json();
+            document.getElementById('emotion').innerText = data.emotion;
+        } catch (error) {
+            console.error('Error fetching emotion:', error);
+        }
+    }
+
+    async function fetchRanking() {
+    try {
+        const response = await fetch('/emotion_ranking');
+        const data = await response.json();
+        const rankingList = document.getElementById('ranking');
+        rankingList.innerHTML = ''; // 기존 리스트 초기화
+
+        if (data.length === 0) {
+            // 감정 순위 데이터가 없을 경우
+            const listItem = document.createElement('li');
+            listItem.textContent = "No data available";
+            rankingList.appendChild(listItem);
+        } else {
+            // 감정 순위를 화면에 표시
+            data.forEach(([emotion, count]) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${emotion}: ${count} times`;
+                rankingList.appendChild(listItem);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching ranking:', error);
+    }
+}
+    setInterval(fetchEmotion, 1000); // 1초마다 감정 값을 가져옴
+    setInterval(fetchRanking, 5000); // 5초마다 감정 순위를 가져옴
+</script>
+</body>
+</html>
