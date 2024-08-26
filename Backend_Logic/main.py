@@ -111,10 +111,10 @@ async def video_feed():
 async def get_density():
     return {"density": current_density}
 
-# index.html 서빙
+# emotion.html 서빙
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("emotion.html", {"request": request})
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,4 +1,4 @@
-#app.py
+# app.py
 import asyncio
 import json
 import logging
@@ -22,7 +22,7 @@ video_frames_queue = asyncio.Queue(maxsize=5)  # 비디오 프레임 큐
 voice_data = None
 
 # MQTT 설정
-MQTT_BROKER = "172.30.1.68"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
