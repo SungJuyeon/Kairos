@@ -1,46 +1,37 @@
-import face_recognition
 import cv2
 import numpy as np
+import face_recognition
 
-# 얼굴 유사성을 비교하는 함수
 def compare_faces(face1, face2):
-    try:
-        # 이미지를 8비트 그레이스케일 또는 RGB로 변환
-        if len(face1.shape) == 2:  # 그레이스케일 이미지일 경우
-            face1 = cv2.cvtColor(face1, cv2.COLOR_GRAY2RGB)
-        elif face1.shape[2] == 4:  # RGBA 이미지일 경우
-            face1 = cv2.cvtColor(face1, cv2.COLOR_RGBA2RGB)
+    # 얼굴 이미지에서 얼굴 특징 추출
+    face1_encoding = face_recognition.face_encodings(face1)
+    face2_encoding = face_recognition.face_encodings(face2)
 
-        if len(face2.shape) == 2:  # 그레이스케일 이미지일 경우
-            face2 = cv2.cvtColor(face2, cv2.COLOR_GRAY2RGB)
-        elif face2.shape[2] == 4:  # RGBA 이미지일 경우
-            face2 = cv2.cvtColor(face2, cv2.COLOR_RGBA2RGB)
+    if len(face1_encoding) == 0 or len(face2_encoding) == 0:
+        print("One or both faces are not detected.")
+        return False, None  # 얼굴이 감지되지 않으면 비교 불가
 
-        # 얼굴 인코딩 얻기
-        faceLoc1 = face_recognition.face_locations(face1)
-        faceLoc2 = face_recognition.face_locations(face2)
+    face1_encoding = face1_encoding[0]
+    face2_encoding = face2_encoding[0]
 
-        # 얼굴이 감지되지 않았을 때 처리
-        if len(faceLoc1) == 0 or len(faceLoc2) == 0:
-            return False, 1.0  # 얼굴이 감지되지 않으면 False와 최대 거리 반환
+    # 두 얼굴 간의 거리 계산
+    distance = np.linalg.norm(face1_encoding - face2_encoding)
+    print(f"Face1 encoding: {face1_encoding}")
+    print(f"Face2 encoding: {face2_encoding}")
+    print(f"Distance: {distance}")
+    return True, distance
 
-        encodeFace1 = face_recognition.face_encodings(face1, known_face_locations=faceLoc1)[0]
-        encodeFace2 = face_recognition.face_encodings(face2, known_face_locations=faceLoc2)[0]
-
-        # 두 얼굴을 비교하여 유사성 확인
-        results = face_recognition.compare_faces([encodeFace1], encodeFace2)
-        faceDis = face_recognition.face_distance([encodeFace1], encodeFace2)
-
-        return results[0], faceDis[0]  # 유사성 결과와 거리 반환
-
-    except Exception as e:
-        # 인코딩이나 다른 처리 중에 문제가 발생하면 예외 처리
-        print(f"Error in compare_faces: {e}")
-        return False, 1.0  # 얼굴이 제대로 인식되지 않으면 False와 최대 거리 반환
-
-# 유사도를 퍼센트로 변환하는 함수
 def get_similarity_percentage(face1, face2):
-    _, faceDis = compare_faces(face1, face2)
-    # 거리 값이 작을수록 유사도가 높으므로, 1 - 거리 값으로 유사도를 계산
-    similarity_percentage = (1 - faceDis) * 100
+    match, distance = compare_faces(face1, face2)
+    if not match:
+        return 0.0  # 얼굴이 감지되지 않으면 유사도 0%
+    similarity_percentage = max(0, (1 - distance) * 100)
+    return similarity_percentage
+
+
+def get_similarity_percentage(face1, face2):
+    match, distance = compare_faces(face1, face2)
+    if not match:
+        return 0.0  # 얼굴이 감지되지 않으면 유사도 0%
+    similarity_percentage = max(0, (1 - distance) * 100)
     return similarity_percentage
