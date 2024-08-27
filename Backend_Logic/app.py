@@ -258,7 +258,9 @@ async def get_voice_data():
 
 
 async def run_fastapi():
-    config = uvicorn.Config(app, port=8000, workers=4)  # 워커 수를 조정
+    config = uvicorn.Config(app, host='0.0.0.0', port=8000,
+                            ssl_keyfile='mykey.key',  # SSL 개인 키 파일 경로
+                            ssl_certfile='mycert.crt')
     server = uvicorn.Server(config)
     await server.serve()
 
