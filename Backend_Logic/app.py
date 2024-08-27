@@ -21,8 +21,9 @@ templates = Jinja2Templates(directory="templates")
 
 # 상태 변수
 distance_data = None
-video_frames_queue = asyncio.Queue(maxsize=5)  # 비디오 프레임 큐
+video_frames_queue = asyncio.Queue()  # 비디오 프레임 큐
 voice_data = None
+hand_gesture = True
 
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
@@ -35,7 +36,10 @@ MQTT_TOPIC_AUDIO = "robot/audio"
 client = MQTTClient(client_id="fastapi_client")
 
 # 손동작 인식기 인스턴스 생성
-gesture_recognizer = HandGestureRecognizer(model_path='models/model2_1.0.h5')
+try:
+    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')  # 확장자 변경
+except Exception as e:
+    logger.error(f"모델 로드 중 오류 발생: {e}")
 
 
 async def on_connect():
@@ -56,15 +60,13 @@ async def process_message(topic, payload):
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
-        # logger.info("Received video frame")
-        try:
-            await video_frames_queue.put(payload)  # 비디오 프레임 큐에 추가
-            logger.info(f"Video frames count: {video_frames_queue.qsize()}")
-        except asyncio.QueueFull:
+        # 현재 큐의 크기를 확인
+        if video_frames_queue.qsize() >= 5:
             logger.warning("Video frame queue is full, dropping the oldest frame")
             await video_frames_queue.get()  # 오래된 프레임 삭제
-            await video_frames_queue.put(payload)  # 새 프레임 추가
-            logger.info(f"Video frames count after dropping: {video_frames_queue.qsize()}")
+
+        await video_frames_queue.put(payload)  # 비디오 프레임 큐에 추가
+        logger.info(f"Video frames count: {video_frames_queue.qsize()}")
         return
 
     # 다른 데이터 유형 처리
@@ -158,15 +160,6 @@ async def video_frame_generator():
         try:
             frame = await video_frames_queue.get()  # 큐에서 프레임 가져오기
             img = cv2.imdecode(np.frombuffer(frame, np.uint8), cv2.IMREAD_COLOR)
-
-            # 손동작 인식
-            action = gesture_recognizer.recognize_gesture(img)
-
-            # 인식된 동작을 비디오 프레임에 표시
-            if action:
-                cv2.putText(img, f'Action: {action.upper()}', org=(10, 30), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
-
-            # 프레임을 JPEG 형식으로 인코딩
             _, jpeg = cv2.imencode('.jpg', img)
 
             yield (b'--frame\r\n'
@@ -177,7 +170,6 @@ async def video_frame_generator():
             await asyncio.sleep(0.1)
 
 
-
 @app.get("/video_feed")
 async def get_video_frame():
     try:
@@ -185,6 +177,19 @@ async def get_video_frame():
     except Exception as e:
         logger.error(f"Error in get_video_frame: {e}")
         return HTMLResponse(content="Error in video stream", status_code=500)
+
+
+@app.post("/set_hand_gesture/{state}")
+async def set_hand_gesture(state: str):
+    global hand_gesture
+    if state.lower() == "on":
+        hand_gesture = True
+        return {"message": "Hand gesture mode enabled"}
+    elif state.lower() == "off":
+        hand_gesture = False
+        return {"message": "Hand gesture mode disabled"}
+    else:
+        return {"error": "Invalid state"}, 400
 
 
 async def voice_data_generator():
@@ -200,7 +205,7 @@ async def get_voice_data():
 
 
 async def run_fastapi():
-    config = uvicorn.Config(app, port=8000)
+    config = uvicorn.Config(app, port=8000, workers=4)  # 워커 수를 조정
     server = uvicorn.Server(config)
     await server.serve()
 
