@@ -23,34 +23,13 @@ export default function SignIn() {
     const [nicknameFocused, setNicknameFocused] = useState(false);
 
     // 회원가입 버튼 클릭 시
-    const createMember = async () => {
-
-        // 비밀번호 입력과 비밀번호 확인입력 비교
-        if (password != conformPW) {
-            Alert.alert('비밀번호가 일치하지 않습니다.')
-            return;
-        }
+    const addFamily = async () => {
 
 
         try {
-            const response = await fetch('http://localhost:8080/join', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    email,
-                }),
-            });
 
-            const data = await response.text();
-            if (response.ok) {
-                Alert.alert('회원가입 성공', data);
-            } else {
-                Alert.alert('회원가입 실패', data);
-            }
+            // 가족 추가하는 로직
+
         } catch (error) {
             console.error(error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
@@ -77,7 +56,7 @@ export default function SignIn() {
 
     return (
         <Container>
-            <Title>회원가입</Title>
+            <Title>가족 추가</Title>
             <InputContainer>
                 <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
                 <StyledTextInput
@@ -88,51 +67,10 @@ export default function SignIn() {
                     focused={usernameFocused}
                     //placeholder="이름"
                 />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호</Text>
-                <StyledTextInput
-                    onChangeText={text => setPassword(text)}
-                    value={password}
-                    secureTextEntry={true}
-                    onFocus={() => setPasswordFocused(true)}
-                    onBlur={() => setPasswordFocused(false)}
-                    focused={passwordFocused}
-                    //placeholder="비밀번호"
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
-                <StyledTextInput
-                    onChangeText={text => setConformPW(text)}
-                    value={conformPW}
-                    secureTextEntry={true}
-                    onFocus={() => setConformPWFocused(true)}
-                    onBlur={() => setConformPWFocused(false)}
-                    focused={conformPWFocused}
-                    //placeholder="비밀번호 확인"
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
-                <StyledTextInput
-                    onChangeText={text => setEmail(text)}
-                    value={email}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onFocus={() => setEmailFocused(true)}
-                    onBlur={() => setEmailFocused(false)}
-                    focused={emailFocused}
-                    //placeholder="이메일"
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>닉네임</Text>
-                <StyledTextInput
-                    onChangeText={text => setNickname(text)}
-                    value={nickname}
-                    onFocus={() => setNicknameFocused(true)}
-                    onBlur={() => setNicknameFocused(false)}
-                    focused={nicknameFocused}
-                    //placeholder="닉네임"
-                />
             </InputContainer>
             <RowContainer>
-                <Button onPress={createMember}>
-                    <ButtonText>회원 가입</ButtonText>
+                <Button onPress={addFamily}>
+                    <ButtonText>가족 추가</ButtonText>
                 </Button>
                 <Button>
                     <ButtonText>파일 업로드</ButtonText>
