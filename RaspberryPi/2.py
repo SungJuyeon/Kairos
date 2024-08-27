@@ -54,7 +54,6 @@ wheel_speed = 100
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 
-
 async def wheel_control(direction):
     global wheel_direction
     wheel_direction = direction
@@ -65,7 +64,6 @@ async def wheel_control(direction):
         await asyncio.sleep(0.1)
 
     stop_wheel()
-
 
 def set_wheel_state(direction):
     if direction == "forward":
@@ -92,14 +90,12 @@ def set_wheel_state(direction):
     pwm_A.ChangeDutyCycle(wheel_speed)
     pwm_B.ChangeDutyCycle(wheel_speed)
 
-
 async def set_speed(speed):
     global wheel_speed
     wheel_speed = max(0, min(speed, 100))  # 속도를 0~100 사이로 제한
     logging.info(f"wheel speed {wheel_speed}")
     if wheel_direction is not None:
         set_wheel_state(wheel_direction)  # 현재 방향에 속도 적용
-
 
 def stop_wheel():
     logging.info("Stopping motors")
@@ -113,7 +109,6 @@ def stop_wheel():
 
     logging.info("Motors stopped")
 
-
 async def actuator_control(direction):
     global actuator_direction
     actuator_direction = direction
@@ -125,7 +120,6 @@ async def actuator_control(direction):
 
     stop_actuator()
 
-
 def set_actuator_state(direction):
     logging.info(f"Setting actuator state to {direction}")
     if direction == "up":
@@ -134,7 +128,6 @@ def set_actuator_state(direction):
     elif direction == "down":
         GPIO.output(ACTUATOR_PINS['IN4'], GPIO.LOW)
         GPIO.output(ACTUATOR_PINS['IN3'], GPIO.HIGH)
-
 
 def stop_actuator():
     logging.info("Stopping actuator")
@@ -145,7 +138,6 @@ def stop_actuator():
         GPIO.output(pin, GPIO.LOW)
 
     logging.info("Actuator stopped")
-
 
 async def send_distance(client):
     while True:
@@ -159,7 +151,6 @@ async def send_distance(client):
         except Exception as e:
             logging.error(f"Error in send_distance: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
-
 
 def measure_distance():
     try:
@@ -176,12 +167,11 @@ def measure_distance():
             pulse_end = time.time()
 
         pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150
+        distance = pulse_duration * 17150  # 거리 계산 (cm)
         return round(distance, 2)
     except Exception as e:
         logging.error(f"Error measuring distance: {e}")
         return None
-
 
 async def generate_frames(client):
     while True:
@@ -195,12 +185,11 @@ async def generate_frames(client):
             _, buffer = cv2.imencode('.jpg', frame)
             frame_data = buffer.tobytes()
             client.publish(MQTT_TOPIC_VIDEO, frame_data)
-            # logging.info("Sent a video frame")
-            await asyncio.sleep(1/24)  # 전송 주기 조정
+            logging.info("Sent a video frame")
+            await asyncio.sleep(1)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
-
 
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
@@ -211,13 +200,11 @@ MQTT_TOPIC_VIDEO = "robot/video"
 
 client = MQTTClient(client_id="robot_controller")
 
-
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logging.info("연결")
     client.subscribe(MQTT_TOPIC_COMMAND)
     logging.info("구독")
-
 
 async def on_message(client, topic, payload, qos, properties):
     try:
@@ -239,7 +226,6 @@ async def on_message(client, topic, payload, qos, properties):
     except Exception as e:
         logging.error(f"Error processing message: {e}")
 
-
 async def on_disconnect():
     logging.warning("Disconnected from MQTT broker, attempting to reconnect...")
     while True:
@@ -251,14 +237,13 @@ async def on_disconnect():
             logging.error(f"Reconnect failed: {e}")
             await asyncio.sleep(5)  # 재시도 대기
 
-
 @asynccontextmanager
 async def lifespan():
     client.on_message = on_message
     await on_connect()
 
     # 비동기 작업 시작
-    #asyncio.create_task(send_distance(client))
+    asyncio.create_task(send_distance(client))
     asyncio.create_task(generate_frames(client))
 
     yield
@@ -266,12 +251,10 @@ async def lifespan():
     logging.info("종료")
     await client.disconnect()
 
-
 async def main():
     async with lifespan():
         while True:
             await asyncio.sleep(1)
-
 
 if __name__ == "__main__":
     try:
