@@ -17,7 +17,7 @@ import java.util.Iterator;
 @ResponseBody
 public class MainController {
 
-    @GetMapping("/")
+    @GetMapping("/main")
     public String mainP() {
         //현재 세션 세션 사용자 아이디
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
