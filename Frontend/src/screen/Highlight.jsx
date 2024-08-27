@@ -4,7 +4,8 @@ import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 
-export default function Highlisht() {
+
+export default function Highlight() {
     const { navigate } = useNavigation();
 
     //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
@@ -36,7 +37,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #222222;
+    background-color: #1B0C5D;
     flex: 1;
     justify-content: center;
     align-items: center;

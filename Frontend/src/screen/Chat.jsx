@@ -103,7 +103,7 @@ export default function Chat() {
 }
 
 const Container = styled.SafeAreaView`
-  background-color: #222222;
+  background-color: #1B0C5D;
   flex: 1;
 `;
 

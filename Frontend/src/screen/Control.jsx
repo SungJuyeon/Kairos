@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
-import CameraRoll from '@react-native-community/cameraroll';
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';

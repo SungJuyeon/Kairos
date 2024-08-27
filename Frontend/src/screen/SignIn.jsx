@@ -3,6 +3,7 @@ import { View, Text, SafeAreaView, TouchableOpacity, Alert } from "react-native"
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import axios from 'axios';
+// import DocumentPicker from 'react-native-document-picker';
 
 export default function SignIn() {
     const { navigate } = useNavigation();
@@ -56,6 +57,24 @@ export default function SignIn() {
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
       };
+
+      // 파일 업로드를 위한 코드
+    //   const uploadFile = async () => {
+    //     try {
+    //       const res = await DocumentPicker.pick({
+    //         type: [DocumentPicker.types.allFiles],
+    //       });
+    
+    //       // 여기에서 파일을 서버로 업로드하는 로직 추가
+    //       console.log('파일 선택됨: ', res.uri);
+    //     } catch (err) {
+    //       if (DocumentPicker.isCancel(err)) {
+    //         console.log('사용자에 의해 취소됨');
+    //       } else {
+    //         throw err;
+    //       }
+    //     }
+    //   };
 
     return (
         <Container>
@@ -116,6 +135,9 @@ export default function SignIn() {
                 <Button onPress={createMember}>
                     <ButtonText>회원 가입</ButtonText>
                 </Button>
+                <Button>
+                    <ButtonText>파일 업로드</ButtonText>
+                </Button>
             </RowContainer>
         </Container>
     );
@@ -130,7 +152,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #222222;
+    background-color: #1B0C5D;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -157,9 +179,9 @@ const Button = styled.TouchableOpacity`
 `;
 
 const ButtonText = styled.Text`
-  color: black;
-  font-size: 16px;
-  font-weight: bold;
+    color: black;
+    font-size: 16px;
+    font-weight: bold;
 `;
 
 const StyledTextInput = styled.TextInput`
@@ -172,7 +194,7 @@ const StyledTextInput = styled.TextInput`
     margin-bottom: 15px;
     color: white;
     font-size: 18px;
-    background-color: #222222;
+    background-color: #1B0C5D;
 `;
 
 const RowContainer = styled.View`
