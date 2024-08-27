@@ -41,7 +41,7 @@ def generate_frames():
     if not os.path.exists(db_image_path):
         raise FileNotFoundError("The registered face image db.png does not exist.")
 
-    registered_face = cv2.imread(db_image_path, cv2.IMREAD_GRAYSCALE)
+    registered_face = cv2.imread(db_image_path)  # RGB 이미지로 로드
     if registered_face is None:
         raise ValueError("Failed to load registered face image.")
 
@@ -53,15 +53,17 @@ def generate_frames():
         if not ret:
             break
 
-        gray, detected_faces, coord = detect_face(frame)
+        # 이미지를 RGB로 처리
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        _, detected_faces, coord = detect_face(frame_rgb)
 
         if len(detected_faces) > 0 and len(coord) > 0:
             x, y, w, h = coord[0]
-            face_zoom = extract_face_features(gray, detected_faces, coord)
-            face_zoom_resized = np.reshape(face_zoom[0], (48, 48))
+            face_zoom = extract_face_features(frame_rgb, detected_faces, coord)
+            face_zoom_resized = face_zoom[0]  # 이미 RGB로 처리된 이미지
 
             # 얼굴 비교
-            similarity_percentage = get_similarity_percentage(face_zoom_resized, registered_face) * 100
+            similarity_percentage = get_similarity_percentage(face_zoom_resized, registered_face)
             print(f"Similarity percentage: {similarity_percentage:.2f}%")
 
             if similarity_percentage > 90:  # 유사도 기준치를 90% 이상으로 설정
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     # 애플리케이션 시작 시 등록된 얼굴 데이터 로드
     try:
         registered_face_path = "C:/Users/MJ/Downloads/Kairos/Backend_Logic/registered_faces/juyeonn.png"
-        registered_face = cv2.imread(registered_face_path, cv2.IMREAD_GRAYSCALE)
+        registered_face = cv2.imread(registered_face_path)  # RGB 이미지로 로드
 
         if registered_face is None:
             raise ValueError("Failed to load the registered face image.")
