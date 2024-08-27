@@ -3,12 +3,15 @@ import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
+import cv2
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from gmqtt import Client as MQTTClient
+import numpy as np
+from Backend_Logic.hand_gesture import HandGestureRecognizer
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -18,8 +21,9 @@ templates = Jinja2Templates(directory="templates")
 
 # 상태 변수
 distance_data = None
-video_frames_queue = asyncio.Queue(maxsize=5)  # 비디오 프레임 큐
+video_frames_queue = asyncio.Queue()  # 비디오 프레임 큐
 voice_data = None
+hand_gesture = True
 
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
@@ -30,6 +34,12 @@ MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="fastapi_client")
+
+# 손동작 인식기 인스턴스 생성
+try:
+    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')  # 확장자 변경
+except Exception as e:
+    logger.error(f"모델 로드 중 오류 발생: {e}")
 
 
 async def on_connect():
@@ -50,15 +60,13 @@ async def process_message(topic, payload):
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
-        # logger.info("Received video frame")
-        try:
-            await video_frames_queue.put(payload)  # 비디오 프레임 큐에 추가
-            logger.info(f"Video frames count: {video_frames_queue.qsize()}")
-        except asyncio.QueueFull:
+        # 현재 큐의 크기를 확인
+        if video_frames_queue.qsize() >= 5:
             logger.warning("Video frame queue is full, dropping the oldest frame")
             await video_frames_queue.get()  # 오래된 프레임 삭제
-            await video_frames_queue.put(payload)  # 새 프레임 추가
-            logger.info(f"Video frames count after dropping: {video_frames_queue.qsize()}")
+
+        await video_frames_queue.put(payload)  # 비디오 프레임 큐에 추가
+        logger.info(f"Video frames count: {video_frames_queue.qsize()}")
         return
 
     # 다른 데이터 유형 처리
@@ -104,6 +112,11 @@ app.add_middleware(
 )
 
 
+@app.get("/", response_class=HTMLResponse)
+async def read_index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
 @app.post("/move/{direction}")
 async def move(direction: str):
     logger.info(f"Attempting to move {direction}")
@@ -114,22 +127,43 @@ async def move(direction: str):
     logger.info(f"Command sent: {command}")
 
 
+# 상태 변수 추가
+current_speed = 100  # 현재 속도 초기화
+
+
+@app.post("/speed/{action}")
+async def speed(action: str):
+    global current_speed
+    logger.info(f"Attempting to set speed: {action}")
+
+    if action == "up":
+        current_speed = min(100, current_speed + 10)  # 속도를 10 증가, 최대 100으로 제한
+    elif action == "down":
+        current_speed = max(0, current_speed - 10)  # 속도를 10 감소, 최소 0으로 제한
+    else:
+        logger.warning(f"Invalid action for speed: {action}")
+        return {"error": "Invalid action"}, 400
+
+    command = json.dumps({"command": "set_speed", "speed": current_speed})
+    client.publish(MQTT_TOPIC_COMMAND, command)
+    logger.info(f"Speed command sent: {command}")
+    return {"message": "Speed command sent successfully", "current_speed": current_speed}
+
+
 @app.get("/distance")
 async def get_distance():
     return {"distance": distance_data}
-
-
-@app.get("/", response_class=HTMLResponse)
-async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 
 async def video_frame_generator():
     while True:
         try:
             frame = await video_frames_queue.get()  # 큐에서 프레임 가져오기
+            img = cv2.imdecode(np.frombuffer(frame, np.uint8), cv2.IMREAD_COLOR)
+            _, jpeg = cv2.imencode('.jpg', img)
+
             yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
             video_frames_queue.task_done()  # 작업 완료 표시
         except Exception as e:
             logger.error(f"Error while sending video frame: {e}")
@@ -145,6 +179,19 @@ async def get_video_frame():
         return HTMLResponse(content="Error in video stream", status_code=500)
 
 
+@app.post("/set_hand_gesture/{state}")
+async def set_hand_gesture(state: str):
+    global hand_gesture
+    if state.lower() == "on":
+        hand_gesture = True
+        return {"message": "Hand gesture mode enabled"}
+    elif state.lower() == "off":
+        hand_gesture = False
+        return {"message": "Hand gesture mode disabled"}
+    else:
+        return {"error": "Invalid state"}, 400
+
+
 async def voice_data_generator():
     while True:
         if voice_data:
@@ -158,7 +205,7 @@ async def get_voice_data():
 
 
 async def run_fastapi():
-    config = uvicorn.Config(app, port=8000)
+    config = uvicorn.Config(app, port=8000, workers=4)  # 워커 수를 조정
     server = uvicorn.Server(config)
     await server.serve()
 
