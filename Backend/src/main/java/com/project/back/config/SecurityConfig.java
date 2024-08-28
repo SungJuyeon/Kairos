@@ -72,12 +72,12 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable());   //http basic 인증 방식 disable
 
         http
-                .authorizeHttpRequests((auth) -> auth   //경로별 인가 작업
-                        .requestMatchers("/login", "/", "/join", "/find/username", "find/password").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/", "/join", "/find/username", "/find/password").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
-                        .requestMatchers("/reissue").permitAll()        //모든 사용자는 access token 만료된 상태로 접근하기에 permitAll
-                        .anyRequest().authenticated() //이외의 요청에는 인증이 필요
-                );
+                        .requestMatchers("/reissue").permitAll()
+                        .anyRequest().authenticated());
+
         http.addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository), LogoutFilter.class);
 
         // 세션 설정하는 부분 : JWT는 무상태(STATELESS)로 설정

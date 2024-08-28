@@ -2,36 +2,40 @@ import cv2
 import numpy as np
 import face_recognition
 
-def compare_faces(face1, face2):
-    # 얼굴 이미지에서 얼굴 특징 추출
-    face1_encoding = face_recognition.face_encodings(face1)
-    face2_encoding = face_recognition.face_encodings(face2)
+def preprocess_face_image(image):
+    target_size = (48, 48)
+    image_resized = cv2.resize(image, target_size)
 
-    if len(face1_encoding) == 0 or len(face2_encoding) == 0:
-        print("One or both faces are not detected.")
-        return False, None  # 얼굴이 감지되지 않으면 비교 불가
+    if len(image_resized.shape) == 2:
+        image_equalized = cv2.equalizeHist(image_resized)
+        image_resized = cv2.cvtColor(image_equalized, cv2.COLOR_GRAY2RGB)
+    else:
+        gray = cv2.cvtColor(image_resized, cv2.COLOR_BGR2GRAY)
+        equalized = cv2.equalizeHist(gray)
+        image_resized = cv2.cvtColor(equalized, cv2.COLOR_GRAY2RGB)
 
-    face1_encoding = face1_encoding[0]
-    face2_encoding = face2_encoding[0]
+    image_normalized = cv2.normalize(image_resized, None, 0, 255, cv2.NORM_MINMAX)
+    image_filtered = cv2.GaussianBlur(image_normalized, (3, 3), 0)
 
-    # 두 얼굴 간의 거리 계산
-    distance = np.linalg.norm(face1_encoding - face2_encoding)
-    print(f"Face1 encoding: {face1_encoding}")
-    print(f"Face2 encoding: {face2_encoding}")
-    print(f"Distance: {distance}")
-    return True, distance
+    if len(image_filtered.shape) == 2:
+        image_filtered = cv2.cvtColor(image_filtered, cv2.COLOR_GRAY2RGB)
 
-def get_similarity_percentage(face1, face2):
-    match, distance = compare_faces(face1, face2)
-    if not match:
-        return 0.0  # 얼굴이 감지되지 않으면 유사도 0%
-    similarity_percentage = max(0, (1 - distance) * 100)
-    return similarity_percentage
+    return image_filtered
 
+def compare_images(image1, image2):
+    # 이미지 크기 조정
+    image1 = cv2.resize(image1, (300, 300))
+    image2 = cv2.resize(image2, (300, 300))
 
-def get_similarity_percentage(face1, face2):
-    match, distance = compare_faces(face1, face2)
-    if not match:
-        return 0.0  # 얼굴이 감지되지 않으면 유사도 0%
-    similarity_percentage = max(0, (1 - distance) * 100)
-    return similarity_percentage
+    # 이미지를 그레이스케일로 변환
+    image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+    image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+    # 히스토그램 계산
+    hist1 = cv2.calcHist([image1_gray], [0], None, [256], [0, 256])
+    hist2 = cv2.calcHist([image2_gray], [0], None, [256], [0, 256])
+
+    # 히스토그램 비교
+    similarity = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+
+    return similarity
