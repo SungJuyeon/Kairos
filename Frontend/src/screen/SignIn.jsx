@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image, ScrollView } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
@@ -19,21 +19,26 @@ export default function SignIn() {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
-
+    
         try {
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            formData.append('email', email);
+            formData.append('nickname', nickname);
+    
+            if (selectedImage) {
+                formData.append('image', {
+                    uri: selectedImage.startsWith('file://') ? selectedImage : `file://${selectedImage}`,
+                    name: 'potoname', // 파일 이름 설정
+                });
+            }
+    
             const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username,
-                    password,
-                    email,
-                    nickname,
-                }),
+                body: formData,
             });
-
+    
             const data = await response.text();
             if (response.ok) {
                 Alert.alert('회원가입 성공', data);
@@ -65,61 +70,60 @@ export default function SignIn() {
         if (result.canceled) {
             console.log('사용자에 의해 취소됨');
         } else {
-            // assets 배열에서 URI 가져오기
             const imageUri = result.assets[0].uri;
             console.log('선택한 이미지 URI:', imageUri);
             setSelectedImage(imageUri);
         }
     };
-    
-    
 
     return (
         <Container>
-            <Title>회원가입</Title>
-            <InputContainer>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
-                <StyledTextInput
-                    onChangeText={text => setUsername(text)}
-                    value={username}
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호</Text>
-                <StyledTextInput
-                    onChangeText={text => setPassword(text)}
-                    value={password}
-                    secureTextEntry={true}
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
-                <StyledTextInput
-                    onChangeText={text => setConformPW(text)}
-                    value={conformPW}
-                    secureTextEntry={true}
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
-                <StyledTextInput
-                    onChangeText={text => setEmail(text)}
-                    value={email}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                />
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>닉네임</Text>
-                <StyledTextInput
-                    onChangeText={text => setNickname(text)}
-                    value={nickname}
-                />
-            </InputContainer>
-            {selectedImage && (
-                <ImagePreview source={{ uri: selectedImage }} />
-            )}
-            <RowContainer>
-                <Button onPress={createMember}>
-                    <ButtonText>회원 가입</ButtonText>
-                </Button>
-                <Button onPress={uploadFile}>
-                    <ButtonText>사진 업로드</ButtonText>
-                </Button>
-            </RowContainer>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Title>회원가입</Title>
+                <InputContainer>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
+                    <StyledTextInput
+                        onChangeText={text => setUsername(text)}
+                        value={username}
+                    />
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호</Text>
+                    <StyledTextInput
+                        onChangeText={text => setPassword(text)}
+                        value={password}
+                        secureTextEntry={true}
+                    />
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
+                    <StyledTextInput
+                        onChangeText={text => setConformPW(text)}
+                        value={conformPW}
+                        secureTextEntry={true}
+                    />
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
+                    <StyledTextInput
+                        onChangeText={text => setEmail(text)}
+                        value={email}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                    />
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>닉네임</Text>
+                    <StyledTextInput
+                        onChangeText={text => setNickname(text)}
+                        value={nickname}
+                    />
+                </InputContainer>
+                {selectedImage && (
+                    <ImagePreview source={{ uri: selectedImage }} />
+                )}
+                <RowContainer>
+                    <Button onPress={createMember}>
+                        <ButtonText>회원 가입</ButtonText>
+                    </Button>
+                    <Button onPress={uploadFile}>
+                        <ButtonText>사진 업로드</ButtonText>
+                    </Button>
+                </RowContainer>
+            </ScrollView>
         </Container>
     );
 }
@@ -127,7 +131,6 @@ export default function SignIn() {
 const Title = styled.Text`
     color: white;
     font-size: 25px;
-    margin-right: 125px;
     margin-bottom: 50px;
     font-weight: bold;
 `;
@@ -135,8 +138,6 @@ const Title = styled.Text`
 const Container = styled.SafeAreaView`
     background-color: #1B0C5D;
     flex: 1;
-    justify-content: center;
-    align-items: center;
 `;
 
 const InputContainer = styled.View`
