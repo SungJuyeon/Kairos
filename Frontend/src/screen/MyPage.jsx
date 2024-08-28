@@ -1,5 +1,5 @@
 import React, { useContext }from "react";
-import { View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, Image } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
@@ -14,9 +14,19 @@ export default function MyPage() {
     return (
         <Container>
           <Title>안녕하세요!</Title>
-            <Button onPress={() => logout()}>
-              <ButtonText>로그 아웃</ButtonText>
-            </Button>
+          <Image
+            source={{ uri: `https://cdn.vectorstock.com/i/500p/53/42/user-member-avatar-face-profile-icon-vector-22965342.jpg` }}
+            style={{ width: 360, height: 360 }}
+          />
+          <Button onPress={() => navigate('FamilyManage')}>
+            <ButtonText>가족 관리</ButtonText>
+          </Button>
+          <Button onPress={() => navigate('ScheduleManage')}>
+            <ButtonText>일정 관리</ButtonText>
+          </Button>
+          <LogoutButton onPress={() => logout()}>
+            <LogoutButtonText>로그 아웃</LogoutButtonText>
+          </LogoutButton>
         </Container>
     );
 }
@@ -43,6 +53,19 @@ const Button = styled.TouchableOpacity`
 `;
 
 const ButtonText = styled.Text`
+  color: black;
+  font-size: 24px;
+  font-weight: bold;
+`;
+
+const LogoutButton = styled.TouchableOpacity`
+  background-color: #FFFFFF;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 5px;
+`;
+
+const LogoutButtonText = styled.Text`
   color: black;
   font-size: 16px;
   font-weight: bold;

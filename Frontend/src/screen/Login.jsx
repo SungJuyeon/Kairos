@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import axios from 'axios';
-import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions, Alert } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions, Alert, Keyboard } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,7 +17,6 @@ export default function Login() {
     const [idFocused, setIdFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
 
-    // 백엔드에서는 id 말고 username을 사용하기에
     const [username, setUsername] = useState('');
 
     const { isLoggedIn, login, logout } = useContext(AuthContext);
@@ -39,8 +38,6 @@ export default function Login() {
         checkLoginStatus();
       }, []);
     
-
-    // 로그인 버튼 클릭시 실행
     const tryLogin = async () => {
         setUsername(id);
 
@@ -85,6 +82,7 @@ export default function Login() {
                         onFocus={() => setIdFocused(true)}
                         onBlur={() => setIdFocused(false)}
                         focused={idFocused}
+                        onSubmitEditing={Keyboard.dismiss}  // 키보드 숨기기
                     />
                     <StyledTextInput
                         onChangeText={setPassword}
@@ -95,6 +93,10 @@ export default function Login() {
                         onFocus={() => setPasswordFocused(true)}
                         onBlur={() => setPasswordFocused(false)}
                         focused={passwordFocused}
+                        onSubmitEditing={() => {
+                            tryLogin();  // 로그인 시도
+                            Keyboard.dismiss();  // 키보드 숨기기
+                        }}
                     />
                     <RowContainer>
                         <LoginButton onPress={tryLogin}>
@@ -113,6 +115,7 @@ export default function Login() {
         </Container>
     );
 }
+
 
 const StyledText = styled.Text`
     color: #FFFFFF;
