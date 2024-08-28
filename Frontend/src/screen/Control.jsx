@@ -3,6 +3,7 @@ import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid,
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
+import * as ImagePicker from 'expo-image-picker';
 
 
     // 스타일 컴포넌트를 위함
@@ -219,6 +220,19 @@ async function downloadImage() {
 }
 
 
+const openGallery = async () => {
+    // 권한 요청
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.granted) {
+        // 갤러리 열기
+        const result = await ImagePicker.launchImageLibraryAsync();
+        if (!result.cancelled) {
+
+        }
+    } else {
+        Alert.alert('권한이 필요합니다!', '갤러리에 접근할 수 있는 권한이 필요합니다.');
+    }
+};
 
 
 
@@ -276,7 +290,7 @@ async function convertBlobToBase64(blob) {
                 <RemoveContainer>
                     <StyledText>__________</StyledText>
                     <OnOffButton
-                        onPress={handleOnOffPress}
+                        onPress={openGallery}
                         isOn={isOn}>
                         <OnOffButtonText isOn={isOn}>{isOn ? 'Gallery' : 'Gallery'}</OnOffButtonText>
                     </OnOffButton>

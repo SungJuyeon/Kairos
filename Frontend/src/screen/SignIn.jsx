@@ -8,7 +8,7 @@ export default function SignIn() {
     const { navigate } = useNavigation();
 
     const [password, setPassword] = useState('');
-    const [conformPW, setConformPW] = useState('');
+    const [confirmPW, setConfirmPW] = useState('');
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [nickname, setNickname] = useState('');
@@ -94,8 +94,8 @@ export default function SignIn() {
                     />
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
                     <StyledTextInput
-                        onChangeText={text => setConformPW(text)}
-                        value={conformPW}
+                        onChangeText={text => setConfirmPW(text)}
+                        value={confirmPW}
                         secureTextEntry={true}
                     />
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
