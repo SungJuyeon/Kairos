@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
 @AllArgsConstructor
@@ -20,7 +23,8 @@ public class JoinService {
         String username = joinDTO.getUsername();    //=loginId
         String password = joinDTO.getPassword();
         String email = joinDTO.getEmail();
-
+        String nickname = joinDTO.getNickname();
+        MultipartFile potoname = joinDTO.getPotoname();
         Boolean isExist = userRepository.existsByUsername(username);
 
         if (isExist) {  //이미 존재하는 login id
@@ -31,8 +35,16 @@ public class JoinService {
         user.setUsername(username);
         user.setPassword(bCryptPasswordEncoder.encode(password));   //암호화 진행
         user.setRole("ADMIN");  //권한 설정 (관리자 계정 필요없으면 USER로 바꾸기)
-
+        user.setNickname(nickname);
         user.setEmail(email);
+        if (potoname != null && !potoname.isEmpty()) {
+            try {
+                user.setPotoname(potoname.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException("파일 저장 중 오류 발생", e);
+            }
+        }
+
 
         userRepository.save(user);
     }
