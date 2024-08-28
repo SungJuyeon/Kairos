@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "expoTest",
+    "slug": "expoTest",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.project.herobot",
+      "NSPhotoLibraryUsageDescription": "사진을 저장하기 위해 접근이 필요합니다."
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.project.herobot"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "95ee9266-e874-4ff2-857f-7e6189fedf03"
+      }
+    }
+  }
+}
