@@ -9,12 +9,13 @@ from face_register import detect_face
 from face_recog import FaceRecog  # 얼굴 인식을 위한 클래스
 from emotion_record import save_emotion_result, get_most_frequent_emotion, manage_daily_files, record_emotion
 from emotion_video import save_frames_to_video
+from keras.models import load_model
 
 # Flask 애플리케이션
 app = Flask(__name__)
 
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
-model = tf.keras.models.load_model('emotion_detection_model.h5')
+model = tf.keras.models.load_model('emotion_detection_model')
 
 current_emotion = 'None'
 current_emotion_probability = 0.0
