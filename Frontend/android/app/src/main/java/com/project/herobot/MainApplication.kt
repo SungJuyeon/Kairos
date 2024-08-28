@@ -1,4 +1,4 @@
-package com.expotest
+package com.project.herobot
 
 import android.app.Application
 import android.content.res.Configuration
