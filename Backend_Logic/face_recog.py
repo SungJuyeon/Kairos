@@ -10,7 +10,7 @@ class FaceRecog:
         self.known_face_names = []
 
         # 등록된 얼굴 이미지가 있는 디렉토리
-        dirname = 'registered_faces'
+        dirname = 'faces'
         files = os.listdir(dirname)  # 디렉토리 내 모든 파일을 리스트로 가져옴
         for filename in files:
             name, ext = os.path.splitext(filename)  # 파일 이름과 확장자로 분리
