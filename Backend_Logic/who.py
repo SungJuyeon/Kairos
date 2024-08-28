@@ -4,6 +4,7 @@ from deepface import DeepFace
 import os
 import re
 
+
 # 등록된 얼굴 목록을 폴더에서 자동으로 불러오기
 def load_registered_faces(folder_path):
     registered_faces = []
@@ -12,6 +13,7 @@ def load_registered_faces(folder_path):
             registered_faces.append(os.path.join(folder_path, filename))
     return registered_faces
 
+
 # 파일 이름에서 닉네임 추출하는 함수
 def get_nickname_from_filename(filename):
     base_name = os.path.splitext(os.path.basename(filename))[0]  # 확장자 제거
@@ -19,11 +21,13 @@ def get_nickname_from_filename(filename):
     nickname = re.sub(r'\s*\(.*?\)', '', base_name)
     return nickname.strip()  # 공백 제거
 
+
 # DNN 얼굴 감지 모델 로드
 model = cv2.dnn.readNetFromCaffe(
     "models/deploy.prototxt",  # Caffe 모델의 구조 파일
     "models/res10_300x300_ssd_iter_140000.caffemodel"  # Caffe 모델의 가중치 파일
 )
+
 
 # DNN 얼굴 감지 함수
 def detect_faces(frame):
@@ -41,6 +45,7 @@ def detect_faces(frame):
             faces.append((startX, startY, endX - startX, endY - startY))  # (x, y, w, h)
 
     return faces
+
 
 # 등록된 얼굴 로드
 registered_faces = load_registered_faces('faces')  # 'faces' 폴더 경로
@@ -65,8 +70,6 @@ while True:
             # 유사도 기준 설정
             threshold = 0.4  # 유사도 기준 거리
             filtered_results = [res for res in result if res['distance'].values[0] < threshold]
-
-            print("Filtered results:", filtered_results)  # 필터링된 결과 출력
 
             if len(filtered_results) > 0:
                 # 등록된 얼굴이 발견된 경우
