@@ -30,10 +30,10 @@ def preprocess_face_image(image):
     return image_filtered
 
 
-def predict_emotion(image):
-    # 이미지 전처리 및 감정 예측 코드
-    # 모델을 이용하여 감정을 예측
-    processed_image = preprocess_face_image(image)  # 필요한 경우 전처리
-    predictions = model.predict(np.expand_dims(processed_image, axis=0))
-    emotion = np.argmax(predictions)
-    return emotion
+# def predict_emotion(image):
+#     # 이미지 전처리 및 감정 예측 코드
+#     # 모델을 이용하여 감정을 예측
+#     processed_image = preprocess_face_image(image)  # 필요한 경우 전처리
+#     predictions = model.predict(np.expand_dims(processed_image, axis=0))
+#     emotion = np.argmax(predictions)
+#     return emotion

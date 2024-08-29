@@ -1,7 +1,7 @@
-import face_recognition  # 얼굴 인식과 관련된 기능을 제공하는 라이브러리
-import cv2  # 이미지 처리와 컴퓨터 비전을 위한 OpenCV 라이브러리
-import numpy as np  # 배열 및 수치 연산을 위한 NumPy 라이브러리
-import os  # 운영 체제와 상호작용하기 위한 os 모듈
+import face_recognition
+import cv2
+import numpy as np
+import os
 
 class FaceRecog:
     def __init__(self):
@@ -48,9 +48,6 @@ class FaceRecog:
                 # 얼굴 인코딩을 등록된 얼굴 인코딩과 비교
                 distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
 
-                # 디버그: 거리 값을 출력하여 문제 해결
-                print(f"Distances: {distances}")
-
                 if distances.size > 0:  # 비교할 거리가 있는 경우
                     min_value = min(distances)  # 최소 거리 값 찾기
                     name = "Unknown"  # 기본 이름을 "Unknown"으로 설정
@@ -83,4 +80,4 @@ class FaceRecog:
             font = cv2.FONT_HERSHEY_DUPLEX  # 글꼴 유형 선택
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)  # 텍스트 레이블 추가
 
-        return frame  # 주석이 추가된 프레임 반환
+        return frame, self.face_names  # 수정된 반환값

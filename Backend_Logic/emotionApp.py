@@ -8,14 +8,13 @@ import os
 from face_register import detect_face
 from face_recog import FaceRecog  # 얼굴 인식을 위한 클래스
 from emotion_record import save_emotion_result, get_most_frequent_emotion, manage_daily_files, record_emotion
-from emotion_video import save_frames_to_video
-from keras.models import load_model
+from emotion_video import save_frames_to_video, generate_video_filename, delete_old_videos
 
 # Flask 애플리케이션
 app = Flask(__name__)
 
 emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
-model = tf.keras.models.load_model('emotion_detection_model')
+model = tf.keras.models.load_model('emotion_detection_model.h5')
 
 current_emotion = 'None'
 current_emotion_probability = 0.0
@@ -44,7 +43,7 @@ def generate_frames():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # 얼굴 인식 결과를 프레임에 반영
-        frame = face_recog.get_frame(frame)
+        frame, face_names = face_recog.get_frame(frame)  # 두 값 반환 처리
 
         gray, detected_faces, coord = detect_face(frame)
 
@@ -93,6 +92,7 @@ def generate_frames():
     video_capture.release()
     cv2.destroyAllWindows()
 
+
 @app.route('/emotion')
 def index():
     return render_template('emotion.html')
@@ -116,4 +116,5 @@ def get_current_emotion():
     return jsonify(emotion=current_emotion, probability=current_emotion_probability)
 
 if __name__ == '__main__':
+    delete_old_videos('videos', days=2)
     app.run(debug=True)
