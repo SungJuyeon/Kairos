@@ -25,6 +25,7 @@ distance_data = None
 video_frames_queue = asyncio.Queue()  # 비디오 프레임 큐
 voice_data = None
 hand_gesture = True
+current_action = None  # 현재 손동작 상태 변수
 
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소
@@ -65,7 +66,7 @@ async def on_message(client, topic, payload, qos, properties):
 
 # 마지막 명령 발행 시간 초기화
 last_command_time = 0
-command_cooldown = 8  # 8초 쿨다운
+command_cooldown = 10  # 10초 쿨다운
 
 
 async def gesture_action(action):
@@ -114,12 +115,12 @@ async def process_message(topic, payload):
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
         if video_frames_queue.qsize() >= 5:
-            logger.warning("Video frame queue is full, dropping the oldest frame")
             await video_frames_queue.get()  # 오래된 프레임 삭제
 
         img_encode = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
-        await video_frames_queue.put(img_encode)  # 프레임을 큐에 추가
 
+        await video_frames_queue.put(img_encode)  # 프레임을 큐에 추가
+        return
     # 다른 데이터 유형 처리
     try:
         message = json.loads(payload.decode('utf-8'))  # JSON 디코딩
@@ -175,12 +176,13 @@ async def move(direction: str):
 
 
 # 상태 변수 추가
-current_speed = 100  # 현재 속도 초기화
+current_speed = 50  # 현재 속도 초기화
+
+
 @app.post("/speed/{action}")
 async def speed(action: str):
     global current_speed
     logger.info(f"Attempting to set speed: {action}")
-
     if action == "up":
         current_speed = min(100, current_speed + 10)  # 속도를 10 증가, 최대 100으로 제한
     elif action == "down":
@@ -201,28 +203,32 @@ async def get_distance():
 
 
 # 얼굴 인식 비디오 스트림 엔드포인트 추가
-frame_interval = 7  # 5 프레임마다 처리
+frame_interval = 8
 frame_counter = 0
 
-async def video_frame_generator(face_recognition=True, run_another_logic=False):
+
+async def video_frame_generator(face_on=True, draw_gesture_on=False):
     global frame_counter
     while True:
         try:
             frame = await video_frames_queue.get()
 
-            if face_recognition:
+            if face_on:
+
                 faces = face_recognition.detect_faces(frame)
-                if frame_counter % frame_interval == 0:
+                if frame_counter == 0:
                     face_recognition.recognize_faces(frame, faces)
 
                 face_recognition.draw_faces(frame, faces)
                 frame_counter += 1
+                frame_counter %= frame_interval
 
-            # B 로직을 여기에 추가할 수 있습니다.
-            if run_another_logic:
-                # 예를 들어, 감정 분석 로직을 여기에 추가할 수 있습니다.
-                pass
-
+            if draw_gesture_on:
+                frame = gesture_recognizer.recognize_gesture(frame)
+                action = gesture_recognizer.this_action
+                logger.info(f"Recognized action: {action}")  # 인식된 동작 로그
+                if action != '?':
+                    await gesture_action(action)
 
 
             _, jpeg = cv2.imencode('.jpg', frame)
@@ -233,15 +239,10 @@ async def video_frame_generator(face_recognition=True, run_another_logic=False):
             await asyncio.sleep(0.1)
 
 
-
-
-
-
-
-
-
-
-
+@app.get("/video_feed/{face_on}/{draw_gesture_on}")
+async def get_video_feed(face_on: bool, draw_gesture_on: bool):
+    return StreamingResponse(video_frame_generator(face_on, draw_gesture_on),
+                             media_type='multipart/x-mixed-replace; boundary=frame')
 
 
 async def run_fastapi():

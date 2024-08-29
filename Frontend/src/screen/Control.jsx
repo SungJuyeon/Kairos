@@ -3,9 +3,6 @@ import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid,
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
-import * as ImagePicker from 'expo-image-picker';
-
-import Slider from '@react-native-community/slider';
 
 
     // 스타일 컴포넌트를 위함
@@ -24,11 +21,10 @@ export default function Control() {
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
 
 
-    const [speed, setSpeed] = useState(1); // 기본 속도
 
 
 
-    const imageURL = `${BASE_URL}/video_feed`;
+    const imageURL = '${BASE_URL}/video_feed';
 
     // 속도 조절
     const [value, setValue] = useState(5);
@@ -42,9 +38,10 @@ export default function Control() {
     };
 
     
-    //const BASE_URL = 'http://172.30.1.68:8000'; //
-    const BASE_URL = 'http://223.194.130.159:8000'; // 학교
-    //const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
+    //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
+    //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
+    //const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
+    const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
 
 
     // 안드로이드에서 사진 저장 권한을 위한 함수
@@ -221,19 +218,10 @@ async function downloadImage() {
     }
 }
 
-const openGallery = async () => {
-    // 권한 요청
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permission.granted) {
-        // 갤러리 열기
-        const result = await ImagePicker.launchImageLibraryAsync();
-        if (!result.cancelled) {
 
-        }
-    } else {
-        Alert.alert('권한이 필요합니다!', '갤러리에 접근할 수 있는 권한이 필요합니다.');
-    }
-};
+
+
+
 
 async function convertBlobToBase64(blob) {
     return new Promise((resolve, reject) => {
@@ -288,7 +276,7 @@ async function convertBlobToBase64(blob) {
                 <RemoveContainer>
                     <StyledText>__________</StyledText>
                     <OnOffButton
-                        onPress={openGallery}
+                        onPress={handleOnOffPress}
                         isOn={isOn}>
                         <OnOffButtonText isOn={isOn}>{isOn ? 'Gallery' : 'Gallery'}</OnOffButtonText>
                     </OnOffButton>
@@ -298,30 +286,15 @@ async function convertBlobToBase64(blob) {
 
             <ControlPadContainer>
 
-            {/* <SpeedButtonContainer>
+            <SpeedButtonContainer>
                 <ValueText>Speed: {value}</ValueText>
                 <SpeedButton onPress={increment}>
                 <SpeedButtonText>UP</SpeedButtonText>
                 </SpeedButton>
                 <SpeedButton onPress={decrement}>
                 <SpeedButtonText>DOWN</SpeedButtonText>
-                </SpeedButton>    
-            </SpeedButtonContainer> */}
-
-            <SliderContainer>
-                <SliderText>Speed: {speed.toFixed(1)}</SliderText>
-                <StyledSlider
-                    minimumValue={0}
-                    maximumValue={10}
-                    step={1}
-                    value={speed}
-                    onValueChange={setSpeed}
-                    minimumTrackTintColor="#1fb28a"
-                    maximumTrackTintColor="#d3d3d3"
-                    thumbTintColor="#f5fcff"
-                />
-            </SliderContainer>
-
+                </SpeedButton>
+            </SpeedButtonContainer>
 
             <ButtonContainer>
                 <UpButtonContainer>
@@ -419,7 +392,7 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-right: 0px;
+    margin-left: 10px;
 `;
 
 const UpButtonContainer = styled.View`
@@ -552,28 +525,6 @@ const StyledImage = styled.Image`
     width: 100%;
     height: 100%;
 `;
-
-const SliderContainer = styled.View`
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 5px;
-    margin-left: 0px;
-`;
-
-const SliderText = styled.Text`
-    font-size: 20px;
-    margin-bottom: 40px;
-    color: #FFFFFF;
-`;
-
-const StyledSlider = styled(Slider)`
-    width: 120px; /* 너비를 좁게 설정 */
-    height: 100px; /* 높이 설정 */
-    transform: rotate(-90deg); /* 슬라이더를 90도 회전 */
-    margin-bottom: 20px;
-`;
-
 
 // const ImageContainer = styled.View`
 //     width: 90%;  // 이미지보다 작은 너비
