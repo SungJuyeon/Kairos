@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image, ScrollView } from "react-native";
-import styled from 'styled-components/native';
-import { useNavigation } from "@react-navigation/native";
+import React, { useState } from 'react';
+import { Text, Alert, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import styled from 'styled-components/native'; // React Native의 경우
 
 export default function SignIn() {
     const { navigate } = useNavigation();
@@ -16,51 +16,67 @@ export default function SignIn() {
     const [selectedImage, setSelectedImage] = useState(null);
 
     const createMember = async () => {
-        if (password !== confirmPW) {
+        if (password !== conformPW) {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
 
         try {
             const formData = new FormData();
-            formData.append('username', username);
-            formData.append('password', password);
-            formData.append('email', email);
-            formData.append('nickname', nickname);
+            formData.append('data', JSON.stringify({
+                username: username,
+                password: password,
+                email: email,
+                nickname: nickname,
+            }));
 
             if (selectedImage) {
-                const compressedImage = await compressImage(selectedImage);
+                const compressedImageUri = await compressImage(selectedImage);
+                console.log('Compressed Image URI:', compressedImageUri); // 압축된 이미지 URI 로그
                 formData.append('file', {
-                    uri: compressedImage.uri,
-                    name: 'photoname.jpg',
-                    type: 'image/jpeg',
+                    uri: compressedImageUri,
+                    name: 'photoname.jpg', // 파일 이름 설정
+                    type: 'image/jpeg', // 파일 타입 설정
                 });
+            } else {
+                console.warn('No image selected');
             }
 
             const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'multipart/form-data', // Content-Type 설정
+                },
                 body: formData,
             });
 
             const data = await response.text();
             if (response.ok) {
                 Alert.alert('회원가입 성공', data);
+                // 회원가입 성공 후의 추가 작업 (예: navigate)
             } else {
                 Alert.alert('회원가입 실패', data);
             }
         } catch (error) {
-            console.error(error);
+            console.error('Error during fetch:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
 
     const compressImage = async (uri) => {
-        const result = await ImageManipulator.manipulateAsync(
-            uri,
-            [{ resize: { width: 800 } }], // 최대 너비를 800으로 설정
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // JPEG 형식으로 압축
-        );
-        return result;
+        try {
+            const result = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 800 } }], // 최대 너비를 800으로 설정
+                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // JPEG 형식으로 압축
+            );
+            console.log('Compressed Image:', result); // 압축된 이미지 정보 로그
+            return result.uri;
+        } catch (error) {
+            console.error('Error compressing image:', error);
+            throw error; // 에러를 던져서 상위 함수에서 처리할 수 있게 함
+        }
     };
 
     const uploadFile = async () => {
