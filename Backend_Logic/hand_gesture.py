@@ -47,7 +47,8 @@ class HandGestureRecognizer:
                 v = v2 - v1
                 v = v / np.linalg.norm(v, axis=1)[:, np.newaxis]
 
-                angle = np.arccos(np.einsum('nt,nt->n', v[[0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16, 17, 18], :],
+                angle = np.arccos(np.einsum('nt,nt->n',
+                                            v[[0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16, 17, 18], :],
                                             v[[1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 17, 18, 19], :]))
                 angle = np.degrees(angle)
 
