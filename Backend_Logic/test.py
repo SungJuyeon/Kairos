@@ -1,178 +1,83 @@
-#robot_controller2.py
 import cv2
-import asyncio
-import RPi.GPIO as GPIO
-import time
-import logging
-import json
-from gmqtt import Client as MQTTClient
+from deepface import DeepFace
+import os
+import re
+import numpy as np
+import tempfile
 
-# 핀 번호 설정
-MOTOR_PINS = {
-    'ENA': 17,
-    'IN1': 27,
-    'IN2': 22,
-    'IN3': 23,
-    'IN4': 24,
-    'ENB': 25
-}
+# 등록된 얼굴 목록을 폴더에서 자동으로 불러오기
+def load_registered_faces(folder_path):
+    registered_faces = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith(('.jpg', '.jpeg', '.png')):  # 이미지 파일 형식
+            registered_faces.append(os.path.join(folder_path, filename))
+    return registered_faces
 
-ULTRASONIC_PINS = {
-    'TRIG': 20,
-    'ECHO': 16
-}
+# 파일 이름에서 닉네임 추출하는 함수
+def get_nickname_from_filename(filename):
+    base_name = os.path.splitext(os.path.basename(filename))[0]  # 확장자 제거
+    nickname = re.sub(r'\s*\(.*?\)', '', base_name)
+    return nickname.strip()  # 공백 제거
 
-# GPIO 초기화
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+# 얼굴 감지 함수
+def detect_faces(frame):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray_frame, scaleFactor=1.1, minNeighbors=5)
+    return faces
 
-# 모터 핀 설정
-for pin in MOTOR_PINS.values():
-    GPIO.setup(pin, GPIO.OUT)
+# 등록된 얼굴 로드
+registered_faces = load_registered_faces('faces')  # 'faces' 폴더 경로
 
-# 초음파 센서 핀 설정
-GPIO.setup(ULTRASONIC_PINS['TRIG'], GPIO.OUT)
-GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
+# 비디오 스트리밍 시작
+cap = cv2.VideoCapture(0)  # 0은 기본 카메라를 의미
 
-# 카메라 설정
-cap = cv2.VideoCapture(0)
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-# MQTT 설정
-MQTT_BROKER = "172.30.1.68"  # MQTT 브로커 주소 입력
-MQTT_PORT = 1883
-MQTT_TOPIC_COMMAND = "robot/commands"
-MQTT_TOPIC_DISTANCE = "robot/distance"
-MQTT_TOPIC_VIDEO = "robot/video"
+    faces = detect_faces(frame)
 
-# 현재 모터 상태를 저장하는 변수
-current_direction = None
+    for (x, y, w, h) in faces:
+        face_image = frame[y:y + h, x:x + w]
 
-# 로깅 설정
-logging.basicConfig(level=logging.INFO)
+        # 임시 파일에 얼굴 이미지 저장
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+            temp_face_path = temp_file.name
+            cv2.imwrite(temp_face_path, face_image)
 
-async def on_connect(client, flags, rc, properties):
-    logging.info(f"Connected to MQTT Broker with result code {rc}")
-    await client.subscribe(MQTT_TOPIC_COMMAND)
+        match_found = False
 
-async def on_message(client, topic, payload, qos, properties):
-    command = json.loads(payload.decode('utf-8'))
-    logging.info(f"Received command: {command}")
+        for registered_face in registered_faces:
+            try:
+                # DeepFace.verify를 사용하여 비교
+                result = DeepFace.verify(temp_face_path, registered_face, model_name='VGG-Face')
+                if result['verified']:
+                    nickname = get_nickname_from_filename(registered_face)  # 닉네임 추출
+                    match_found = True
 
-    if command["command"] == "stop":
-        stop()
-    elif command["command"] in ["forward", "back", "left", "right"]:
-        await motor_control(command)
-    else:
-        logging.warning(f"Invalid command: {command}")
+                    # 얼굴 주변에 사각형 그리기 및 닉네임 표시
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    cv2.putText(frame, nickname, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                    break
 
-async def motor_control(direction):
-    global current_direction
-    current_direction = direction
-    logging.info(f"Setting motor state to {direction}")
-    set_motor_state(direction)
+            except Exception as e:
+                print("Error in face recognition:", e)
 
-    while current_direction == direction:
-        await asyncio.sleep(0.1)
+        if not match_found:
+            # 등록된 얼굴이 발견되지 않은 경우
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)  # 빨간색 사각형
+            cv2.putText(frame, "Unknown", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
-    stop()
+        # 임시 파일 삭제
+        os.remove(temp_face_path)
 
-def set_motor_state(direction):
-    GPIO.output(MOTOR_PINS['ENA'], GPIO.HIGH)
-    GPIO.output(MOTOR_PINS['ENB'], GPIO.HIGH)
+    cv2.imshow('Video Stream', frame)
 
-    # 모터 방향 설정
-    if direction == "forward":
-        GPIO.output(MOTOR_PINS['IN1'], GPIO.HIGH)
-        GPIO.output(MOTOR_PINS['IN2'], GPIO.LOW)
-        GPIO.output(MOTOR_PINS['IN3'], GPIO.HIGH)
-        GPIO.output(MOTOR_PINS['IN4'], GPIO.LOW)
-    elif direction == "back":
-        GPIO.output(MOTOR_PINS['IN1'], GPIO.LOW)
-        GPIO.output(MOTOR_PINS['IN2'], GPIO.HIGH)
-        GPIO.output(MOTOR_PINS['IN3'], GPIO.LOW)
-        GPIO.output(MOTOR_PINS['IN4'], GPIO.HIGH)
-    elif direction == "left":
-        GPIO.output(MOTOR_PINS['IN1'], GPIO.LOW)
-        GPIO.output(MOTOR_PINS['IN2'], GPIO.HIGH)
-        GPIO.output(MOTOR_PINS['IN3'], GPIO.HIGH)
-        GPIO.output(MOTOR_PINS['IN4'], GPIO.LOW)
-    elif direction == "right":
-        GPIO.output(MOTOR_PINS['IN1'], GPIO.HIGH)
-        GPIO.output(MOTOR_PINS['IN2'], GPIO.LOW)
-        GPIO.output(MOTOR_PINS['IN3'], GPIO.LOW)
-        GPIO.output(MOTOR_PINS['IN4'], GPIO.HIGH)
+    # 'q'를 눌러 종료
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-def stop():
-    logging.info("Stopping motors")
-    global current_direction
-    current_direction = None
-
-    for pin in MOTOR_PINS.values():
-        GPIO.output(pin, GPIO.LOW)
-
-    logging.info("Motors stopped")
-
-async def send_distance(client):
-    while True:
-        distance = measure_distance()
-        if distance is not None:
-            distance_message = json.dumps({"distance": distance})  # JSON 형식으로 전송
-            client.publish(MQTT_TOPIC_DISTANCE, distance_message)  # await 제거
-            logging.info(f"Published distance: {distance}")
-        await asyncio.sleep(1)
-
-def measure_distance():
-    try:
-        GPIO.output(ULTRASONIC_PINS['TRIG'], True)
-        time.sleep(0.00001)
-        GPIO.output(ULTRASONIC_PINS['TRIG'], False)
-
-        pulse_start = time.time()
-        while GPIO.input(ULTRASONIC_PINS['ECHO']) == 0:
-            pulse_start = time.time()
-
-        pulse_end = time.time()
-        while GPIO.input(ULTRASONIC_PINS['ECHO']) == 1:
-            pulse_end = time.time()
-
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150
-        return round(distance, 2)
-    except Exception as e:
-        logging.error(f"Error measuring distance: {e}")
-        return None
-
-async def generate_frames(client):
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            logging.warning("Failed to capture frame")
-            continue
-
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame_data = buffer.tobytes()
-        client.publish(MQTT_TOPIC_VIDEO, frame_data)
-        logging.info("Sent a video frame")
-        await asyncio.sleep(0.2)  # 전송 주기 조정
-
-async def main():
-    client = MQTTClient("robot_controller")
-    client.on_connect = on_connect
-    client.on_message = on_message
-    await client.connect(MQTT_BROKER, MQTT_PORT)
-
-    # 비동기 작업 시작
-    asyncio.create_task(send_distance(client))
-    asyncio.create_task(generate_frames(client))
-
-    # MQTT 클라이언트 루프 시작
-    while True:
-        await asyncio.sleep(1)  # MQTT 클라이언트의 비동기 루프를 대기하는 방법
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        GPIO.cleanup()
-        cap.release()
-        logging.info("Cleanup completed")
+cap.release()
+cv2.destroyAllWindows()
