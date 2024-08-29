@@ -9,6 +9,11 @@ export default function Chat() {
   const { navigate } = useNavigation();
   const inputRef = useRef(null); // Input에 대한 ref 생성
 
+  const BASE_URL = 'http://223.194.130.159:8000'; // 학교
+  //const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
+
+  const imageURL = `${BASE_URL}/video_feed`;
+
   const sendMessage = async () => {
     if (message.trim() === '') return;
 
@@ -62,7 +67,7 @@ export default function Chat() {
 
   return (
     <Container>
-      <Title>Herobot과의 대화</Title>
+      <Title>Herobot에게 물어보세요!</Title>
       <ChatContainer>
         <FlatList
           data={messages}

@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
-import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 
 import Slider from '@react-native-community/slider';
@@ -24,7 +23,8 @@ export default function Control() {
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
 
 
-    const [speed, setSpeed] = useState(1); // 기본 속도
+    const [speed, setSpeed] = useState(5); // 기본 속도
+    const [prevSpeed, setPrevSpeed] = useState(5); // 이전 속도 저장
 
 
 
@@ -256,6 +256,24 @@ async function convertBlobToBase64(blob) {
     const handleOnOffPress = () => {
         setIsOn(!isOn);
     };
+
+
+    useEffect(() => {
+        const updateSpeed = async () => {
+          if (speed > prevSpeed) {
+            await fetch(`${BASE_URL}/speed/up`, { method: 'POST' });
+          } else if (speed < prevSpeed) {
+            await fetch(`${BASE_URL}/speed/down`, { method: 'POST' });
+          }
+          setPrevSpeed(speed); // 현재 속도를 이전 속도로 업데이트
+        };
+    
+        updateSpeed();
+      }, [speed]);
+
+
+
+
 
     return (
         <Container>
