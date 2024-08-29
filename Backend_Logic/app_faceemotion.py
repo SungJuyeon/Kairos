@@ -73,20 +73,29 @@ async def process_message(topic, payload):
         await video_frames_queue.put(img_encode)  # 프레임을 큐에 추가
 
 # 얼굴 인식 비디오 스트림 엔드포인트 추가
+frame_interval = 7  # 5 프레임마다 처리
+frame_counter = 0
+
 async def face_video_frame_generator():
+    global frame_counter
     while True:
         try:
-            frame = await video_frames_queue.get()  # 큐에서 프레임 가져오기
+            frame = await video_frames_queue.get()
+
             faces = face_recognition.detect_faces(frame)
-            face_recognition.recognize_faces(frame, faces)
+
+            if frame_counter % frame_interval == 0:
+                face_recognition.recognize_faces(frame, faces)
+
             face_recognition.draw_faces(frame, faces)
+            frame_counter += 1
 
             _, jpeg = cv2.imencode('.jpg', frame)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
         except Exception as e:
             logger.error(f"Error processing video frame: {e}")
-            await asyncio.sleep(0.1)  # 오류 발생 시 잠시 대기
+            await asyncio.sleep(0.1)
 
 
 # 기존 API 엔드포인트들
