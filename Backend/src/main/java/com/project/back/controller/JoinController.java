@@ -19,12 +19,6 @@ public class JoinController {
 
     private final JoinService joinService;
 
-    @GetMapping("/join")
-    public String showJoinForm() {
-        return "joinForm";
-    }
-
-
     @PostMapping("/join")
     public ResponseEntity<String> joinProcess(
             @RequestParam("data") String data,
