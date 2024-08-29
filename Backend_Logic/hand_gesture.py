@@ -3,7 +3,6 @@ import numpy as np
 import mediapipe as mp
 from tensorflow.keras.models import load_model
 
-
 class HandGestureRecognizer:
     def __init__(self, model_path):
         self.actions = ['come', 'away', 'spin']
@@ -21,7 +20,6 @@ class HandGestureRecognizer:
         self.seq = []
         self.action_seq = []
         self.last_action = None
-        self.this_action = '?'
 
     def recognize_gesture(self, img):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -63,25 +61,21 @@ class HandGestureRecognizer:
                 i_pred = int(np.argmax(y_pred))
                 conf = y_pred[i_pred]
 
-                if conf < 0.95:
+                if conf < 0.9:
                     continue
 
                 action = self.actions[i_pred]
                 self.action_seq.append(action)
 
-                if len(self.action_seq) < 8:  # 기준 5번 연속
+                if len(self.action_seq) < 5:  # 기준 5번 연속
                     continue
 
-                if self.action_seq[-1] == self.action_seq[-2] == self.action_seq[-3] == self.action_seq[-4] == \
-                        self.action_seq[-5] == self.action_seq[-6] == self.action_seq[-7] == self.action_seq[-8]:
-                    self.this_action = action
+                this_action = '?'
+                if self.action_seq[-1] == self.action_seq[-2] == self.action_seq[-3] == self.action_seq[-4] == self.action_seq[-5]:
+                    this_action = action
 
-                cv2.putText(img, f'{self.this_action.upper()}', org=(int(hand_landmarks.landmark[0].x * img.shape[1]),
-                                                                     int(hand_landmarks.landmark[0].y * img.shape[
-                                                                         0] + 20)),
-                            fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 255, 0), thickness=3)
-
-        else:
-            self.this_action = '?'  # 또는 None 등으로 설정하여 동작을 초기화
+                cv2.putText(img, f'{this_action.upper()}', org=(int(hand_landmarks.landmark[0].x * img.shape[1]),
+                                                                int(hand_landmarks.landmark[0].y * img.shape[0] + 20)),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 255, 0), thickness=2)
 
         return img

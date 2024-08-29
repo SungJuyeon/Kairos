@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, TextInput, FlatList, Text, Alert } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
@@ -7,8 +7,11 @@ export default function Chat() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const { navigate } = useNavigation();
-  const inputRef = useRef(null); // Input에 대한 ref 생성
 
+  // 다시 inputText를 포커싱하기 위해
+  //const inputText = document.getElementById('inputText');
+
+  // 서버에 메세지를 보내는 함수
   const sendMessage = async () => {
     if (message.trim() === '') return;
 
@@ -29,6 +32,7 @@ export default function Chat() {
 
       const data = await response.text();
 
+      // 답장이 왔을 때
       if (response.ok) {
         handleSuccessMessage(data);
       } else {
@@ -37,32 +41,31 @@ export default function Chat() {
     } catch (error) {
       console.error(error);
       Alert.alert('오류 발생', '다시 시도해 주세요.');
-    } finally {
-      // 메시지를 보낸 후에 포커스를 다시 설정합니다.
-      inputRef.current.focus(); // 포커스 설정
     }
   };
 
+  // 메세지가 수신 되었을 때
   const handleSuccessMessage = (data) => {
     const serverMessage = { text: '메세지 수신 성공', isUser: false };
     setMessages((prevMessages) => [serverMessage, ...prevMessages]);
   };
 
+  // 메세지 수신이 실패했을 때
   const handleFailureMessage = (data) => {
     const serverMessage = { text: '메세지 수신 실패', isUser: false };
     setMessages((prevMessages) => [serverMessage, ...prevMessages]);
   };
 
+  // 보내기 버튼 혹은 엔터키를 눌렀을 때
   const handleSubmit = () => {
     if (message.trim() !== '') {
       sendMessage();
-      inputRef.current.focus(); // 메시지를 보낸 후 입력 필드에 포커스
+      //inputText.focus();
     }
   };
 
   return (
     <Container>
-      <Title>Herobot과의 대화</Title>
       <ChatContainer>
         <FlatList
           data={messages}
@@ -80,30 +83,24 @@ export default function Chat() {
       </ChatContainer>
       <InputContainer>
         <StyledTextInput
-          ref={inputRef} // ref를 입력 필드에 연결
           value={message}
           onChangeText={setMessage}
           placeholder="메시지를 입력하세요"
-          onSubmitEditing={handleSubmit}
+          onSubmitEditing={handleSubmit} // 엔터키를 누르면 보내기 버튼 클릭 처리
           returnKeyType="send"
         />
         <ButtonContainer>
           <SendButton onPress={handleSubmit}>
             <SendButtonText>보내기</SendButtonText>
           </SendButton>
+          <VoiceButton onPress={() => navigate("VoiceChat")}>
+            <VoiceButtonText>음성 모드</VoiceButtonText>
+          </VoiceButton>
         </ButtonContainer>
       </InputContainer>
     </Container>
   );
 }
-
-const Title = styled.Text`
-    color: white;
-    font-size: 25px;
-    font-weight: bold;
-    margin-top: 5%;
-    margin-left: 5%;
-`;
 
 const Container = styled.SafeAreaView`
   background-color: #1B0C5D;
@@ -134,7 +131,7 @@ const InputContainer = styled.View`
   align-items: center;
   padding: 16px;
   border-top-width: 1px;
-  border-top-color: #FFFFFF;
+  border-top-color: #333;
 `;
 
 const ButtonContainer = styled.View`
@@ -152,6 +149,17 @@ const SendButton = styled.TouchableOpacity`
 
 const SendButtonText = styled.Text`
   color: #000;
+  font-size: 16px;
+`;
+
+const VoiceButton = styled.TouchableOpacity`
+  background-color: #999;
+  padding: 12px 16px;
+  border-radius: 16px;
+`;
+
+const VoiceButtonText = styled.Text`
+  color: #fff;
   font-size: 16px;
 `;
 

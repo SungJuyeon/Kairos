@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { ImageBackground, Animated, View } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
-import Login from "./Login";
 
 export default function Home() {
     const ball1Y = useRef(new Animated.Value(-100)).current;
@@ -108,9 +107,6 @@ export default function Home() {
                         <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                         </CaptureButtonStyle>
-                        <LoginButtonStyle onPress={() => navigate('MyPage')}>
-                            <LoginButtonText>로그인 / 회원가입</LoginButtonText>
-                        </LoginButtonStyle>
                     </CaptureButtonContainer>
                 </AnimatedContainer>
             )}
@@ -163,23 +159,7 @@ const CaptureButtonStyle = styled.TouchableOpacity`
     margin-top: 20px;
 `;
 
-const LoginButtonStyle = styled.TouchableOpacity`
-    background-color: white;
-    width: 200px;
-    height: 60px;
-    border-radius: 10px;
-    padding: 20px 35px;
-    margin-top: 20px;
-    margin-right: 100px;
-`;
-
 const CaptureButtonText = styled.Text`
-    color: black;
-    font-size: 18px;
-    font-weight: bold;
-`;
-
-const LoginButtonText = styled.Text`
     color: black;
     font-size: 18px;
     font-weight: bold;

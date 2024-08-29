@@ -19,30 +19,30 @@ export default function App() {
     />
     <NavigationContainer>
       <BottomTab.Navigator
-          screenOptions={({ route }) => ({
-            headerShown: false,
-            tabBarStyle: {
-              backgroundColor: '#1B0C5D',
-              activeTintColor: '#FFFFFF',
-              inactiveTintColor: 'gray'
-            },
-            tabBarIcon: ({ color, size, focused }) => {
-              let iconName;
-              const iconColor = '#FFFFFF'
-        
-              if (route.name === 'Control') {
-                iconName = focused ? 'camera' : 'camera-outline';
-              } else if (route.name === 'MyPage') {
-                iconName = focused ? 'person' : 'person-outline';
-              } else if (route.name === 'Chat') {
-                iconName = focused ? 'chatbox' : 'chatbox-outline';
-              } else if (route.name === 'Highlight') {
-                iconName = focused ? 'star' : 'star-outline';
-              }
-              return <Ionicons name={iconName} size={size} color={iconColor} />;
-            },
-            tabBarLabel: () => null, // 탭 바 텍스트를 숨깁니다.
-          })}>
+                screenOptions={({ route }) => ({
+                  headerShown: false,
+                  tabBarStyle: {
+                    backgroundColor: '#1B0C5D',
+                    activeTintColor: '#FFFFFF',
+                    inactiveTintColor: 'gray'
+                  },
+                  tabBarIcon: ({ color, size, focused }) => {
+                    let iconName;
+                    const iconColor = '#FFFFFF'
+              
+                    if (route.name === 'Control') {
+                      iconName = focused ? 'camera' : 'camera-outline';
+                    } else if (route.name === 'MyPage') {
+                      iconName = focused ? 'person' : 'person-outline';
+                    } else if (route.name === 'Chat') {
+                      iconName = focused ? 'chatbox' : 'chatbox-outline';
+                    } else if (route.name === 'Highlight') {
+                      iconName = focused ? 'star' : 'star-outline';
+                    }
+                    return <Ionicons name={iconName} size={size} color={iconColor} />;
+                  },
+                  tabBarLabel: () => null, // 탭 바 텍스트를 숨깁니다.
+                })}>
         <BottomTab.Screen name="Control" component={ControlNavigator} />
         <BottomTab.Screen name="Chat" component={ChatNavigator} />
         <BottomTab.Screen name="Highlight" component={HighlightNavigator} />

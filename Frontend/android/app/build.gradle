@@ -85,11 +85,11 @@ android {
 
     namespace "com.expotest"
     defaultConfig {
-        applicationId 'com.project.herobot'
+        applicationId "com.expotest"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.0"
     }
     signingConfigs {
         debug {

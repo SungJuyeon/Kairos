@@ -62,12 +62,13 @@ async def wheel_control(direction):
     set_wheel_state(direction)
 
     while wheel_direction == direction:
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
 
     stop_wheel()
 
 
 def set_wheel_state(direction):
+    # 모터 방향 설정
     if direction == "forward":
         GPIO.output(WHEEL_PINS['IN1'], GPIO.HIGH)
         GPIO.output(WHEEL_PINS['IN2'], GPIO.LOW)
@@ -88,9 +89,9 @@ def set_wheel_state(direction):
         GPIO.output(WHEEL_PINS['IN2'], GPIO.LOW)
         GPIO.output(WHEEL_PINS['IN3'], GPIO.LOW)
         GPIO.output(WHEEL_PINS['IN4'], GPIO.HIGH)
-
-    pwm_A.ChangeDutyCycle(wheel_speed)
-    pwm_B.ChangeDutyCycle(wheel_speed)
+    # PWM을 사용하여 속도 조절
+    pwm_A.ChangeDutyCycle(wheel_speed)  # ENA 핀에 속도 적용
+    pwm_B.ChangeDutyCycle(wheel_speed)  # ENB 핀에 속도 적용
 
 
 async def set_speed(speed):
@@ -99,7 +100,6 @@ async def set_speed(speed):
     logging.info(f"wheel speed {wheel_speed}")
     if wheel_direction is not None:
         set_wheel_state(wheel_direction)  # 현재 방향에 속도 적용
-
 
 def stop_wheel():
     logging.info("Stopping motors")
@@ -144,18 +144,18 @@ def stop_actuator():
     for pin in ACTUATOR_PINS.values():
         GPIO.output(pin, GPIO.LOW)
 
-    logging.info("Actuator stopped")
+    logging.info("Motors stopped")
 
 
 async def send_distance(client):
     while True:
         try:
-            distance = await asyncio.to_thread(measure_distance)
+            distance = measure_distance()
             if distance is not None:
                 distance_message = json.dumps({"distance": distance})  # JSON 형식으로 전송
                 client.publish(MQTT_TOPIC_DISTANCE, distance_message)
-                logging.info(f"거리 발행: {distance}")
-            await asyncio.sleep(1)  # 전송 주기
+                # logging.info(f"거리 발행: {distance}")
+            await asyncio.sleep(0.1)  # 전송 주기
         except Exception as e:
             logging.error(f"Error in send_distance: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
@@ -196,7 +196,7 @@ async def generate_frames(client):
             frame_data = buffer.tobytes()
             client.publish(MQTT_TOPIC_VIDEO, frame_data)
             # logging.info("Sent a video frame")
-            await asyncio.sleep(1/24)  # 전송 주기 조정
+            await asyncio.sleep(0.1)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
@@ -220,24 +220,21 @@ async def on_connect():
 
 
 async def on_message(client, topic, payload, qos, properties):
-    try:
-        command = json.loads(payload.decode('utf-8'))
-        logging.info(f"Received command: {command}")
+    command = json.loads(payload.decode('utf-8'))
+    logging.info(f"Received command: {command}")
 
-        if command["command"] == "stop_wheel":
-            stop_wheel()
-        elif command["command"] == "stop_actuator":
-            stop_actuator()
-        elif command["command"] in ["forward", "back", "left", "right"]:
-            await wheel_control(command["command"])
-        elif command["command"] in ["up", "down"]:
-            await actuator_control(command["command"])
-        elif command["command"] == "set_speed":
-            await set_speed(command["speed"])  # 속도 조절 명령 처리
-        else:
-            logging.warning(f"Invalid command: {command}")
-    except Exception as e:
-        logging.error(f"Error processing message: {e}")
+    if command["command"] == "stop_wheel":
+        stop_wheel()
+    elif command["command"] == "stop_actuator":
+        stop_actuator()
+    elif command["command"] in ["forward", "back", "left", "right"]:
+        await wheel_control(command["command"])
+    elif command["command"] in ["up", "down"]:
+        await actuator_control(command["command"])
+    elif command["command"] == "set_speed":
+        await set_speed(command["speed"])  # 속도 조절 명령 처리
+    else:
+        logging.warning(f"Invalid command: {command}")
 
 
 async def on_disconnect():
@@ -258,7 +255,7 @@ async def lifespan():
     await on_connect()
 
     # 비동기 작업 시작
-    #asyncio.create_task(send_distance(client))
+    asyncio.create_task(send_distance(client))
     asyncio.create_task(generate_frames(client))
 
     yield
@@ -277,8 +274,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Program interrupted. Cleaning up...")
-    finally:
         GPIO.cleanup()
         cap.release()
         logging.info("Cleanup completed")

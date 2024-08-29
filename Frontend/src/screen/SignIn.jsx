@@ -8,7 +8,7 @@ export default function SignIn() {
     const { navigate } = useNavigation();
 
     const [password, setPassword] = useState('');
-    const [confirmPW, setConfirmPW] = useState('');
+    const [conformPW, setConformPW] = useState('');
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [nickname, setNickname] = useState('');
@@ -19,26 +19,26 @@ export default function SignIn() {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
-    
+
         try {
             const formData = new FormData();
             formData.append('username', username);
             formData.append('password', password);
             formData.append('email', email);
             formData.append('nickname', nickname);
-    
+
             if (selectedImage) {
                 formData.append('image', {
                     uri: selectedImage.startsWith('file://') ? selectedImage : `file://${selectedImage}`,
                     name: 'potoname', // 파일 이름 설정
                 });
             }
-    
+
             const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
                 body: formData,
             });
-    
+
             const data = await response.text();
             if (response.ok) {
                 Alert.alert('회원가입 성공', data);
@@ -53,19 +53,19 @@ export default function SignIn() {
 
     const uploadFile = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
         if (permissionResult.granted === false) {
             Alert.alert('사진 라이브러리에 접근할 수 없습니다.');
             return;
         }
-    
+
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
-    
+
         console.log('선택 결과:', result);
         if (result.canceled) {
             console.log('사용자에 의해 취소됨');
@@ -94,8 +94,8 @@ export default function SignIn() {
                     />
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
                     <StyledTextInput
-                        onChangeText={text => setConfirmPW(text)}
-                        value={confirmPW}
+                        onChangeText={text => setConformPW(text)}
+                        value={conformPW}
                         secureTextEntry={true}
                     />
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
