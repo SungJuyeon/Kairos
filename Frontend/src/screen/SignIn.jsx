@@ -1,83 +1,69 @@
-import React, { useState } from 'react';
-import { Text, Alert, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image, ScrollView } from "react-native";
+import styled from 'styled-components/native';
+import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import styled from 'styled-components/native'; // React Native의 경우
 
 export default function SignIn() {
     const { navigate } = useNavigation();
 
     const [password, setPassword] = useState('');
-    const [conformPW, setConformPW] = useState('');
+    const [confirmPW, setConfirmPW] = useState('');
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [nickname, setNickname] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
 
     const createMember = async () => {
-        if (password !== conformPW) {
+        if (password !== confirmPW) {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
 
         try {
             const formData = new FormData();
-            formData.append('data', JSON.stringify({
-                username: username,
-                password: password,
-                email: email,
-                nickname: nickname,
-            }));
+            const data = JSON.stringify({ username, password, email, nickname });
+            formData.append('data', data);
 
             if (selectedImage) {
-                const compressedImageUri = await compressImage(selectedImage);
-                console.log('Compressed Image URI:', compressedImageUri); // 압축된 이미지 URI 로그
-                formData.append('file', {
-                    uri: compressedImageUri,
-                    name: 'photoname.jpg', // 파일 이름 설정
-                    type: 'image/jpeg', // 파일 타입 설정
-                });
-            } else {
-                console.warn('No image selected');
+                const fileName = `${username}.png`; // 파일 이름을 username으로 설정
+                const fileType = 'image/png'; // MIME 타입을 image/png으로 설정
+
+                // Base64 데이터를 Blob 객체로 변환
+                const response = await fetch(selectedImage);
+                const blob = await response.blob();
+
+                // Blob 객체를 파일로 변환
+                const file = new File([blob], fileName, { type: fileType });
+
+                formData.append('file', file);
             }
 
             const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
                 headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'multipart/form-data', // Content-Type 설정
+                    // 'Content-Type': 'multipart/form-data', // FormData는 자동으로 Content-Type을 설정합니다.
                 },
                 body: formData,
             });
 
-            const data = await response.text();
+            const responseText = await response.text();
+            console.log('Response Status:', response.status);
+            console.log('Response Text:', responseText);
+
             if (response.ok) {
-                Alert.alert('회원가입 성공', data);
-                // 회원가입 성공 후의 추가 작업 (예: navigate)
+                Alert.alert('회원가입 성공', responseText);
             } else {
-                Alert.alert('회원가입 실패', data);
+                Alert.alert('회원가입 실패', responseText);
             }
+
         } catch (error) {
-            console.error('Error during fetch:', error);
+            console.error('Error:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
 
-    const compressImage = async (uri) => {
-        try {
-            const result = await ImageManipulator.manipulateAsync(
-                uri,
-                [{ resize: { width: 800 } }], // 최대 너비를 800으로 설정
-                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // JPEG 형식으로 압축
-            );
-            console.log('Compressed Image:', result); // 압축된 이미지 정보 로그
-            return result.uri;
-        } catch (error) {
-            console.error('Error compressing image:', error);
-            throw error; // 에러를 던져서 상위 함수에서 처리할 수 있게 함
-        }
-    };
+
 
     const uploadFile = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -122,8 +108,8 @@ export default function SignIn() {
                     />
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
                     <StyledTextInput
-                        onChangeText={text => setConformPW(text)}
-                        value={conformPW}
+                        onChangeText={text => setConfirmPW(text)}
+                        value={confirmPW}
                         secureTextEntry={true}
                     />
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
