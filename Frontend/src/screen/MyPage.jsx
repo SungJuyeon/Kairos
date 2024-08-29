@@ -1,5 +1,5 @@
 import React, { useContext }from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, Image } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, Image, ScrollView } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
@@ -13,6 +13,7 @@ export default function MyPage() {
 
     return (
         <Container>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Title>안녕하세요!</Title>
           <Image
             source={{ uri: `https://cdn.vectorstock.com/i/500p/53/42/user-member-avatar-face-profile-icon-vector-22965342.jpg` }}
@@ -27,6 +28,7 @@ export default function MyPage() {
           <LogoutButton onPress={() => logout()}>
             <LogoutButtonText>로그 아웃</LogoutButtonText>
           </LogoutButton>
+          </ScrollView>
         </Container>
     );
 }
