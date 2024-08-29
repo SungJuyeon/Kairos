@@ -309,7 +309,7 @@ async function convertBlobToBase64(blob) {
             </SpeedButtonContainer> */}
 
             <SliderContainer>
-                <SliderText>Speed: {speed.toFixed(1)}</SliderText>
+                <SliderText>{speed}</SliderText>
                 <StyledSlider
                     minimumValue={0}
                     maximumValue={10}
@@ -419,24 +419,24 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-right: 0px;
+    margin-right: 70px;
 `;
 
 const UpButtonContainer = styled.View`
     margin-bottom: 20px;
-    margin-left: 15px;
+    margin-left: 70px;
 `;
 
 const DirectionButtonContainer = styled.View`
     flex-direction: row;
     justify-content: space-between;
     margin-bottom: 20px;
-    width: 300px;
+    width: 200px;
 `;
 
 const DownButtonContainer = styled.View`
     margin-top: 0px;
-    margin-left: 15px;
+    margin-left: 70px;
 `;
 
 
@@ -563,7 +563,7 @@ const SliderContainer = styled.View`
 
 const SliderText = styled.Text`
     font-size: 20px;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
     color: #FFFFFF;
 `;
 

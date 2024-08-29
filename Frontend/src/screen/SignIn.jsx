@@ -15,7 +15,7 @@ export default function SignIn() {
     const [selectedImage, setSelectedImage] = useState(null); // 선택한 이미지 상태 추가
 
     const createMember = async () => {
-        if (password !== conformPW) {
+        if (password !== confirmPW) {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
