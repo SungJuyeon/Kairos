@@ -204,7 +204,7 @@ async def get_distance():
 frame_interval = 7  # 5 프레임마다 처리
 frame_counter = 0
 
-async def video_frame_generator(face_recognition=True, run_another_logic=False):
+async def video_frame_generator(face_recognition=True, draw_gesture=False):
     global frame_counter
     while True:
         try:
@@ -219,9 +219,8 @@ async def video_frame_generator(face_recognition=True, run_another_logic=False):
                 frame_counter += 1
 
             # B 로직을 여기에 추가할 수 있습니다.
-            if run_another_logic:
-                # 예를 들어, 감정 분석 로직을 여기에 추가할 수 있습니다.
-                pass
+            if draw_gesture:
+
 
 
 
