@@ -12,6 +12,8 @@ from fastapi.templating import Jinja2Templates
 from gmqtt import Client as MQTTClient
 import numpy as np
 from Backend_Logic.hand_gesture import HandGestureRecognizer
+from Backend_Logic.who_emotion_class import FaceRecognition
+from gmqtt import Client as MQTTClient
 import time
 
 # Logging 설정
@@ -27,7 +29,7 @@ voice_data = None
 hand_gesture = True
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
@@ -36,16 +38,20 @@ MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="fastapi_client")
 
+# 얼굴 인식기 인스턴스 생성
+face_recognition = FaceRecognition(
+    registered_faces_folder='faces',
+    model_prototxt='models/deploy.prototxt',
+    model_weights='models/res10_300x300_ssd_iter_140000.caffemodel'
+)
+
 # 손동작 인식기 인스턴스 생성
 try:
-    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')  # 확장자 변경
+    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')
 except Exception as e:
     logger.error(f"모델 로드 중 오류 발생: {e}")
 
-# 마지막 명령 발행 시간 초기화
-last_command_time = 0
-command_cooldown = 8  # 5초 쿨다운
-
+# MQTT 연결 및 메시지 처리
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logger.info("연결: MQTT Broker")
@@ -55,9 +61,12 @@ async def on_connect():
 
 
 async def on_message(client, topic, payload, qos, properties):
-    # logger.info(f"Message received on topic {topic}: {len(payload)} bytes")
     await process_message(topic, payload)
 
+
+# 마지막 명령 발행 시간 초기화
+last_command_time = 0
+command_cooldown = 8  # 8초 쿨다운
 
 async def gesture_action(action):
     global last_command_time  # 마지막 명령 발행 시간 사용
@@ -67,7 +76,7 @@ async def gesture_action(action):
     # 쿨다운 체크
     if current_time - last_command_time < command_cooldown:
         logger.info("Command is on cooldown. Ignoring action.")
-        return  # 5초가 지나지 않았으면 명령 무시
+        return  # cooldown 지나지 않았으면 명령 무시
 
     if action == 'come':
         command = json.dumps({"command": "forward"})
@@ -101,7 +110,7 @@ async def gesture_action(action):
 
 
 async def process_message(topic, payload):
-    global voice_data, distance_data
+    global voice_data, distance_data, video_frames_queue
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:

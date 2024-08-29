@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FlatList, Text, View } from "react-native";
+import { FlatList, Text, View, ScrollView } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { Calendar } from 'react-native-calendars';
@@ -38,6 +38,7 @@ export default function ScheduleManage() {
 
     return (
         <Container>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Title>일정 관리</Title>
             <Calendar
                 onDayPress={(day) => {
@@ -80,6 +81,7 @@ export default function ScheduleManage() {
                     </ScheduleItem>
                 )}
             />
+            </ScrollView>
         </Container>
     );
 };

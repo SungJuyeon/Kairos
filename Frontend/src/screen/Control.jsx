@@ -5,6 +5,8 @@ import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 
+import Slider from '@react-native-community/slider';
+
 
     // 스타일 컴포넌트를 위함
     const { width, height } = Dimensions.get('window');
@@ -22,6 +24,7 @@ export default function Control() {
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
 
 
+    const [speed, setSpeed] = useState(1); // 기본 속도
 
 
 
@@ -218,7 +221,6 @@ async function downloadImage() {
     }
 }
 
-
 const openGallery = async () => {
     // 권한 요청
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -232,9 +234,6 @@ const openGallery = async () => {
         Alert.alert('권한이 필요합니다!', '갤러리에 접근할 수 있는 권한이 필요합니다.');
     }
 };
-
-
-
 
 async function convertBlobToBase64(blob) {
     return new Promise((resolve, reject) => {
@@ -299,15 +298,30 @@ async function convertBlobToBase64(blob) {
 
             <ControlPadContainer>
 
-            <SpeedButtonContainer>
+            {/* <SpeedButtonContainer>
                 <ValueText>Speed: {value}</ValueText>
                 <SpeedButton onPress={increment}>
                 <SpeedButtonText>UP</SpeedButtonText>
                 </SpeedButton>
                 <SpeedButton onPress={decrement}>
                 <SpeedButtonText>DOWN</SpeedButtonText>
-                </SpeedButton>
-            </SpeedButtonContainer>
+                </SpeedButton>    
+            </SpeedButtonContainer> */}
+
+            <SliderContainer>
+                <SliderText>Speed: {speed.toFixed(1)}</SliderText>
+                <StyledSlider
+                    minimumValue={0}
+                    maximumValue={10}
+                    step={1}
+                    value={speed}
+                    onValueChange={setSpeed}
+                    minimumTrackTintColor="#1fb28a"
+                    maximumTrackTintColor="#d3d3d3"
+                    thumbTintColor="#f5fcff"
+                />
+            </SliderContainer>
+
 
             <ButtonContainer>
                 <UpButtonContainer>
@@ -405,7 +419,7 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-left: 10px;
+    margin-right: 0px;
 `;
 
 const UpButtonContainer = styled.View`
@@ -538,6 +552,28 @@ const StyledImage = styled.Image`
     width: 100%;
     height: 100%;
 `;
+
+const SliderContainer = styled.View`
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    margin-left: 0px;
+`;
+
+const SliderText = styled.Text`
+    font-size: 20px;
+    margin-bottom: 40px;
+    color: #FFFFFF;
+`;
+
+const StyledSlider = styled(Slider)`
+    width: 120px; /* 너비를 좁게 설정 */
+    height: 100px; /* 높이 설정 */
+    transform: rotate(-90deg); /* 슬라이더를 90도 회전 */
+    margin-bottom: 20px;
+`;
+
 
 // const ImageContainer = styled.View`
 //     width: 90%;  // 이미지보다 작은 너비

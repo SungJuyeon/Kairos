@@ -42,11 +42,68 @@ def detect_faces(frame):
 
     return faces
 
+# 얼굴 인식 및 탐색 함수
+def recognize_faces(frame, faces):
+    global last_detected_nickname, last_detected_distance, last_face_position
+
+    if len(faces) == 0:
+        last_detected_nickname = "unknown"
+        last_detected_distance = None
+        return
+
+    for (x, y, w, h) in faces:
+        face_image = frame[y:y + h, x:x + w]
+
+        # 얼굴 인식
+        try:
+            result = DeepFace.find(face_image, db_path='faces', model_name='Facenet', enforce_detection=False)
+
+            # 유사도 기준 설정
+            threshold = 0.4  # 유사도 기준 거리
+            filtered_results = [res for res in result if res['distance'].values[0] < threshold]
+
+            if len(filtered_results) > 0:
+                # 등록된 얼굴이 발견된 경우
+                matched_face_path = filtered_results[0]['identity'].values[0]  # 첫 번째 열에서 경로 가져오기
+                last_detected_distance = filtered_results[0]['distance'].values[0]  # 첫 번째 열에서 거리 가져오기
+                last_detected_nickname = get_nickname_from_filename(matched_face_path)
+                last_face_position = (x, y, w, h)  # 현재 얼굴 위치 저장
+            else:
+                last_detected_nickname = "unknown"
+                last_detected_distance = None
+        except Exception as e:
+            print("Error in face recognition:", e)
+
+# 얼굴 그리기 함수
+def draw_faces(frame):
+    global last_detected_nickname, last_detected_distance, last_face_position
+
+    # 인식된 얼굴 그리기
+    if last_face_position is not None:
+        (x, y, w, h) = last_face_position
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        if last_detected_distance is not None:
+            cv2.putText(frame, f"Detected: {last_detected_nickname} ({last_detected_distance:.2f})",
+                        (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        else:
+            cv2.putText(frame, f"Detected: {last_detected_nickname}",
+                        (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+    # 현재 프레임에서 얼굴 그리기
+    for (x, y, w, h) in faces:
+        if (x, y, w, h) != last_face_position:  # 마지막 인식된 얼굴과 다르면 빨간색 표시
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
 # 등록된 얼굴 로드
 registered_faces = load_registered_faces('faces')  # 'faces' 폴더 경로
 
 # 비디오 스트리밍 시작
 cap = cv2.VideoCapture(0)  # 0은 기본 카메라를 의미
+
+frame_counter = 0
+last_detected_nickname = "unknown"  # 이전에 인식된 이름
+last_detected_distance = None  # 이전에 인식된 유사도
+last_face_position = None  # 이전에 인식된 얼굴 위치
 
 while True:
     ret, frame = cap.read()
@@ -55,34 +112,14 @@ while True:
 
     faces = detect_faces(frame)
 
-    for (x, y, w, h) in faces:
-        face_image = frame[y:y + h, x:x + w]
+    if frame_counter % 7 == 0:  # 7프레임마다 얼굴 인식 수행
+        recognize_faces(frame, faces)
 
-        # 얼굴 인식
-        try:
-            result = DeepFace.find(face_image, db_path='faces', model_name='VGG-Face', enforce_detection=False)
-
-            # 유사도 기준 설정
-            threshold = 0.4  # 유사도 기준 거리
-            filtered_results = [res for res in result if res['distance'].values[0] < threshold]
-
-            print("Filtered results:", filtered_results)  # 필터링된 결과 출력
-
-            if len(filtered_results) > 0:
-                # 등록된 얼굴이 발견된 경우
-                matched_face_path = filtered_results[0]['identity'].values[0]  # 첫 번째 열에서 경로 가져오기
-                distance = filtered_results[0]['distance'].values[0]  # 첫 번째 열에서 거리 가져오기
-                nickname = get_nickname_from_filename(matched_face_path)
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, f"Detected: {nickname} ({distance:.2f})", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
-                            (0, 255, 0), 2)
-            else:
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-                cv2.putText(frame, "unknown", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-        except Exception as e:
-            print("Error in face recognition:", e)
+    draw_faces(frame)  # 얼굴 그리기 호출
 
     cv2.imshow('Video Stream', frame)
+
+    frame_counter += 1
 
     # 'q'를 눌러 종료
     if cv2.waitKey(1) & 0xFF == ord('q'):
