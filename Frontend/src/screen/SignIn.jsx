@@ -3,7 +3,6 @@ import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image, ScrollView } 
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function SignIn() {
     const { navigate } = useNavigation();
@@ -23,45 +22,48 @@ export default function SignIn() {
 
         try {
             const formData = new FormData();
-            formData.append('username', username);
-            formData.append('password', password);
-            formData.append('email', email);
-            formData.append('nickname', nickname);
+            const data = JSON.stringify({ username, password, email, nickname });
+            formData.append('data', data);
 
             if (selectedImage) {
-                const compressedImage = await compressImage(selectedImage);
-                formData.append('file', {
-                    uri: compressedImage.uri,
-                    name: 'photoname.jpg',
-                    type: 'image/jpeg',
-                });
+                const fileName = `${username}.png`; // 파일 이름을 username으로 설정
+                const fileType = 'image/png'; // MIME 타입을 image/png으로 설정
+
+                // Base64 데이터를 Blob 객체로 변환
+                const response = await fetch(selectedImage);
+                const blob = await response.blob();
+
+                // Blob 객체를 파일로 변환
+                const file = new File([blob], fileName, { type: fileType });
+
+                formData.append('file', file);
             }
 
             const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
+                headers: {
+                    // 'Content-Type': 'multipart/form-data', // FormData는 자동으로 Content-Type을 설정합니다.
+                },
                 body: formData,
             });
 
-            const data = await response.text();
+            const responseText = await response.text();
+            console.log('Response Status:', response.status);
+            console.log('Response Text:', responseText);
+
             if (response.ok) {
-                Alert.alert('회원가입 성공', data);
+                Alert.alert('회원가입 성공', responseText);
             } else {
-                Alert.alert('회원가입 실패', data);
+                Alert.alert('회원가입 실패', responseText);
             }
+
         } catch (error) {
-            console.error(error);
+            console.error('Error:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
 
-    const compressImage = async (uri) => {
-        const result = await ImageManipulator.manipulateAsync(
-            uri,
-            [{ resize: { width: 800 } }], // 최대 너비를 800으로 설정
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // JPEG 형식으로 압축
-        );
-        return result;
-    };
+
 
     const uploadFile = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
