@@ -26,7 +26,7 @@ public class JoinService {
         String nickname = joinDTO.getNickname();
         Boolean isExist = userRepository.existsByUsername(username);
         Boolean isExistN = userRepository.existsByNickname(nickname);
-        MultipartFile photoname = joinDTO.getPhotoname();
+        byte[] photoname = joinDTO.getPhotoname();
 
         if (isExist) {  //이미 존재하는 login id
             throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
@@ -43,7 +43,7 @@ public class JoinService {
 
         user.setEmail(email);
         user.setNickname(nickname);
-        user.setPhotoname(photoname.getBytes());  // 바이트 배열 설정
+        user.setPhotoname(photoname);  // 바이트 배열 설정
 
         userRepository.save(user);
     }

@@ -10,5 +10,5 @@ public class JoinDTO {
     private String password;
     private String email;
     private String nickname;
-    private MultipartFile photoname; // 파일 데이터
+    private byte[] photoname; // 파일 데이터
 }
