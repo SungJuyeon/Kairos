@@ -20,6 +20,7 @@
     "expo": "~51.0.19",
     "expo-av": "~14.0.7",
     "expo-file-system": "~17.0.1",
+    "expo-image-picker": "^15.0.7",
     "expo-media-library": "^16.0.4",
     "expo-speech": "^12.0.2",
     "expo-status-bar": "~1.12.1",
@@ -37,5 +38,6 @@
   "devDependencies": {
     "@babel/core": "^7.20.0"
   },
-  "private": true
+  "private": true,
+  "proxy": "http://localhost:8080"
 }
