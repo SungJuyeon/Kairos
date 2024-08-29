@@ -65,7 +65,7 @@ class FaceRecognition:
             face_image = frame[y:y + h, x:x + w]
 
             try:
-                result = DeepFace.find(face_image, db_path='faces', model_name='Facenet', enforce_detection=False)
+                result = DeepFace.find(face_image, db_path='faces', model_name='VGG-Face', enforce_detection=False)
                 threshold = 0.4
                 filtered_results = [res for res in result if res['distance'].values[0] < threshold]
 
