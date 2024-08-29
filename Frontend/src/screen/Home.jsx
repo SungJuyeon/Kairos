@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ImageBackground, Animated, View } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
+import Login from "./Login";
 
 export default function Home() {
     const ball1Y = useRef(new Animated.Value(-100)).current;
@@ -10,7 +11,7 @@ export default function Home() {
     const fadeInOpacity = useRef(new Animated.Value(0)).current;
     const welcomeOpacity = useRef(new Animated.Value(0)).current; // 추가된 코드
     const welcomeTranslateX = useRef(new Animated.Value(-100)).current; // 추가된 코드
-    const backgroundImage = { uri: '../assets/Home.jpg' };
+    const backgroundImage = { uri: 'https://images.unsplash.com/photo-1541873676-a18131494184?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8NHx8fGVufDB8fHx8fA%3D%3D' };
     const { navigate } = useNavigation();
     const circleOpacity = useRef(new Animated.Value(0)).current;
     const circleOpacity2 = useRef(new Animated.Value(0)).current;
@@ -107,6 +108,9 @@ export default function Home() {
                         <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                         </CaptureButtonStyle>
+                        <LoginButtonStyle onPress={() => navigate('MyPage')}>
+                            <LoginButtonText>로그인 / 회원가입</LoginButtonText>
+                        </LoginButtonStyle>
                     </CaptureButtonContainer>
                 </AnimatedContainer>
             )}
@@ -159,7 +163,23 @@ const CaptureButtonStyle = styled.TouchableOpacity`
     margin-top: 20px;
 `;
 
+const LoginButtonStyle = styled.TouchableOpacity`
+    background-color: white;
+    width: 200px;
+    height: 60px;
+    border-radius: 10px;
+    padding: 20px 35px;
+    margin-top: 20px;
+    margin-right: 100px;
+`;
+
 const CaptureButtonText = styled.Text`
+    color: black;
+    font-size: 18px;
+    font-weight: bold;
+`;
+
+const LoginButtonText = styled.Text`
     color: black;
     font-size: 18px;
     font-weight: bold;

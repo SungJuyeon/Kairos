@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HighlightScreen from "./Highlight";
 import EmotionScreen from "./Emotion";
+import RepositoryScreen from "./Repository";
 import React from "react";
 
 const HighlightStack = createNativeStackNavigator();
@@ -18,15 +19,15 @@ export default function HighlightNavigator() {
     }}
     >
         <HighlightStack.Screen 
-          name="Highlight" 
-          component={HighlightScreen} 
-          options={{ title: '' }} // 타이틀을 직접 설정
+          name="Emotion" 
+          component={EmotionScreen} 
+          options={{ title: "" }} // 타이틀을 직접 설정
         />
 
         <HighlightStack.Screen 
-          name="Emotion" 
-          component={EmotionScreen} 
-          options={{ title: "Today's Highlight" }} // 타이틀을 직접 설정
+          name="Repository" 
+          component={RepositoryScreen} 
+          options={{ title: "" }} // 타이틀을 직접 설정
         />
 
     </HighlightStack.Navigator>

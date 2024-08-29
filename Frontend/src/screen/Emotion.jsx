@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
-import CameraRoll from '@react-native-community/cameraroll';
 import styled from 'styled-components/native';
-import * as FileSystem from 'expo-file-system';
+import { useNavigation } from "@react-navigation/native";
 
 
     // 스타일 컴포넌트를 위함
@@ -13,26 +12,28 @@ import * as FileSystem from 'expo-file-system';
 
 
 export default function Control() {
-    const [isUpPressed, setIsUpPressed] = useState(false);
-    const [isLeftPressed, setIsLeftPressed] = useState(false);
-    const [isRightPressed, setIsRightPressed] = useState(false);
-    const [isDownPressed, setIsDownPressed] = useState(false);
-    const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
-    const [isOn, setIsOn] = useState(false); // on/off 상태 추가
+    const { navigate } = useNavigation();
 
-    const [mostEmotion, setMostEmotion] = useState("Haapy");
+    const [mostEmotion, setMostEmotion] = useState("Happy");
     
-    //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
-    //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
-    //const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
+
     const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
 
     const imageURL = '${BASE_URL}/video_feed';
 
     return (
         <Container>
-
+            
+            <RowContainer>
             <Title>현재 나의 감정</Title>
+
+            <RepositoryButton onPress={() => navigate("Repository")}>
+                <RepositoryButtonText>
+                    저장소
+                </RepositoryButtonText>
+            </RepositoryButton>
+
+            </RowContainer>
 
                 <ImageContainer>
                     <StyledImage
@@ -70,6 +71,13 @@ const Container = styled.SafeAreaView`
     align-items: center;
 `;
 
+const RowContainer = styled.SafeAreaView`
+    background-color: #1B0C5D;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+`;
+
 const BorderContainer = styled.View`
     border: 1px solid #FFFFFF;
     width: ${width * 0.90}px;
@@ -91,7 +99,7 @@ const StyledImage = styled.Image`
     height: 100%;
 `;
 
-const Button = styled.TouchableOpacity`
+const RepositoryButton = styled.TouchableOpacity`
     width: ${scale * 100}px; 
     height: ${scale * 50}px;
     justify-content: center;
@@ -102,7 +110,7 @@ const Button = styled.TouchableOpacity`
     margin-left: 15px;
 `;
 
-const OnOffButtonText = styled.Text`
+const RepositoryButtonText = styled.Text`
     color: white;
     font-size: ${scale * 18}px;
     font-weight: bold;

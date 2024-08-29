@@ -49,4 +49,4 @@ model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accur
 model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=30, batch_size=64)
 
 # 학습된 모델 저장
-model.save('emotion_detection_model.h5')
+model.save('emotion_detection_model')
