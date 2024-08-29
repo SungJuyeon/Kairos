@@ -1,4 +1,3 @@
-# app.py
 import asyncio
 import json
 import logging
@@ -13,7 +12,6 @@ from gmqtt import Client as MQTTClient
 import numpy as np
 from Backend_Logic.hand_gesture import HandGestureRecognizer
 from Backend_Logic.who_emotion_class import FaceRecognition
-from gmqtt import Client as MQTTClient
 import time
 
 # Logging 설정
@@ -51,6 +49,7 @@ try:
 except Exception as e:
     logger.error(f"모델 로드 중 오류 발생: {e}")
 
+
 # MQTT 연결 및 메시지 처리
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
@@ -68,9 +67,9 @@ async def on_message(client, topic, payload, qos, properties):
 last_command_time = 0
 command_cooldown = 8  # 8초 쿨다운
 
+
 async def gesture_action(action):
     global last_command_time  # 마지막 명령 발행 시간 사용
-
     current_time = time.time()  # 현재 시간 가져오기
 
     # 쿨다운 체크
@@ -119,27 +118,14 @@ async def process_message(topic, payload):
             await video_frames_queue.get()  # 오래된 프레임 삭제
 
         img_encode = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
-        img_gesture = gesture_recognizer.recognize_gesture(img_encode)
-        action = gesture_recognizer.this_action
-
-        logger.info(f"Recognized action: {action}")  # 인식된 동작 로그
-
-        if action != '?':
-            await gesture_action(action)  # 동작에 따라 명령을 발행
-            await video_frames_queue.put(img_gesture)
-            return
-        await video_frames_queue.put(img_encode)
-        # logger.info(f"Video frames count: {video_frames_queue.qsize()}")
-        return
+        await video_frames_queue.put(img_encode)  # 프레임을 큐에 추가
 
     # 다른 데이터 유형 처리
     try:
         message = json.loads(payload.decode('utf-8'))  # JSON 디코딩
-        # logger.info(f"Decoded message: {message}")
 
         if topic == MQTT_TOPIC_DISTANCE:
             distance_data = message["distance"]
-            #logger.info(f"Received distance data: {distance_data}")
 
         elif topic == MQTT_TOPIC_COMMAND:
             voice_data = message["audio"]
@@ -183,17 +169,13 @@ async def read_index(request: Request):
 @app.post("/move/{direction}")
 async def move(direction: str):
     logger.info(f"Attempting to move {direction}")
-
     command = json.dumps({"command": direction})
     client.publish(MQTT_TOPIC_COMMAND, command)
-
     logger.info(f"Command sent: {command}")
 
 
 # 상태 변수 추가
 current_speed = 100  # 현재 속도 초기화
-
-
 @app.post("/speed/{action}")
 async def speed(action: str):
     global current_speed
@@ -218,58 +200,52 @@ async def get_distance():
     return {"distance": distance_data}
 
 
-async def video_frame_generator():
+# 얼굴 인식 비디오 스트림 엔드포인트 추가
+frame_interval = 7  # 5 프레임마다 처리
+frame_counter = 0
+
+async def video_frame_generator(face_recognition=True, run_another_logic=False):
+    global frame_counter
     while True:
         try:
-            img = await video_frames_queue.get()
-            _, jpeg = cv2.imencode('.jpg', img)
+            frame = await video_frames_queue.get()
 
+            if face_recognition:
+                faces = face_recognition.detect_faces(frame)
+                if frame_counter % frame_interval == 0:
+                    face_recognition.recognize_faces(frame, faces)
+
+                face_recognition.draw_faces(frame, faces)
+                frame_counter += 1
+
+            # B 로직을 여기에 추가할 수 있습니다.
+            if run_another_logic:
+                # 예를 들어, 감정 분석 로직을 여기에 추가할 수 있습니다.
+                pass
+
+
+
+            _, jpeg = cv2.imencode('.jpg', frame)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-            video_frames_queue.task_done()  # 작업 완료 표시
         except Exception as e:
-            logger.error(f"Error while sending video frame: {e}")
+            logger.error(f"Error processing video frame: {e}")
             await asyncio.sleep(0.1)
 
 
-@app.get("/video_feed")
-async def get_video_frame():
-    try:
-        return StreamingResponse(video_frame_generator(), media_type='multipart/x-mixed-replace; boundary=frame')
-    except Exception as e:
-        logger.error(f"Error in get_video_frame: {e}")
-        return HTMLResponse(content="Error in video stream", status_code=500)
 
 
-@app.post("/set_hand_gesture/{state}")
-async def set_hand_gesture(state: str):
-    global hand_gesture
-    if state.lower() == "on":
-        hand_gesture = True
-        return {"message": "Hand gesture mode enabled"}
-    elif state.lower() == "off":
-        hand_gesture = False
-        return {"message": "Hand gesture mode disabled"}
-    else:
-        return {"error": "Invalid state"}, 400
 
 
-async def voice_data_generator():
-    while True:
-        if voice_data:
-            yield voice_data.encode('utf-8')
-        await asyncio.sleep(0.1)
 
 
-@app.get("/get_voice_data")
-async def get_voice_data():
-    return StreamingResponse(voice_data_generator(), media_type="application/octet-stream")
+
+
+
 
 
 async def run_fastapi():
-    config = uvicorn.Config(app, host='0.0.0.0', port=8000,
-                            ssl_keyfile='mykey.key',  # SSL 개인 키 파일 경로
-                            ssl_certfile='mycert.crt')
+    config = uvicorn.Config(app, host='0.0.0.0', port=8000)
     server = uvicorn.Server(config)
     await server.serve()
 

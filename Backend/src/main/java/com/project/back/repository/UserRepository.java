@@ -7,7 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<UserEntity,Long> {
     Boolean existsByUsername(String username);  //회원가입 시 username 여부 확인
+    Boolean existsByNickname(String nickname);
 
     UserEntity findByUsername(String username); //DB에서 회원을 조회
     UserEntity findByEmail(String email);
+
+    byte[] findImageByUsername(String username);
 }

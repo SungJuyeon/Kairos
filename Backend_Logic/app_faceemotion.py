@@ -26,21 +26,24 @@ video_frames_queue = asyncio.Queue()  # 비디오 프레임 큐
 voice_data = None
 hand_gesture = True
 
+
+
+# MQTT 설정
+MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소
+MQTT_PORT = 1883
+MQTT_TOPIC_COMMAND = "robot/commands"
+MQTT_TOPIC_DISTANCE = "robot/distance"
+MQTT_TOPIC_VIDEO = "robot/video"
+MQTT_TOPIC_AUDIO = "robot/audio"
+
+client = MQTTClient(client_id="fastapi_client")
+
 # 얼굴 인식기 인스턴스 생성
 face_recognition = FaceRecognition(
     registered_faces_folder='faces',
     model_prototxt='models/deploy.prototxt',
     model_weights='models/res10_300x300_ssd_iter_140000.caffemodel'
 )
-
-# MQTT 설정
-MQTT_BROKER = "3.27.221.93"
-MQTT_PORT = 1883
-MQTT_TOPIC_COMMAND = "robot/commands"
-MQTT_TOPIC_DISTANCE = "robot/distance"
-MQTT_TOPIC_VIDEO = "robot/video"
-
-client = MQTTClient(client_id="fastapi_client")
 
 # 손동작 인식기 인스턴스 생성
 try:
@@ -56,10 +59,56 @@ async def on_connect():
     client.subscribe(MQTT_TOPIC_VIDEO)
     logger.info("구독 완료")
 
+
 async def on_message(client, topic, payload, qos, properties):
     await process_message(topic, payload)
 
-# 비디오 프레임 큐에 프레임 추가
+
+# 마지막 명령 발행 시간 초기화
+last_command_time = 0
+command_cooldown = 8  # 8초 쿨다운
+
+async def gesture_action(action):
+    global last_command_time  # 마지막 명령 발행 시간 사용
+
+    current_time = time.time()  # 현재 시간 가져오기
+
+    # 쿨다운 체크
+    if current_time - last_command_time < command_cooldown:
+        logger.info("Command is on cooldown. Ignoring action.")
+        return  # cooldown 지나지 않았으면 명령 무시
+
+    if action == 'come':
+        command = json.dumps({"command": "forward"})
+        client.publish(MQTT_TOPIC_COMMAND, command)
+        logger.info("Command sent: forward")
+        last_command_time = current_time  # 명령 발행 시간 기록
+        while True:
+            if distance_data is not None and distance_data < 10:
+                command = json.dumps({"command": "stop"})
+                client.publish(MQTT_TOPIC_COMMAND, command)
+                break
+            await asyncio.sleep(0.1)  # 0.1초 대기하여 CPU 사용량을 줄임
+
+    elif action == 'spin':
+        command = json.dumps({"command": "right"})
+        client.publish(MQTT_TOPIC_COMMAND, command)
+        logger.info("Command sent: right")
+        last_command_time = current_time  # 명령 발행 시간 기록
+        await asyncio.sleep(2)
+        command = json.dumps({"command": "stop"})
+        client.publish(MQTT_TOPIC_COMMAND, command)
+
+    elif action == 'away':
+        command = json.dumps({"command": "back"})
+        client.publish(MQTT_TOPIC_COMMAND, command)
+        logger.info("Command sent: back")
+        last_command_time = current_time  # 명령 발행 시간 기록
+        await asyncio.sleep(2)
+        command = json.dumps({"command": "stop"})
+        client.publish(MQTT_TOPIC_COMMAND, command)
+
+
 async def process_message(topic, payload):
     global video_frames_queue
 

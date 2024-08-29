@@ -5,6 +5,7 @@ package com.project.back.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Entity
 @Data
@@ -25,5 +26,5 @@ public class UserEntity {
     private String nickname;
 
     @Lob
-    private byte[] potoname; // 프로필 이미지 파일 데이터
+    private byte[] photoname; // 프로필 이미지 파일 데이터
 }
