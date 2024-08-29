@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
-import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 
 import Slider from '@react-native-community/slider';
@@ -24,7 +23,8 @@ export default function Control() {
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
 
 
-    const [speed, setSpeed] = useState(1); // 기본 속도
+    const [speed, setSpeed] = useState(5); // 기본 속도
+    const [prevSpeed, setPrevSpeed] = useState(5); // 이전 속도 저장
 
 
 
@@ -257,6 +257,24 @@ async function convertBlobToBase64(blob) {
         setIsOn(!isOn);
     };
 
+
+    useEffect(() => {
+        const updateSpeed = async () => {
+          if (speed > prevSpeed) {
+            await fetch(`${BASE_URL}/speed/up`, { method: 'POST' });
+          } else if (speed < prevSpeed) {
+            await fetch(`${BASE_URL}/speed/down`, { method: 'POST' });
+          }
+          setPrevSpeed(speed); // 현재 속도를 이전 속도로 업데이트
+        };
+    
+        updateSpeed();
+      }, [speed]);
+
+
+
+
+
     return (
         <Container>
 
@@ -309,7 +327,7 @@ async function convertBlobToBase64(blob) {
             </SpeedButtonContainer> */}
 
             <SliderContainer>
-                <SliderText>Speed: {speed.toFixed(1)}</SliderText>
+                <SliderText>{speed}</SliderText>
                 <StyledSlider
                     minimumValue={0}
                     maximumValue={10}
@@ -419,24 +437,24 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-right: 0px;
+    margin-right: 70px;
 `;
 
 const UpButtonContainer = styled.View`
     margin-bottom: 20px;
-    margin-left: 15px;
+    margin-left: 70px;
 `;
 
 const DirectionButtonContainer = styled.View`
     flex-direction: row;
     justify-content: space-between;
     margin-bottom: 20px;
-    width: 300px;
+    width: 200px;
 `;
 
 const DownButtonContainer = styled.View`
     margin-top: 0px;
-    margin-left: 15px;
+    margin-left: 70px;
 `;
 
 
@@ -563,7 +581,7 @@ const SliderContainer = styled.View`
 
 const SliderText = styled.Text`
     font-size: 20px;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
     color: #FFFFFF;
 `;
 
