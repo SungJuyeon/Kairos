@@ -14,7 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 export default function Control() {
     const { navigate } = useNavigation();
 
-    const [mostEmotion, setMostEmotion] = useState("Happy");
+    const [mostEmotion, setMostEmotion] = useState("Haapy");
     
 
     const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL

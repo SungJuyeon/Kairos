@@ -12,54 +12,8 @@ return
 
 
 
-# 얼굴 인식 비디오 스트림 엔드포인트 추가
-frame_interval = 7  # 5 프레임마다 처리
-frame_counter = 0
-
-async def face_video_frame_generator():
-    global frame_counter
-    while True:
-        try:
-            frame = await video_frames_queue.get()
-
-            faces = face_recognition.detect_faces(frame)
-
-            if frame_counter % frame_interval == 0:
-                face_recognition.recognize_faces(frame, faces)
-
-            face_recognition.draw_faces(frame, faces)
-            frame_counter += 1
-
-            _, jpeg = cv2.imencode('.jpg', frame)
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-        except Exception as e:
-            logger.error(f"Error processing video frame: {e}")
-            await asyncio.sleep(0.1)
 
 
-
-
-
-
-
-async def video_frame_generator():
-    while True:
-        try:
-            img = await video_frames_queue.get()
-            _, jpeg = cv2.imencode('.jpg', img)
-
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-            video_frames_queue.task_done()  # 작업 완료 표시
-        except Exception as e:
-            logger.error(f"Error while sending video frame: {e}")
-            await asyncio.sleep(0.1)
-
-
-@app.get("/video_feed/{run_face_recognition}/{run_another_logic}")
-async def get_video_feed(run_face_recognition: bool = True, run_another_logic: bool = True):
-    return StreamingResponse(video_frame_generator(), media_type='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.post("/set_hand_gesture/{state}")
@@ -73,6 +27,12 @@ async def set_hand_gesture(state: str):
         return {"message": "Hand gesture mode disabled"}
     else:
         return {"error": "Invalid state"}, 400
+
+
+
+
+
+
 
 
 async def voice_data_generator():
