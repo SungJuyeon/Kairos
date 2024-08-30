@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ControlScreen from "./Control";
 import HomeScreen from "./Home";
 import SmartHomeScreen from "./SmartHome";
+import Login from "./Login";
 import React from "react";
 
 const ControlStack = createNativeStackNavigator();
