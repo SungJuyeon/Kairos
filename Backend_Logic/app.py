@@ -12,9 +12,6 @@ from fastapi.templating import Jinja2Templates
 from gmqtt import Client as MQTTClient
 import numpy as np
 from Backend_Logic.hand_gesture import HandGestureRecognizer
-from Backend_Logic.who_emotion_class import FaceRecognition
-from gmqtt import Client as MQTTClient
-import time
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -29,7 +26,7 @@ voice_data = None
 hand_gesture = True
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소
+MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
@@ -38,20 +35,13 @@ MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="fastapi_client")
 
-# 얼굴 인식기 인스턴스 생성
-face_recognition = FaceRecognition(
-    registered_faces_folder='faces',
-    model_prototxt='models/deploy.prototxt',
-    model_weights='models/res10_300x300_ssd_iter_140000.caffemodel'
-)
-
 # 손동작 인식기 인스턴스 생성
 try:
-    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')
+    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')  # 확장자 변경
 except Exception as e:
     logger.error(f"모델 로드 중 오류 발생: {e}")
 
-# MQTT 연결 및 메시지 처리
+
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logger.info("연결: MQTT Broker")
@@ -61,75 +51,22 @@ async def on_connect():
 
 
 async def on_message(client, topic, payload, qos, properties):
+    # logger.info(f"Message received on topic {topic}: {len(payload)} bytes")
     await process_message(topic, payload)
 
 
-# 마지막 명령 발행 시간 초기화
-last_command_time = 0
-command_cooldown = 8  # 8초 쿨다운
-
-async def gesture_action(action):
-    global last_command_time  # 마지막 명령 발행 시간 사용
-
-    current_time = time.time()  # 현재 시간 가져오기
-
-    # 쿨다운 체크
-    if current_time - last_command_time < command_cooldown:
-        logger.info("Command is on cooldown. Ignoring action.")
-        return  # cooldown 지나지 않았으면 명령 무시
-
-    if action == 'come':
-        command = json.dumps({"command": "forward"})
-        client.publish(MQTT_TOPIC_COMMAND, command)
-        logger.info("Command sent: forward")
-        last_command_time = current_time  # 명령 발행 시간 기록
-        while True:
-            if distance_data is not None and distance_data < 10:
-                command = json.dumps({"command": "stop"})
-                client.publish(MQTT_TOPIC_COMMAND, command)
-                break
-            await asyncio.sleep(0.1)  # 0.1초 대기하여 CPU 사용량을 줄임
-
-    elif action == 'spin':
-        command = json.dumps({"command": "right"})
-        client.publish(MQTT_TOPIC_COMMAND, command)
-        logger.info("Command sent: right")
-        last_command_time = current_time  # 명령 발행 시간 기록
-        await asyncio.sleep(2)
-        command = json.dumps({"command": "stop"})
-        client.publish(MQTT_TOPIC_COMMAND, command)
-
-    elif action == 'away':
-        command = json.dumps({"command": "back"})
-        client.publish(MQTT_TOPIC_COMMAND, command)
-        logger.info("Command sent: back")
-        last_command_time = current_time  # 명령 발행 시간 기록
-        await asyncio.sleep(2)
-        command = json.dumps({"command": "stop"})
-        client.publish(MQTT_TOPIC_COMMAND, command)
-
-
 async def process_message(topic, payload):
-    global voice_data, distance_data, video_frames_queue
+    global voice_data, distance_data
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
+        # 현재 큐의 크기를 확인
         if video_frames_queue.qsize() >= 5:
             logger.warning("Video frame queue is full, dropping the oldest frame")
             await video_frames_queue.get()  # 오래된 프레임 삭제
 
-        img_encode = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
-        img_gesture = gesture_recognizer.recognize_gesture(img_encode)
-        action = gesture_recognizer.this_action
-
-        logger.info(f"Recognized action: {action}")  # 인식된 동작 로그
-
-        if action != '?':
-            await gesture_action(action)  # 동작에 따라 명령을 발행
-            await video_frames_queue.put(img_gesture)
-            return
-        await video_frames_queue.put(img_encode)
-        # logger.info(f"Video frames count: {video_frames_queue.qsize()}")
+        await video_frames_queue.put(payload)  # 비디오 프레임 큐에 추가
+        logger.info(f"Video frames count: {video_frames_queue.qsize()}")
         return
 
     # 다른 데이터 유형 처리
@@ -221,11 +158,12 @@ async def get_distance():
 async def video_frame_generator():
     while True:
         try:
-            img = await video_frames_queue.get()
+            frame = await video_frames_queue.get()  # 큐에서 프레임 가져오기
+            img = cv2.imdecode(np.frombuffer(frame, np.uint8), cv2.IMREAD_COLOR)
             _, jpeg = cv2.imencode('.jpg', img)
 
             yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
             video_frames_queue.task_done()  # 작업 완료 표시
         except Exception as e:
             logger.error(f"Error while sending video frame: {e}")
@@ -267,9 +205,7 @@ async def get_voice_data():
 
 
 async def run_fastapi():
-    config = uvicorn.Config(app, host='0.0.0.0', port=8000,
-                            ssl_keyfile='mykey.key',  # SSL 개인 키 파일 경로
-                            ssl_certfile='mycert.crt')
+    config = uvicorn.Config(app, port=8000, workers=4)  # 워커 수를 조정
     server = uvicorn.Server(config)
     await server.serve()
 

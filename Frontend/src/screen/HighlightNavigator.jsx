@@ -19,9 +19,15 @@ export default function HighlightNavigator() {
     }}
     >
         <HighlightStack.Screen 
+          name="Highlight" 
+          component={HighlightScreen} 
+          options={{ title: '' }} // 타이틀을 직접 설정
+        />
+
+        <HighlightStack.Screen 
           name="Emotion" 
           component={EmotionScreen} 
-          options={{ title: "" }} // 타이틀을 직접 설정
+          options={{ title: "Today's Highlight" }} // 타이틀을 직접 설정
         />
 
         <HighlightStack.Screen 
