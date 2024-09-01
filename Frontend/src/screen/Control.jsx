@@ -23,22 +23,13 @@ export default function Control() {
 
     // 속도 조절
     const [value, setValue] = useState(5);
-    const [previousValue, setPreviousValue] = useState(0);
-
-    const increment = () => {
-      setValue(prevValue => Math.min(prevValue + 1, 10)); // 최대값 10으로 제한
-    };
-  
-    const decrement = () => {
-      setValue(prevValue => Math.max(prevValue - 1, 1)); // 최소값 1으로 제한
-    };
 
     
     //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
     //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
     //const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
     //const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
-    const BASE_URL = 'http://172.30.1.1:8000'; // 라즈베리파이 서버 URL
+    const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
 
 
     const imageURL = '${BASE_URL}/video_feed';
@@ -246,23 +237,16 @@ async function convertBlobToBase64(blob) {
 
 
     // 속도 조절 코드
-
-    const handleValueChange = (newValue) => {
-        setPreviousValue(value); // 현재 값을 저장
+    const handleValueChange = async (newValue) => {
         setValue(newValue); // 새로운 값으로 업데이트
-      };
-    
-      const handleSlidingComplete = async (finalValue) => {
-        if (finalValue > previousValue) {
-          await fetch('/speed/up', { method: 'POST' });
-        } else if (finalValue < previousValue) {
-          await fetch('/speed/down', { method: 'POST' });
-        }
-      };
+
+        // 서버에 fetch 요청
+        await fetch(`http://localhost:8000/speed/${newValue > value ? 'up' : 'down'}`, { method: 'POST' });
+    };
+
 
 
       // 갤러리 열기
-
 
       const openGallery = async () => {
         // 권한 요청
@@ -331,8 +315,7 @@ async function convertBlobToBase64(blob) {
                 maximumValue={10}
                 step={1}
                 value={value}
-                onValueChange={handleValueChange}
-                onSlidingComplete={handleSlidingComplete} // 슬라이더 조작 완료 시 호출
+                onValueChange={handleValueChange} // newValue를 인자로 전달
                 minimumTrackTintColor="#1EB1FC"
                 maximumTrackTintColor="#d3d3d3"
                 thumbTintColor="#1EB1FC"
