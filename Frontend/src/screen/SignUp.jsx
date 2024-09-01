@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
 
-export default function SignIn() {
+export default function SignUp() {
     const { navigate } = useNavigation();
 
     const [password, setPassword] = useState('');
@@ -53,6 +53,7 @@ export default function SignIn() {
 
             if (response.ok) {
                 Alert.alert('회원가입 성공', responseText);
+                navigate('Login');
             } else {
                 Alert.alert('회원가입 실패', responseText);
             }
