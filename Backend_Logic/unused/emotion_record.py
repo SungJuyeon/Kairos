@@ -4,7 +4,7 @@ from datetime import datetime
 
 # 감정 파일 경로 설정 함수 (오늘의 감정 파일 경로 설정)
 def get_emotion_file_today():
-    base_dir = os.path.abspath("../Backend_Logic/emotions")
+    base_dir = os.path.abspath("emotions")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
     return os.path.join(base_dir, "emotion_today.json")

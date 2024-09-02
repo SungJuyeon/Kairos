@@ -3,13 +3,12 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import time
-from datetime import datetime
-from flask import Flask, jsonify, request, render_template, Response
+from flask import Flask, jsonify, render_template, Response
 
-from compare_faces import compare_faces, get_similarity_percentage
+from Backend_Logic.unused.compare_faces import get_similarity_percentage
 from emotion_video import save_frames_to_video
 from face_register import detect_face, extract_face_features
-from emotion_record import save_emotion_result, manage_daily_files, get_most_frequent_emotion, record_emotion
+from emotion_record import manage_daily_files, get_most_frequent_emotion, record_emotion
 
 # Flask 애플리케이션
 app = Flask(__name__)

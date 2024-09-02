@@ -100,7 +100,7 @@ class FaceEmotionRecognizer:
 
 # 사용 예
 if __name__ == "__main__":
-    recognizer = FaceEmotionRecognizer(model_path="models/", embeddings_file='faces/face_embeddings.csv')
+    recognizer = FaceEmotionRecognizer(model_path="../models/", embeddings_file='faces/face_embeddings.csv')
 
     cap = cv2.VideoCapture(0)
     while True:

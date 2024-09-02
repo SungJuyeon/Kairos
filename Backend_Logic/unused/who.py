@@ -56,7 +56,7 @@ def recognize_faces(frame, faces):
 
         # 얼굴 인식
         try:
-            result = DeepFace.find(face_image, db_path='faces', model_name='Facenet', enforce_detection=False)
+            result = DeepFace.find(face_image, db_path='../faces', model_name='Facenet', enforce_detection=False)
 
             # 유사도 기준 설정
             threshold = 0.4  # 유사도 기준 거리
@@ -95,7 +95,7 @@ def draw_faces(frame):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
 # 등록된 얼굴 로드
-registered_faces = load_registered_faces('faces')  # 'faces' 폴더 경로
+registered_faces = load_registered_faces('../faces')  # 'faces' 폴더 경로
 
 # 비디오 스트리밍 시작
 cap = cv2.VideoCapture(0)  # 0은 기본 카메라를 의미

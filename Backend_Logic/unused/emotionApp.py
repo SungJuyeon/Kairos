@@ -1,14 +1,13 @@
-from flask import Flask, jsonify, request, render_template, Response
+from flask import Flask, jsonify, render_template, Response
 import cv2
 import numpy as np
 import tensorflow as tf
 import time
-import os
 
 from face_register import detect_face
-from face_recog import FaceRecog  # 얼굴 인식을 위한 클래스
-from emotion_record import save_emotion_result, get_most_frequent_emotion, manage_daily_files, record_emotion
-from emotion_video import save_frames_to_video, generate_video_filename, delete_old_videos
+from Backend_Logic.unused.face_recog import FaceRecog  # 얼굴 인식을 위한 클래스
+from Backend_Logic.unused.emotion_record import get_most_frequent_emotion, manage_daily_files, record_emotion
+from Backend_Logic.unused.emotion_video import save_frames_to_video, delete_old_videos
 
 # Flask 애플리케이션
 app = Flask(__name__)

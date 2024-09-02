@@ -1,14 +1,12 @@
 import cv2
 import numpy as np
 from deepface import DeepFace
-import os
-import re
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
+
 class FaceRecognition:
     def __init__(self, registered_faces_folder, model_prototxt, model_weights):
-        self.registered_faces = self.load_registered_faces(registered_faces_folder)
         self.model = cv2.dnn.readNetFromCaffe(model_prototxt, model_weights)
         self.last_detected_nicknames = []
         self.last_detected_distances = []
@@ -16,18 +14,6 @@ class FaceRecognition:
         self.last_detected_emotions = []
         self.last_detected_emotion_scores = []
         self.executor = ThreadPoolExecutor(max_workers=4)
-
-    def load_registered_faces(self, folder_path):
-        registered_faces = []
-        for filename in os.listdir(folder_path):
-            if filename.endswith(('.jpg', '.jpeg', '.png')):
-                registered_faces.append(os.path.join(folder_path, filename))
-        return registered_faces
-
-    def get_nickname_from_filename(self, filename):
-        base_name = os.path.splitext(os.path.basename(filename))[0]
-        nickname = re.sub(r'\s*\(.*?\)', '', base_name)
-        return nickname.strip()
 
     def detect_faces(self, frame):
         h, w = frame.shape[:2]
@@ -56,7 +42,7 @@ class FaceRecognition:
             print("Error in emotion recognition:", e)
             return "unknown", {}
 
-    async def recognize_faces(self, frame, faces):
+    def recognize_faces(self, frame, faces):
         self.last_detected_nicknames.clear()
         self.last_detected_distances.clear()
         self.last_face_positions.clear()
@@ -92,10 +78,12 @@ class FaceRecognition:
 
     def draw_faces(self, frame, faces):
         for idx, (x, y, w, h) in enumerate(faces):
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+            # 모든 얼굴에 대해 노란색 네모를 그립니다.
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)  # 노란색
 
-            # 인덱스가 유효한지 확인
-            if idx < len(self.last_detected_nicknames):
+            # 인식된 얼굴에 대해서는 초록색 네모를 추가로 그립니다.
+            if idx < len(self.last_detected_nicknames) and self.last_detected_nicknames[idx] != "unknown":
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)  # 초록색
                 nickname = self.last_detected_nicknames[idx]
                 distance = self.last_detected_distances[idx]
                 emotion = self.last_detected_emotions[idx]
@@ -118,6 +106,7 @@ class FaceRecognition:
                         cv2.putText(frame, f"{emotion}: {score:.2f}%", (x + w + 10, y + 25 + i * 30),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
             else:
+                # 인식 실패 시 텍스트 표시
                 cv2.putText(frame, "No recognition data", (x, y - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
@@ -134,13 +123,13 @@ class FaceRecognition:
             faces = self.detect_faces(frame)
 
             if frame_counter == 0:
-                asyncio.run(self.recognize_faces(frame, faces))
+                self.recognize_faces(frame, faces)
 
             self.draw_faces(frame, faces)
             cv2.imshow('Video Stream', frame)
 
             frame_counter += 1
-            frame_counter %= 12
+            frame_counter %= 7
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

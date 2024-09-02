@@ -71,7 +71,7 @@ async def generate_frames(client):
             _, buffer = cv2.imencode('.jpg', frame)
             frame_data = buffer.tobytes()
             client.publish(MQTT_TOPIC_VIDEO, frame_data)
-            await asyncio.sleep(1/30)  # 전송 주기 조정
+            await asyncio.sleep(1/24)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(0.5)  # 오류 발생 시 대기

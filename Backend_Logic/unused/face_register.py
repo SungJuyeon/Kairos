@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
-from scipy.ndimage import zoom
-from compare_faces import compare_faces
+
 
 # 얼굴을 감지하는 함수
 def detect_face(frame):

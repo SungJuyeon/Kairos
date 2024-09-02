@@ -33,4 +33,4 @@ def save_face_embeddings(folder_path, output_file):
 
 # 사용 예
 if __name__ == "__main__":
-    save_face_embeddings('faces', 'face_embeddings.csv')
+    save_face_embeddings('../faces', 'face_embeddings.csv')

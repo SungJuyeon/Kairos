@@ -20,6 +20,7 @@ class HandGestureRecognizer:
         self.seq = []
         self.action_seq = []
         self.last_action = None
+        self.this_action = '?'
 
     def recognize_gesture(self, img):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

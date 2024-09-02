@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 import numpy as np
-from Backend_Logic.hand_gesture import HandGestureRecognizer
-from Backend_Logic.who_emotion_class import FaceRecognition
+from Backend_Logic.HandGestureRecognizer import HandGestureRecognizer
+from Backend_Logic.FaceRecognition import FaceRecognition
 from gmqtt import Client as MQTTClient
 import time
 
@@ -47,7 +47,7 @@ face_recognition = FaceRecognition(
 
 # 손동작 인식기 인스턴스 생성
 try:
-    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')
+    gesture_recognizer = HandGestureRecognizer(model_path='../models/model.keras')
 except Exception as e:
     logger.error(f"모델 로드 중 오류 발생: {e}")
 
