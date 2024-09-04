@@ -63,7 +63,7 @@ public class SecurityConfig {
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/", "/join", "/getImage/{id}", "/find/username", "/find/password", "/user/**", "/main").permitAll()
+                        .requestMatchers("/login", "/", "/join", "/getImage/{id}", "/find/username", "/find/password", "/user/**", "/family/**", "/main").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .requestMatchers("/reissue").permitAll()
                         .anyRequest().authenticated()
