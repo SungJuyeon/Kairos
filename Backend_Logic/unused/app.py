@@ -22,7 +22,7 @@ templates = Jinja2Templates(directory="templates")
 # 상태 변수
 distance_data = None
 video_frames_queue = asyncio.Queue()  # 비디오 프레임 큐
-voice_data = None
+audio_data = None
 hand_gesture = True
 
 # MQTT 설정
@@ -56,7 +56,7 @@ async def on_message(client, topic, payload, qos, properties):
 
 
 async def process_message(topic, payload):
-    global voice_data, distance_data
+    global audio_data, distance_data
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
@@ -194,8 +194,8 @@ async def set_hand_gesture(state: str):
 
 async def voice_data_generator():
     while True:
-        if voice_data:
-            yield voice_data.encode('utf-8')
+        if audio_data:
+            yield audio_data.encode('utf-8')
         await asyncio.sleep(0.1)
 
 

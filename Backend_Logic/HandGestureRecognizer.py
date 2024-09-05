@@ -3,6 +3,7 @@ import numpy as np
 import mediapipe as mp
 from tensorflow.keras.models import load_model
 
+
 class HandGestureRecognizer:
     def __init__(self, model_path):
         self.actions = ['come', 'away', 'spin']
@@ -73,7 +74,8 @@ class HandGestureRecognizer:
                     continue
 
                 this_action = '?'
-                if self.action_seq[-1] == self.action_seq[-2] == self.action_seq[-3] == self.action_seq[-4] == self.action_seq[-5]:
+                if self.action_seq[-1] == self.action_seq[-2] == self.action_seq[-3] == self.action_seq[-4] == \
+                        self.action_seq[-5]:
                     this_action = action
 
                 cv2.putText(img, f'{this_action.upper()}', org=(int(hand_landmarks.landmark[0].x * img.shape[1]),

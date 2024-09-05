@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 import numpy as np
 from Backend_Logic.HandGestureRecognizer import HandGestureRecognizer
-from Backend_Logic.FaceRecognition import FaceRecognition
+from Backend_Logic.unused.FaceRecognition import FaceRecognition
 from gmqtt import Client as MQTTClient
 import time
 
@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory="templates")
 # 상태 변수
 distance_data = None
 video_frames_queue = asyncio.Queue()  # 비디오 프레임 큐
-voice_data = None
+audio_data = None
 hand_gesture = True
 
 

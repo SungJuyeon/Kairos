@@ -223,8 +223,7 @@ async def generate_frames(client):
 
             if not audio_queue.empty():
                 audio_data = audio_queue.get()
-                if len(audio_data) > 1024:  # 예: 1024바이트 이상일 때만 전송
-                    client.publish(MQTT_TOPIC_AUDIO, audio_data.tobytes())
+                client.publish(MQTT_TOPIC_AUDIO, audio_data.tobytes())
 
             await asyncio.sleep(0.1)  # 전송 주기 조정
         except Exception as e:
