@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/GitHub.Kairos.iml" filepath="$PROJECT_DIR$/.idea/modules/GitHub.Kairos.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Kairos.iml" filepath="$PROJECT_DIR$/.idea/modules/Kairos.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Kairos-main.Kairos.iml" filepath="$PROJECT_DIR$/.idea/modules/Kairos-main.Kairos.iml" />
     </modules>
   </component>
 </project>

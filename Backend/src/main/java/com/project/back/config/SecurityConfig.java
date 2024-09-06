@@ -57,7 +57,7 @@ public class SecurityConfig {
                         configuration.setMaxAge(3600L);
                         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
                         return configuration;
-                    }
+                    }//userentity
                 }))
                 .csrf(csrf -> csrf.disable())
                 .formLogin(formLogin -> formLogin.disable())

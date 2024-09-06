@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "os": "^0.1.2"
+    "os": "^0.1.2",
+    "react-native-webview": "^13.12.1"
   }
 }

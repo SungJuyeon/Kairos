@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
-
+//import { WebView } from 'react-native-webview';
 
     // 스타일 컴포넌트를 위함
     const { width, height } = Dimensions.get('window');
