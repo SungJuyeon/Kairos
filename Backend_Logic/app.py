@@ -27,6 +27,18 @@ audio_data = []
 hand_gesture = True
 current_action = None  # 현재 손동작 상태 변수
 
+
+# MQTT 설정
+# MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "localhost"
+MQTT_PORT = 1883
+MQTT_TOPIC_COMMAND = "robot/commands"
+MQTT_TOPIC_DISTANCE = "robot/distance"
+MQTT_TOPIC_VIDEO = "robot/video"
+MQTT_TOPIC_AUDIO = "robot/audio"
+
+client = MQTTClient(client_id="fastapi_client")
+
 # 얼굴 인식기 인스턴스 생성
 try:
     face_recognition = FaceRecognition(
@@ -39,20 +51,9 @@ except Exception as e:
 
 # 손동작 인식기 인스턴스 생성
 try:
-    gesture_recognizer = HandGestureRecognizer(model_path='models/model.keras')
+    gesture_recognizer = HandGestureRecognizer(model_path='./models/model.keras')
 except Exception as e:
-    logger.error(f"모델 로드 중 오류 발생: {e}")
-
-# MQTT 설정
-# MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
-MQTT_TOPIC_COMMAND = "robot/commands"
-MQTT_TOPIC_DISTANCE = "robot/distance"
-MQTT_TOPIC_VIDEO = "robot/video"
-MQTT_TOPIC_AUDIO = "robot/audio"
-
-client = MQTTClient(client_id="fastapi_client")
+    logger.error(f"손동작 모델 로드 중 오류 발생: {e}")
 
 
 # MQTT 연결 및 메시지 처리
@@ -180,15 +181,19 @@ async def get_frame_copy():
 
 
 async def video_frame_updater():
+    logger.info("비디오 프레임 업데이터 시작")
     while True:
         try:
             frames = await get_frame_copy()
             if frames:
+                logger.info("프레임 복사 완료")
                 frame = frames[-1]
-
                 await asyncio.to_thread(face_recognition.detect_faces, frame)
                 await asyncio.to_thread(face_recognition.recognize_emotion, frame)
                 await asyncio.to_thread(face_recognition.recognize_faces, frame)
+            else:
+                logger.info("프레임이 없습니다.")
+            await asyncio.sleep(1)  # 너무 빠르게 반복하지 않도록 대기
 
         except Exception as e:
             logger.error(f"Error processing video frame: {e}")

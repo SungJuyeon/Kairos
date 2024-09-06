@@ -41,8 +41,8 @@ client = MQTTClient(client_id="fastapi_client")
 # 얼굴 인식기 인스턴스 생성
 face_recognition = FaceRecognition(
     registered_faces_folder='faces',
-    model_prototxt='models/deploy.prototxt',
-    model_weights='models/res10_300x300_ssd_iter_140000.caffemodel'
+    model_prototxt='../models/deploy.prototxt',
+    model_weights='../models/res10_300x300_ssd_iter_140000.caffemodel'
 )
 
 # 손동작 인식기 인스턴스 생성
