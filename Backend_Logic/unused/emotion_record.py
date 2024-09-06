@@ -77,3 +77,8 @@ def manage_daily_files():
     # 오늘 날짜의 파일이 존재하지 않으면 초기화 (새로운 날이 시작됨을 의미)
     if not os.path.exists(file_path):
         reset_emotion_file()
+
+    # 현재 날짜와 감정 파일 수정 날짜를 비교
+    file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path)).strftime('%Y-%m-%d')
+    if file_mtime != today:
+        reset_emotion_file()
