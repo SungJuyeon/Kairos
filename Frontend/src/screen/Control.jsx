@@ -283,13 +283,14 @@ async function convertBlobToBase64(blob) {
             <MarginContainer />
 
             <ImageContainer>
-            <WebView
-                source={{ uri: 'http://127.0.0.1:8000/video_feed' }}
-                style={{ flex: 1 }}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                startInLoadingState={true}
-            />
+
+
+    <Container>
+      <StyledWebView
+        source={{ uri: 'http://10.0.2.2:8000/video_feed' }} // 표시할 웹사이트 URL
+      />
+    </Container>
+
             </ImageContainer>
 
             <Margin2Container />
@@ -397,8 +398,6 @@ const RemoveContainer = styled.View`
 const Container = styled.SafeAreaView`
     background-color: #1B0C5D;
     flex: 1;
-    justify-content: center;
-    align-items: center;
 `;
 
 const MarginContainer = styled.View`
@@ -551,8 +550,6 @@ const ImageContainer = styled.View`
     border-width: 2px; 
     border-color: #F8098B;
     background-color: #222222; 
-    justify-content: center;
-    align-items: center;
 `;
 
 const StyledImage = styled.Image`
@@ -572,10 +569,13 @@ const StyledSlider = styled(Slider)`
     transform: rotate(-90deg);
 `;
 
-const StyledVideo = styled(Video)`
-  width: 100%;
-  height: 100%;
+
+const StyledWebView = styled(WebView)`
+  flex: 1;
 `;
+
+
+
 
 // const ImageContainer = styled.View`
 //     width: 90%;  // 이미지보다 작은 너비
