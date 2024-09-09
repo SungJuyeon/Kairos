@@ -4,6 +4,7 @@ import cv2
 
 app = FastAPI()
 
+
 def generate_frames():
     cap = cv2.VideoCapture(0)  # 웹캠 사용
     while True:

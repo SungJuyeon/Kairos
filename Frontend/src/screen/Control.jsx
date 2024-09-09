@@ -4,6 +4,8 @@ import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
+import { WebView } from 'react-native-webview';
+
 
 
     // 스타일 컴포넌트를 위함
@@ -240,8 +242,11 @@ async function convertBlobToBase64(blob) {
     const handleValueChange = async (newValue) => {
         setValue(newValue); // 새로운 값으로 업데이트
 
+        
+
         // 서버에 fetch 요청
         await fetch(`http://localhost:8000/speed/${newValue > value ? 'up' : 'down'}`, { method: 'POST' });
+        
     };
 
 
@@ -278,9 +283,13 @@ async function convertBlobToBase64(blob) {
             <MarginContainer />
 
             <ImageContainer>
-                <StyledImage
-                    source={{ uri: `${BASE_URL}/video_feed` }}
-                />
+            <WebView
+                source={{ uri: 'http://127.0.0.1:8000/video_feed' }}
+                style={{ flex: 1 }}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                startInLoadingState={true}
+            />
             </ImageContainer>
 
             <Margin2Container />
@@ -315,7 +324,7 @@ async function convertBlobToBase64(blob) {
                 maximumValue={10}
                 step={1}
                 value={value}
-                onValueChange={handleValueChange} // newValue를 인자로 전달
+                onValueChange={handleValueChange}
                 minimumTrackTintColor="#1EB1FC"
                 maximumTrackTintColor="#d3d3d3"
                 thumbTintColor="#1EB1FC"
@@ -561,6 +570,11 @@ const StyledSlider = styled(Slider)`
     height: 10px;
     width: 150px;
     transform: rotate(-90deg);
+`;
+
+const StyledVideo = styled(Video)`
+  width: 100%;
+  height: 100%;
 `;
 
 // const ImageContainer = styled.View`
