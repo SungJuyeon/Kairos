@@ -11,6 +11,7 @@ from gmqtt import Client as MQTTClient
 logger = logging.getLogger(__name__)
 
 # MQTT 설정
+# MQTT_BROKER = "3.27.221.93"
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"

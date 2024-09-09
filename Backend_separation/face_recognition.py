@@ -153,10 +153,10 @@ def get_nickname_from_filename(filename):
 
 
 async def recognize_periodically(frame_queue):
+    logging.error("얼굴 인식 업데이트 시작")
     while True:
         if not frame_queue.empty():
             frame = await frame_queue.get()
-            logging.info("프레임을 큐에서 가져왔습니다.")  # 프레임 수신 로그
 
             # 프레임 유효성 검사
             if frame is None or frame.size == 0:
@@ -164,15 +164,13 @@ async def recognize_periodically(frame_queue):
                 await asyncio.sleep(1)  # 대기 후 계속 진행
                 continue
 
-            logging.info(f"인식할 프레임 크기: {frame.shape}")  # 인식할 프레임 크기 로그
             await recognize_faces(frame)
             await recognize_emotion(frame)
 
-            logging.info("얼굴 인식 및 감정 인식 완료.")  # 인식 완료 로그
         else:
             logging.info("프레임 큐가 비어 있습니다.")  # 큐가 비어 있는 경우 로그
             await asyncio.sleep(3)
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
 
 
 frame_queue = asyncio.Queue()
