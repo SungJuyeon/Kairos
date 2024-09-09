@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface FamilyRequestRepository extends JpaRepository<FamilyRequest, Long> {
-    List<FamilyRequest> findByReceiverAndStatus(UserEntity receiver, FamilyRequest.FamilyRequestStatus status);
     List<FamilyRequest> findBySender_Id(Long senderId);
     List<FamilyRequest> findByReceiver_Id(Long receiverId);
 

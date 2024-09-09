@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface FamilyshipRepository extends JpaRepository<Familyship, Long> {
+    boolean existsByUser1AndUser2(UserEntity user1, UserEntity user2);
 
     @Query("SELECT f.user2 FROM Familyship f WHERE f.user1.id = :userId " +
             "UNION " +
