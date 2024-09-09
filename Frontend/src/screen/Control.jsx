@@ -287,7 +287,10 @@ async function convertBlobToBase64(blob) {
 
     <Container>
       <StyledWebView
-        source={{ uri: 'http://10.0.2.2:8000/video_feed' }} // 표시할 웹사이트 URL
+        source={{ uri: 'http://127.0.0.1:8000/video_feed' }} // 표시할 웹사이트 URL
+
+        // 안드로이드: 10.0.2.2
+        // ios: 127.0.0.1
       />
     </Container>
 
