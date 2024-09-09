@@ -4,13 +4,13 @@ import lombok.Data;
 
 @Data
 public class FamilyRequestDTO {
-    private String username;
+    private Long requestId;
+    private String senderUsername;
+    private String status;
 
-    public FamilyRequestDTO() {
-        // 기본 생성자
-    }
-
-    public FamilyRequestDTO(String username) {
-        this.username = username;
+    public FamilyRequestDTO(Long requestId, String senderUsername, String status) {
+        this.requestId = requestId;
+        this.senderUsername = senderUsername;
+        this.status = status;
     }
 }
