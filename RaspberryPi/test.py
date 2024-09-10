@@ -95,9 +95,6 @@ def measure_distance():
 
 # 영상, 음성 전송 ####################################################################
 async def generate_frames(client):
-    # 음성 스트리밍 시작
-    stream = sd.InputStream(callback=audio_callback)
-    stream.start()
     while True:
         try:
             ret, frame = cap.read()
@@ -107,20 +104,13 @@ async def generate_frames(client):
                 continue
 
             _, buffer = cv2.imencode('.jpg', frame)
-            frame_data = buffer.tobytes()
-            client.publish(MQTT_TOPIC_VIDEO, frame_data)  # 비디오 프레임 전송
+            client.publish(MQTT_TOPIC_VIDEO, buffer.tobytes())  # 바이너리 형식 전송
             # logging.info("Sent a video frame")
-
-            if not audio_queue.empty():
-                audio_data = audio_queue.get()
-                client.publish(MQTT_TOPIC_AUDIO, audio_data.tobytes())
-                # logging.info(f"Sent audio data of length: {len(audio_data)} bytes")
 
             await asyncio.sleep(1 / 30)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
-    stream.stop()
 
 
 # 음성 캡처 콜백 함수

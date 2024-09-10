@@ -3,53 +3,64 @@
 
 import asyncio
 import cv2
-from Backend_Logic.FaceRecognotion import FaceRecognition
 import logging
-
+from mqtt_client import video_frames
+from Backend_separation.face_recognition import detect_faces, recognize_emotion, recognize_faces, draw_faces
+import numpy as np
 logger = logging.getLogger(__name__)
 
-# 상태 변수
-video_frames = []
-MAX_VIDEO_FRAMES = 5
 
-# 얼굴 인식기 인스턴스 생성
-face_recognition = FaceRecognition(
-    registered_faces_folder='faces',
-    model_prototxt='models/deploy.prototxt',
-    model_weights='models/res10_300x300_ssd_iter_140000.caffemodel'
-)
-
-
-async def video_frame_updater():
-    global video_frames
-    logger.info("비디오 프레임 업데이터 시작")
+async def generate_frames():
     while True:
-        try:
-            if len(video_frames) > 0:
-                current_frame = video_frames[0]
-                await asyncio.to_thread(face_recognition.detect_faces, current_frame)
-                await asyncio.to_thread(face_recognition.recognize_emotion, current_frame)
-                await asyncio.to_thread(face_recognition.recognize_faces, current_frame)
-            await asyncio.sleep(1)
-        except Exception as e:
-            logger.error(f"Error processing video frame: {e}")
-            await asyncio.sleep(0.05)
+        if len(video_frames) > 0:
+            frame = video_frames[-1]
 
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-async def video_frame_generator(face_on=True):
-    global video_frames
-    while True:
-        try:
-            if len(video_frames) > 0:
-                frame = video_frames[0]
-                if face_on:
-                    face_recognition.draw_faces(frame)
-
-                _, jpeg = cv2.imencode('.jpg', frame)
+            # 변환된 프레임을 JPEG 형식으로 인코딩
+            success, buffer = cv2.imencode('.jpg', frame)
+            if success:
                 yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n\r\n')
-            else:
-                await asyncio.sleep(0.1)
-        except Exception as e:
-            logger.error(f"Error processing video frame: {e}")
+                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+        await asyncio.sleep(0.1)  # 프레임을 가져오는 간격 조절
+
+
+async def video_frame_generator(face=True):
+    while True:
+        logging.info(f"Current video frames count: {len(video_frames)}")
+        if len(video_frames) > 0:
+            frame = video_frames[-1]
+            logging.info(f"Processing frame: {frame.shape}.")
+
+            if frame is None or not isinstance(frame, np.ndarray):
+                logging.error("Invalid frame received.")
+                await asyncio.sleep(0.1)  # 잠깐 대기 후 다음 루프 실행
+                continue
+
+            if face:
+                detect_faces(frame)  # 동기 호출
+                frame = draw_faces(frame)  # 동기 호출
+
+            success, buffer = cv2.imencode('.jpg', frame)
+            if success:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
             await asyncio.sleep(0.1)
+        else:
+            logging.warning("No frames available, sleeping...")
+            await asyncio.sleep(0.1)
+
+# async def video_frame_updater():
+#     logger.info("비디오 프레임 업데이터 시작")
+#     while True:
+#         try:
+#             if len(video_frames) > 0:
+#                 current_frame = video_frames[0]
+#                 await asyncio.to_thread(detect_faces, current_frame)
+#                 await asyncio.to_thread(recognize_emotion, current_frame)
+#                 await asyncio.to_thread(recognize_faces, current_frame)
+#             await asyncio.sleep(1)
+#         except Exception as e:
+#             logger.error(f"Error processing video frame: {e}")
+#             await asyncio.sleep(0.05)

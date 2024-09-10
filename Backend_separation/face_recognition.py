@@ -114,7 +114,7 @@ def draw_faces(frame):
     global last_face_positions, last_detected_nicknames, last_detected_distances, last_detected_emotions, \
         last_detected_emotion_scores
     if last_face_positions is None:
-        return
+        return frame
 
     for idx, (x, y, w, h) in enumerate(last_face_positions):
         # 얼굴 감지 사각형 (노란색)
@@ -144,6 +144,8 @@ def draw_faces(frame):
             cv2.putText(frame, f"Detected: {nickname}",
                         (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
+    return frame
+
 
 def get_nickname_from_filename(filename):
     base_name = filename.split('/')[-1]  # 파일 경로에서 파일 이름만 추출
@@ -152,68 +154,15 @@ def get_nickname_from_filename(filename):
     return name_part
 
 
-async def recognize_periodically(frame_queue):
-    logging.error("얼굴 인식 업데이트 시작")
+async def recognize_periodically(video_frames):
+    logging.info("얼굴 인식 업데이트 시작")
     while True:
-        if not frame_queue.empty():
-            frame = await frame_queue.get()
-
-            # 프레임 유효성 검사
-            if frame is None or frame.size == 0:
-                logging.error("받은 프레임이 유효하지 않습니다.")  # 유효하지 않은 프레임 로그
-                await asyncio.sleep(1)  # 대기 후 계속 진행
-                continue
-
+        try:
+            frame = video_frames[-1]
             await recognize_faces(frame)
             await recognize_emotion(frame)
-
-        else:
-            logging.info("프레임 큐가 비어 있습니다.")  # 큐가 비어 있는 경우 로그
-            await asyncio.sleep(3)
-        await asyncio.sleep(2)
-
-
-frame_queue = asyncio.Queue()
-
-
-async def show_frame(frame):
-    """프레임을 화면에 표시하는 함수."""
-    cv2.imshow("Face Recognition", frame)
-    await asyncio.sleep(0.001)  # 짧은 대기
-
-
-async def video_generator_face_recognition(frame):
-    await frame_queue.put(frame)
-    if frame_queue.qsize() > 5:
-        await frame_queue.get()
-
-    detect_faces(frame)  # 얼굴 감지
-    draw_faces(frame)  # 얼굴 및 감정 정보 그리기
-
-
-# 나머지 코드...
-
-async def main():
-    asyncio.create_task(recognize_periodically(frame_queue))
-
-    cap = cv2.VideoCapture(0)  # 웹캠에서 비디오 캡처
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            logging.error("프레임을 읽는 데 실패했습니다.")  # 프레임 읽기 실패 로그
-            break
-        await video_generator_face_recognition(frame)
-        # 프레임을 비동기적으로 표시
-        await show_frame(frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # 'q' 키를 누르면 종료
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-
-# 메인 함수 실행
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+            logging.info("인식 완료")
+        except IndexError:
+            logging.info("리스트가 비어 있습니다.")
+        finally:
+            await asyncio.sleep(2)
