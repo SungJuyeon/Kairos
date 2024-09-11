@@ -18,7 +18,7 @@ public class JoinService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public void joinProcess(JoinDTO joinDTO) {
+    public void joinProcess(JoinDTO joinDTO) throws IOException {
 
         String username = joinDTO.getUsername();    //=loginId
         String password = joinDTO.getPassword();

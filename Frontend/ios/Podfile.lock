@@ -1,23 +1,29 @@
 PODS:
   - React-Core (0.1.0)
-  - react-native-image-picker (7.1.2):
+  - react-native-document-picker (9.3.1):
+    - React-Core
+  - react-native-webview (13.12.2):
     - React-Core
 
 DEPENDENCIES:
-  - react-native-image-picker (from `../node_modules/react-native-image-picker`)
+  - react-native-document-picker (from `../node_modules/react-native-document-picker`)
+  - react-native-webview (from `../node_modules/react-native-webview`)
 
 SPEC REPOS:
   trunk:
     - React-Core
 
 EXTERNAL SOURCES:
-  react-native-image-picker:
-    :path: "../node_modules/react-native-image-picker"
+  react-native-document-picker:
+    :path: "../node_modules/react-native-document-picker"
+  react-native-webview:
+    :path: "../node_modules/react-native-webview"
 
 SPEC CHECKSUMS:
   React-Core: c89e140a0ac23ed77a6094fe25d005e9c72e03b0
-  react-native-image-picker: 6f8b3ea523b02c622b9e4f9c36f17348aff0909d
+  react-native-document-picker: 940269e45632f48eb5e81543381ffd15a970d849
+  react-native-webview: 9878f756078ae731c2b72c107191b466b606e22a
 
-PODFILE CHECKSUM: 0692557efe00fd3c19a29dfc7442c55011be62c9
+PODFILE CHECKSUM: 56d901b2f5cac0f07ff9c71cc6d5e2cf0d2f9d72
 
 COCOAPODS: 1.15.2

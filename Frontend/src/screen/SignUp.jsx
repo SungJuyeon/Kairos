@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
 
-export default function SignIn() {
+export default function SignUp() {
     const { navigate } = useNavigation();
 
     const [password, setPassword] = useState('');
@@ -12,60 +12,75 @@ export default function SignIn() {
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [nickname, setNickname] = useState('');
-    const [selectedImage, setSelectedImage] = useState(null); // 선택한 이미지 상태 추가
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const createMember = async () => {
         if (password !== confirmPW) {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
-    
+
         try {
             const formData = new FormData();
-            formData.append('username', username);
-            formData.append('password', password);
-            formData.append('email', email);
-            formData.append('nickname', nickname);
-    
+            const data = JSON.stringify({ username, password, email, nickname });
+            formData.append('data', data);
+
             if (selectedImage) {
-                formData.append('file', {
-                    uri: selectedImage.startsWith('file://') ? selectedImage : `file://${selectedImage}`,
-                    name: 'photoname', // 파일 이름 설정
-                });
+                const fileName = `${username}.png`; // 파일 이름을 username으로 설정
+                const fileType = 'image/png'; // MIME 타입을 image/png으로 설정
+
+                // Base64 데이터를 Blob 객체로 변환
+                const response = await fetch(selectedImage);
+                const blob = await response.blob();
+
+                // Blob 객체를 파일로 변환
+                const file = new File([blob], fileName, { type: fileType });
+
+                formData.append('file', file);
             }
-    
+
             const response = await fetch('http://localhost:8080/join', {
                 method: 'POST',
+                headers: {
+                    // 'Content-Type': 'multipart/form-data', // FormData는 자동으로 Content-Type을 설정합니다.
+                },
                 body: formData,
             });
-    
-            const data = await response.text();
+
+            const responseText = await response.text();
+            console.log('Response Status:', response.status);
+            console.log('Response Text:', responseText);
+
             if (response.ok) {
-                Alert.alert('회원가입 성공', data);
+                Alert.alert('회원가입 성공', responseText);
+                navigate('Login');
             } else {
-                Alert.alert('회원가입 실패', data);
+                Alert.alert('회원가입 실패', responseText);
             }
+
         } catch (error) {
-            console.error(error);
+            console.error('Error:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
 
+
+
     const uploadFile = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
         if (permissionResult.granted === false) {
             Alert.alert('사진 라이브러리에 접근할 수 없습니다.');
             return;
         }
-    
+
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
-    
+
         console.log('선택 결과:', result);
         if (result.canceled) {
             console.log('사용자에 의해 취소됨');

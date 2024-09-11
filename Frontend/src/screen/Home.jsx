@@ -17,6 +17,7 @@ export default function Home() {
     const circleOpacity3 = useRef(new Animated.Value(0)).current;
     const circleOpacity4 = useRef(new Animated.Value(0)).current;
 
+
     useEffect(() => {
         Animated.parallel([
             Animated.timing(ball1Y, {
@@ -106,6 +107,9 @@ export default function Home() {
                         </ControlButton>
                         <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
+                        </CaptureButtonStyle>
+                        <CaptureButtonStyle onPress={() => navigate('MyPage')}>
+                            <CaptureButtonText>로그인 / 회원가입</CaptureButtonText>
                         </CaptureButtonStyle>
                     </CaptureButtonContainer>
                 </AnimatedContainer>
