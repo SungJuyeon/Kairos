@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MyPageScreen from "./MyPage";
 import LoginScreen from "./Login";
-import SignInScreen from "./SignIn";
+import SignUpScreen from "./SignUp";
 import FindUserDataScreen from "./FindUserData";
 import FindIdScreen from "./FindId";
 import FindPasswordScreen from "./FindPassword";
@@ -19,7 +19,7 @@ export default function MyPageNavigator() {
       headerTransparent: true, // 헤더를 투명하게 설정
     }}>
         <MyPageStack.Screen name="Login" component={LoginScreen} options={{ title: '' }} />
-        <MyPageStack.Screen name="SignIn" component={SignInScreen} options={{ title: '' }} />
+        <MyPageStack.Screen name="SignUp" component={SignUpScreen} options={{ title: '' }} />
         <MyPageStack.Screen name="MyPage" component={MyPageScreen} options={{ title: '' }} />
         <MyPageStack.Screen name="FindUserData" component={FindUserDataScreen} options={{ title: '' }} />
         <MyPageStack.Screen name="FindId" component={FindIdScreen} options={{ title: '' }} />

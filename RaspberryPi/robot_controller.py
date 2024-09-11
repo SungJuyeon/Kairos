@@ -1,3 +1,4 @@
+import queue
 import cv2
 import asyncio
 import RPi.GPIO as GPIO
@@ -6,6 +7,7 @@ import logging
 import json
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
+import sounddevice as sd
 
 # 핀 번호 설정
 WHEEL_PINS = {
@@ -37,7 +39,7 @@ for pin in ACTUATOR_PINS.values():
 GPIO.setup(ULTRASONIC_PINS['TRIG'], GPIO.OUT)
 GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
 
-# PWM 객체 생성 후 시작
+# PWM 객체 생성 후 시작 (속도조절)
 pwm_A = GPIO.PWM(WHEEL_PINS['ENA'], 100)  # 100Hz
 pwm_B = GPIO.PWM(WHEEL_PINS['ENB'], 100)  # 100Hz
 pwm_A.start(0)
@@ -45,6 +47,8 @@ pwm_B.start(0)
 
 # 카메라 설정
 cap = cv2.VideoCapture(0)
+# 음성 캡처 큐
+audio_queue = queue.Queue()
 
 # 현재 모터 상태를 저장하는 변수
 wheel_direction = None
@@ -55,6 +59,7 @@ wheel_speed = 100
 logging.basicConfig(level=logging.INFO)
 
 
+# 바퀴 설정 #######################################################################
 async def wheel_control(direction):
     global wheel_direction
     wheel_direction = direction
@@ -101,6 +106,7 @@ async def set_speed(speed):
     if wheel_direction is not None:
         set_wheel_state(wheel_direction)  # 현재 방향에 속도 적용
 
+
 def stop_wheel():
     logging.info("Stopping motors")
     global wheel_direction
@@ -114,6 +120,10 @@ def stop_wheel():
     logging.info("Motors stopped")
 
 
+#############################################################################
+
+
+# 액추에이터 설정 ###############################################################
 async def actuator_control(direction):
     global actuator_direction
     actuator_direction = direction
@@ -147,6 +157,10 @@ def stop_actuator():
     logging.info("Motors stopped")
 
 
+#############################################################################
+
+
+# 거리 전송 ###################################################################
 async def send_distance(client):
     while True:
         try:
@@ -171,8 +185,11 @@ def measure_distance():
         while GPIO.input(ULTRASONIC_PINS['ECHO']) == 0:
             pulse_start = time.time()
 
-        pulse_end = time.time()
+        # 타임아웃 설정 (예: 0.1초)
+        timeout = time.time() + 0.1
         while GPIO.input(ULTRASONIC_PINS['ECHO']) == 1:
+            if time.time() > timeout:
+                raise Exception("Echo timeout")
             pulse_end = time.time()
 
         pulse_duration = pulse_end - pulse_start
@@ -183,7 +200,14 @@ def measure_distance():
         return None
 
 
+#############################################################################
+
+
+# 영상, 음성 전송 ####################################################################
 async def generate_frames(client):
+    # 음성 스트리밍 시작
+    stream = sd.InputStream(callback=audio_callback)
+    stream.start()
     while True:
         try:
             ret, frame = cap.read()
@@ -194,12 +218,30 @@ async def generate_frames(client):
 
             _, buffer = cv2.imencode('.jpg', frame)
             frame_data = buffer.tobytes()
-            client.publish(MQTT_TOPIC_VIDEO, frame_data)
+            client.publish(MQTT_TOPIC_VIDEO, frame_data)  # 비디오 프레임 전송
             # logging.info("Sent a video frame")
+
+            if not audio_queue.empty():
+                audio_data = audio_queue.get()
+                client.publish(MQTT_TOPIC_AUDIO, audio_data.tobytes())
+
             await asyncio.sleep(0.1)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
+    stream.stop()
+
+
+# 음성 캡처 콜백 함수
+def audio_callback(indata, frames, time, status):
+    if status:
+        logging.error(status)  # 오류 로그 남기기
+    try:
+        audio_queue.put(indata.copy())
+    except Exception as e:
+        logging.error(f"Error in audio callback: {e}")
+
+#############################################################################
 
 
 # MQTT 설정
@@ -208,6 +250,7 @@ MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
+MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="robot_controller")
 
@@ -271,9 +314,14 @@ async def main():
 
 
 if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
     try:
-        asyncio.run(main())
+        # asyncio.run(main())
+        loop.run_until_complete(main())
     except KeyboardInterrupt:
+        logging.info("Interrupted by user, cleaning up...")
+    finally:
+        # 종료 처리
         GPIO.cleanup()
         cap.release()
         logging.info("Cleanup completed")

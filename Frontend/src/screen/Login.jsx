@@ -105,7 +105,7 @@ export default function Login() {
                         </Button>
                     </RowContainer>
                     <StyledText>처음이시라면...?</StyledText>
-                    <SignIn onPress={() => navigate('SignIn')}>
+                    <SignIn onPress={() => navigate('SignUp')}>
                         <ButtonText>회원 가입 하러가기</ButtonText>
                     </SignIn>
                 </View>
