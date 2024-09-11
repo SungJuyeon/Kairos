@@ -43,12 +43,12 @@ async def read_index(request: Request):
 
 
 @app.post("/move/{direction}")
-async def move_(direction: str):
+async def post_move(direction: str):
     await move(direction)
 
 
 @app.post("/speed/{action}")
-async def speed_(action: str):
+async def post_speed(action: str):
     await speed(action)
 
 
