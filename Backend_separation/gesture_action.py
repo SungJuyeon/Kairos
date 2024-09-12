@@ -14,10 +14,6 @@ last_command_time = 0
 command_cooldown = 10  # 10초 쿨다운
 
 
-last_command_time = 0
-command_cooldown = 10  # 10초 쿨다운
-
-
 async def gesture_action(action, client, distance_data):
     global last_command_time  # 마지막 명령 발행 시간 사용
     current_time = time.time()  # 현재 시간 가져오기
