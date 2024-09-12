@@ -6,8 +6,11 @@ import numpy as np
 from deepface import DeepFace
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from emotion_record import get_most_frequent_emotion, save_emotion_result, get_emotion_file_today, save_most_emotion_pic
-from emotion_video import generate_video_filename, save_frames_to_video
+from io import BytesIO
+from PIL import Image
+
+from face_image_db import get_faces_from_db
+from emotion_video import delete_old_videos
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +25,7 @@ last_detected_emotions = []
 last_detected_emotion_scores = []
 faces = []
 executor = ThreadPoolExecutor(max_workers=4)
-
+highlight_frames = []
 
 def detect_faces(frame):
     global faces, last_face_positions
@@ -42,14 +45,20 @@ def detect_faces(frame):
 
     last_face_positions = faces if faces else None  # 얼굴이 감지되지 않은 경우 None으로 설정
 
+def load_image_from_blob(blob_data):
+    return Image.open(BytesIO(blob_data))
 
 async def recognize_faces(frame):
     global last_detected_nicknames, last_detected_distances, last_detected_rectangles, last_face_positions
+
     if last_face_positions is None:
         last_detected_nicknames = ["unknown"]
         last_detected_distances = [None]
         last_detected_rectangles = []
         return
+
+    faces_db = get_faces_from_db()
+    faces_db_images = {nickname: load_image_from_blob(photoname) for nickname, photoname in faces_db}
 
     last_detected_nicknames.clear()
     last_detected_distances.clear()
@@ -57,47 +66,24 @@ async def recognize_faces(frame):
 
     for idx, (x, y, w, h) in enumerate(last_face_positions):
         face_image = frame[y:y + h, x:x + w]
+        face_pil = Image.fromarray(face_image)
 
-        try:
-            result = DeepFace.find(face_image, db_path='faces', model_name='VGG-Face', enforce_detection=False)
-            #logging.info(f"DeepFace.find() result: {result}")  # DeepFace 결과 로그 출력
+        matched_nickname = "unknown"
+        min_distance = float('inf')
 
-            if result and len(result) > 0:
-                threshold = 0.4
-                filtered_results = [res for res in result if res['distance'].values[0] < threshold]
+        for nickname, db_image in faces_db_images.items():
+            result = DeepFace.verify(face_pil, db_image, model_name='VGG-Face', enforce_detection=False)
+            if result and result['distance'] < min_distance:
+                min_distance = result['distance']
+                matched_nickname = nickname
 
-                if filtered_results:
-                    matched_face_path = filtered_results[0]['identity'].values[0]
-                    matched_nickname = get_nickname_from_filename(matched_face_path)
-                    last_detected_distances.append(filtered_results[0]['distance'].values[0])
-                    last_detected_nicknames.append(matched_nickname)
-                    last_detected_rectangles.append(last_face_positions[idx])  # 초록색 사각형 정보 추가
+        last_detected_nicknames.append(matched_nickname)
+        last_detected_distances.append(min_distance if min_distance < 0.4 else None)
+        last_detected_rectangles.append(last_face_positions[idx])
 
-                    # 인식된 얼굴과 비교된 faces 폴더의 사진 이름 표시
-                    compared_files = [get_nickname_from_filename(res['identity'].values[0]) for res in filtered_results]
-                    #logging.info(f"비교된 사진들: {compared_files}")  # 비교된 사진 로그 출력
-                else:
-                    last_detected_nicknames.append("unknown")
-                    last_detected_distances.append(None)
-                    last_detected_rectangles.append(None)
-            else:
-                last_detected_nicknames.append("unknown")
-                last_detected_distances.append(None)
-                last_detected_rectangles.append(None)
-
-        except Exception as e:
-            print("Error in face recognition:", e)
-            last_detected_nicknames.append("unknown")
-            last_detected_distances.append(None)
-            last_detected_rectangles.append(None)
-
-highlight_frames = []
-highlight_start_time = None
 
 async def recognize_emotion(frame):
-    global last_detected_emotions, last_detected_emotion_scores, last_face_positions, highlight_start_time, highlight_frames
-    most_frequent_emotion = get_most_frequent_emotion()
-
+    global last_detected_emotions, last_detected_emotion_scores, last_face_positions
     if last_face_positions is None:
         last_detected_emotions = ["unknown"]
         last_detected_emotion_scores = [{}]
@@ -113,57 +99,35 @@ async def recognize_emotion(frame):
             emotion_result = DeepFace.analyze(face_image, actions=['emotion'], enforce_detection=False)
             if emotion_result:
                 emotion = emotion_result[0]['dominant_emotion']
-                last_detected_emotions.append(emotion)
+                last_detected_emotions.append(emotion_result[0]['dominant_emotion'])
                 last_detected_emotion_scores.append(emotion_result[0]['emotion'])
-
                 # 감정 결과 저장 (Neutral 제외)
-                if emotion != 'neutral':
-                    # 이름이 unknown이 아니면 감정 저장 및 most_emotion_pic 저장
-                    detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
-                    if detected_person_name != "unknown":
-                        save_emotion_result(emotion)
+                from Backend_separation.emotion_record import save_emotion_result
+                save_emotion_result(emotion)
 
-                        # 최다 감정이 바뀌었거나 현재 감정이 최다 감정과 일치하면 사진 저장
-                        if emotion == most_frequent_emotion:
-                            save_most_emotion_pic(frame, emotion)
-                        elif get_most_frequent_emotion() != most_frequent_emotion:
-                            save_most_emotion_pic(frame, emotion)
+                # 감정이 90을 넘는 경우 하이라이트 영상 저장
+                top_emotion, top_score = max(emotion_result[0]['emotion'].items(), key=lambda x: x[1])
+                if top_score > 90 and top_emotion != 'Neutral':
+                    highlight_frames.append(frame)
 
-                try:
-                    emotion_scores = {k: v for k, v in emotion_result[0]['emotion'].items() if isinstance(v, (int, float))}
-
-                    # 가장 높은 감정 점수 찾기
-                    top_emotion, top_score = max(emotion_scores.items(), key=lambda x: x[1])
-
-                    # 감정 점수가 90 이상이고, Neutral이 아닌 경우 하이라이트 저장
-                    if top_score > 90 and top_emotion != 'neutral':
-                        detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
-                        if detected_person_name != "unknown":
-                            highlight_frames.append(frame)
-
-                            # 하이라이트 시작 시간 기록
-                            if highlight_start_time is None:
-                                highlight_start_time = datetime.datetime.now()
-
-                            # 하이라이트 저장
-                            elapsed_time = (datetime.datetime.now() - highlight_start_time).seconds
-                            if elapsed_time >= 10:
-                                video_filename = generate_video_filename(detected_person_name)
-                                save_frames_to_video(video_filename, highlight_frames)
-
-                                # 저장 후 하이라이트 초기화
-                                highlight_frames.clear()
-                                highlight_start_time = None
-                                print(f"Saved highlight video: {video_filename}")
-
-                except Exception as e:
-                    print(f"Error in emotion recognition: {e}")
+            else:
+                last_detected_emotions.append("unknown")
+                last_detected_emotion_scores.append({})
 
         except Exception as e:
             print("Error in emotion recognition:", e)
             last_detected_emotions.append("unknown")
             last_detected_emotion_scores.append({})
 
+    # 감정 사진 저장 (최다 감정 갱신)
+    from Backend_separation.emotion_record import get_most_frequent_emotion
+    most_frequent_emotion, _ = get_most_frequent_emotion()
+    if most_frequent_emotion != 'Neutral':
+        if last_detected_emotions:
+            current_emotion = last_detected_emotions[-1]
+            if current_emotion == most_frequent_emotion:
+                from Backend_separation.emotion_record import save_most_emotion_pic
+                save_most_emotion_pic(frame, current_emotion)
 
 
 def draw_faces(frame):
@@ -204,7 +168,7 @@ def draw_faces(frame):
 
 
 def get_nickname_from_filename(filename):
-    base_name = os.path.basename(filename)  # 파일 경로에서 파일 이름만 추출
+    base_name = filename.split('/')[-1]  # 파일 경로에서 파일 이름만 추출
     name_part = base_name.split('.')[0]  # 확장자 제거
     name_part = name_part.split('(')[0].strip()  # 괄호 앞부분을 가져옴
     return name_part
@@ -217,8 +181,30 @@ async def recognize_periodically(video_frames):
             frame = video_frames[-1]
             await recognize_faces(frame)
             await recognize_emotion(frame)
+
+            # 하이라이트 영상 저장
+            if highlight_frames:
+                from Backend_separation.emotion_video import generate_video_filename
+                video_filename = generate_video_filename("highlight")
+                from Backend_separation.emotion_video import save_frames_to_video
+                save_frames_to_video(video_filename, highlight_frames)
+                highlight_frames.clear()
+
             logging.info("인식 완료")
         except IndexError:
             logging.info("리스트가 비어 있습니다.")
         finally:
             await asyncio.sleep(2)
+
+# 매일 자정에 감정 데이터 파일 초기화
+def manage_daily_files():
+    today = datetime.datetime.today().strftime('%Y-%m-%d')
+    from Backend_separation.emotion_record import get_emotion_file_today
+    file_path = get_emotion_file_today()
+    if os.path.exists(file_path):
+        # 감정 데이터 초기화
+        from Backend_separation.emotion_record import reset_emotion_file
+        reset_emotion_file()
+
+    # 이전 하이라이트 영상 삭제
+    delete_old_videos(os.path.dirname(file_path), days=2)

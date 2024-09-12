@@ -2,11 +2,14 @@
 # 비디오 프레임 처리 관련 로직을 포함하는 파일
 
 import asyncio
-import cv2
 import logging
-from mqtt_client import video_frames
-from Backend_separation.face_recognition import detect_faces, recognize_emotion, recognize_faces, draw_faces
+
+import cv2
 import numpy as np
+
+from face_recognition import detect_faces, draw_faces
+from mqtt_client import video_frames
+
 logger = logging.getLogger(__name__)
 
 
