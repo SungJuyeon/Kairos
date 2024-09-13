@@ -541,7 +541,7 @@ const CaptureButtonStyle = styled.TouchableOpacity`
 
 const ImageContainer = styled.View`
     width: 90%;
-    height: 45%;
+    height: 34%;
     border-width: 2px; 
     border-color: #F8098B;
     background-color: #222222; 
