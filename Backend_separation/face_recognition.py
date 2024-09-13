@@ -136,7 +136,7 @@ async def recognize_emotion(frame):
                     top_emotion, top_score = max(emotion_scores.items(), key=lambda x: x[1])
 
                     # 감정 점수가 90 이상이고, Neutral이 아닌 경우 하이라이트 저장
-                    if top_score > 90 and top_emotion != 'neutral':
+                    if top_score > 30 and top_emotion != 'neutral':
                         detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
                         if detected_person_name != "unknown":
                             highlight_frames.append(frame)
