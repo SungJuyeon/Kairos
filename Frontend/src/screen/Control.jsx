@@ -7,7 +7,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { WebView } from 'react-native-webview';
 
 
-
     // 스타일 컴포넌트를 위함
     const { width, height } = Dimensions.get('window');
 
@@ -27,14 +26,11 @@ export default function Control() {
     const [value, setValue] = useState(5);
 
     
-    //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
-    //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
-    //const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
-    //const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
-    const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
+
+    const BASE_URL = 'http://localhost:8000';
 
 
-    const imageURL = '${BASE_URL}/video_feed';
+    const imageURL = `${BASE_URL}/video`;
 
     // 안드로이드에서 사진 저장 권한을 위한 함수
     // const requestCameraRollPermission = async () => {
@@ -283,17 +279,13 @@ async function convertBlobToBase64(blob) {
             <MarginContainer />
 
             <ImageContainer>
-
-
-    <Container>
-      <StyledWebView
-        source={{ uri: 'http://127.0.0.1:8000/video_feed' }} // 표시할 웹사이트 URL
-
-        // 안드로이드: 10.0.2.2
-        // ios: 127.0.0.1
-      />
-    </Container>
-
+                {Platform.OS === 'web' ? (
+                     <img src={imageURL} width="100%" alt="Live Stream" />
+                ) : (
+                    <StyledWebView
+                        source={{ uri: imageURL }}
+                    />
+                )}
             </ImageContainer>
 
             <Margin2Container />
