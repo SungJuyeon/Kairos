@@ -8,6 +8,7 @@ from typing import List
 import json
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
@@ -76,67 +77,74 @@ async def get_video_feed(face: bool):
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 
-##################################################################
-DATABASE_URL = ("mssql+pyodbc://gongsoonjin99:abcdhajindcba9210!@whichx2.mysql.database.azure.com/mypage?driver=ODBC"
-                "+Driver+17+for+SQL+Server")
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.reflect(bind=engine)  # 기존 테이블 반영
-
-
-class MessageCreate(BaseModel):
-    sender_id: int
-    receiver_id: int
-    content: str
-
-
-class MessageResponse(BaseModel):
-    id: int
-    sender_id: int
-    receiver_id: int
-    content: str
-
-
-@app.post("/messages/", response_model=MessageResponse)
-def create_message(message: MessageCreate):
-    db = SessionLocal()
-    msg = Message(sender_id=message.sender_id, receiver_id=message.receiver_id, content=message.content)
-    db.add(msg)
-    db.commit()
-    db.refresh(msg)
-    return msg
-
-
-@app.get("/messages/{user_id}", response_model=List[MessageResponse])
-def read_messages(user_id: int):
-    db = SessionLocal()
-    messages = db.query(Message).filter((Message.sender_id == user_id) | (Message.receiver_id == user_id)).all()
-    return messages
-
-
-# WebSocket 예시
-@app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int):
-    await websocket.accept()
-
-    # 메시지를 받는 동안 대기
-    while True:
-        data = await websocket.receive_text()
-        # 메시지 처리 로직
-        # 예를 들어, 메시지를 데이터베이스에 저장하고, 해당 사용자에게 전송
-
-        # 예: 메시지를 상대에게 전송
-        message_data = json.loads(data)
-        new_message = MessageCreate(sender_id=user_id, receiver_id=message_data['receiver_id'],
-                                    content=message_data['content'])
-        await create_message(new_message)  # 메시지를 저장하는 함수 호출
-
-        await websocket.send_text(f"Message sent to {message_data['receiver_id']}: {message_data['content']}")
-
-
-###################################################################
+# ##################################################################
+# load_dotenv()
+#
+# DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
+# DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+# DATABASE_SERVER = "whichx2.mysql.database.azure.com"
+# DATABASE_NAME = "mypage"
+#
+# DATABASE_URL = (f"mssql+pyodbc://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_SERVER}/{DATABASE_NAME}?driver=ODBC"
+#                 f"+Driver+17+for+SQL+Server")
+#
+# engine = create_engine(DATABASE_URL)
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+#
+# Base.metadata.reflect(bind=engine)  # 기존 테이블 반영
+#
+#
+# class MessageCreate(BaseModel):
+#     sender_id: int
+#     receiver_id: int
+#     content: str
+#
+#
+# class MessageResponse(BaseModel):
+#     id: int
+#     sender_id: int
+#     receiver_id: int
+#     content: str
+#
+#
+# @app.post("/messages/", response_model=MessageResponse)
+# def create_message(message: MessageCreate):
+#     db = SessionLocal()
+#     msg = Message(sender_id=message.sender_id, receiver_id=message.receiver_id, content=message.content)
+#     db.add(msg)
+#     db.commit()
+#     db.refresh(msg)
+#     return msg
+#
+#
+# @app.get("/messages/{user_id}", response_model=List[MessageResponse])
+# def read_messages(user_id: int):
+#     db = SessionLocal()
+#     messages = db.query(Message).filter((Message.sender_id == user_id) | (Message.receiver_id == user_id)).all()
+#     return messages
+#
+#
+# # WebSocket 예시
+# @app.websocket("/ws/{user_id}")
+# async def websocket_endpoint(websocket: WebSocket, user_id: int):
+#     await websocket.accept()
+#
+#     # 메시지를 받는 동안 대기
+#     while True:
+#         data = await websocket.receive_text()
+#         # 메시지 처리 로직
+#         # 예를 들어, 메시지를 데이터베이스에 저장하고, 해당 사용자에게 전송
+#
+#         # 예: 메시지를 상대에게 전송
+#         message_data = json.loads(data)
+#         new_message = MessageCreate(sender_id=user_id, receiver_id=message_data['receiver_id'],
+#                                     content=message_data['content'])
+#         await create_message(new_message)  # 메시지를 저장하는 함수 호출
+#
+#         await websocket.send_text(f"Message sent to {message_data['receiver_id']}: {message_data['content']}")
+#
+#
+# ###################################################################
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
     server = uvicorn.Server(config)
