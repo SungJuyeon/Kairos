@@ -31,10 +31,8 @@ async def generate_frames():
 
 async def video_frame_generator(face=True):
     while True:
-        logging.info(f"Current video frames count: {len(video_frames)}")
         if len(video_frames) > 0:
             frame = video_frames[-1]
-            logging.info(f"Processing frame: {frame.shape}.")
 
             if frame is None or not isinstance(frame, np.ndarray):
                 logging.error("Invalid frame received.")
