@@ -7,7 +7,7 @@ import logging
 import cv2
 import numpy as np
 
-from Backend_separation.face_recognition import detect_faces, draw_faces
+from face_recognition import detect_faces, draw_faces
 from mqtt_client import video_frames
 
 logger = logging.getLogger(__name__)
