@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions, Text } from "react-native";
+import { Alert, Platform, Dimensions, Text } from "react-native";
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
-import { WebView } from 'react-native-webview';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebView } from 'react-native-webview'
 import * as MediaLibrary from 'expo-media-library';
 
 
@@ -154,10 +153,10 @@ const onMessage = async (event) => {
         // MediaLibrary에 저장
         const asset = await MediaLibrary.createAssetAsync(fileUri);
         console.log('Image saved to photo library successfully:', asset); // 저장 성공 로그
-        Alert.alert('Success', 'Image saved to your photo library.');
+        Alert.alert('사진 찍기 완료', '사진이 갤러리에 저장되었습니다.');
     } catch (error) {
         console.error('Error saving image:', error); // 에러 로그
-        Alert.alert('Error', 'Failed to save image to photo library.');
+        Alert.alert('사진 찍기 실패', '오류가 발생했습니다.');
     }
 };
 
