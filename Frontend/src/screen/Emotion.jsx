@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
+import { WebView } from 'react-native-webview';
 
 
     // 스타일 컴포넌트를 위함
@@ -19,7 +20,7 @@ export default function Control() {
 
     const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
 
-    const imageURL = '${BASE_URL}/video_feed';
+    const imageURL = `${BASE_URL}/video`;
 
     return (
         <Container>
@@ -36,9 +37,13 @@ export default function Control() {
             </RowContainer>
 
                 <ImageContainer>
-                    <StyledImage
-                        source={{ uri: `${BASE_URL}/video_feed` }}
-                    />
+                    {Platform.OS === 'web' ? (
+                        <img src={imageURL} width="100%" alt="Live Stream" />
+                    ) : (
+                        <StyledWebView
+                            source={{ uri: imageURL }}
+                        />
+                    )}
                 </ImageContainer>
             <BorderContainer />
 
@@ -86,12 +91,10 @@ const BorderContainer = styled.View`
 
 const ImageContainer = styled.View`
     width: 90%;
-    height: 35%;
+    height: 34%;
     border-width: 2px; 
     border-color: #F8098B;
     background-color: #222222; 
-    justify-content: center;
-    align-items: center;
 `;
 
 const StyledImage = styled.Image`
@@ -114,4 +117,9 @@ const RepositoryButtonText = styled.Text`
     color: white;
     font-size: ${scale * 18}px;
     font-weight: bold;
+`;
+
+
+const StyledWebView = styled(WebView)`
+  flex: 1;
 `;

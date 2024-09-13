@@ -29,7 +29,7 @@ export default function App() {
                   tabBarIcon: ({ color, size, focused }) => {
                     let iconName;
                     const iconColor = '#FFFFFF'
-              
+
                     if (route.name === 'Control') {
                       iconName = focused ? 'camera' : 'camera-outline';
                     } else if (route.name === 'MyPage') {

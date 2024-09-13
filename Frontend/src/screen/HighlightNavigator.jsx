@@ -18,6 +18,11 @@ export default function HighlightNavigator() {
       headerTitleAlign: 'center', // 타이틀 정렬을 가운데로 설정
     }}
     >
+        <HighlightStack.Screen 
+          name="Highlight" 
+          component={HighlightScreen} 
+          options={{ title: '' }} // 타이틀을 직접 설정
+        />
 
         <HighlightStack.Screen 
           name="Emotion" 
