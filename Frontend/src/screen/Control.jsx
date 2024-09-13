@@ -207,7 +207,13 @@ const onMessage = async (event) => {
 
             <ImageContainer>
                 {Platform.OS === 'web' ? (
-                     <img src={imageURL} width="100%" alt="Live Stream" />
+                    <img src={imageURL} width="100%" alt="Live Stream" />
+                ) : Platform.OS === 'android' ? (
+                    <StyledWebView
+                        source={{ uri: 'http://10.0.2.2:8000/video' }}
+                        ref={webViewRef}
+                        onMessage={onMessage}
+                    />
                 ) : (
                     <StyledWebView
                         source={{ uri: imageURL }}

@@ -39,11 +39,15 @@ export default function Control() {
                 <ImageContainer>
                     {Platform.OS === 'web' ? (
                         <img src={imageURL} width="100%" alt="Live Stream" />
+                    ) : Platform.OS === 'android' ? (
+                        <StyledWebView
+                            source={{ uri: 'http://10.0.2.2:8000/video' }}
+                        />
                     ) : (
                         <StyledWebView
                             source={{ uri: imageURL }}
                         />
-                    )}
+                )}
                 </ImageContainer>
             <BorderContainer />
 
