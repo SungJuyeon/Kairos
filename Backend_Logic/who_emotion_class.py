@@ -3,16 +3,19 @@ import numpy as np
 from deepface import DeepFace
 import os
 import re
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 class FaceRecognition:
     def __init__(self, registered_faces_folder, model_prototxt, model_weights):
         self.registered_faces = self.load_registered_faces(registered_faces_folder)
         self.model = cv2.dnn.readNetFromCaffe(model_prototxt, model_weights)
-        self.last_detected_nickname = "unknown"
-        self.last_detected_distance = None
-        self.last_face_position = None
-        self.last_detected_emotion = "unknown"
-        self.last_detected_emotion_scores = {}
+        self.last_detected_nicknames = []
+        self.last_detected_distances = []
+        self.last_face_positions = []
+        self.last_detected_emotions = []
+        self.last_detected_emotion_scores = []
+        self.executor = ThreadPoolExecutor(max_workers=4)
 
     def load_registered_faces(self, folder_path):
         registered_faces = []
@@ -53,13 +56,12 @@ class FaceRecognition:
             print("Error in emotion recognition:", e)
             return "unknown", {}
 
-    def recognize_faces(self, frame, faces):
-        if len(faces) == 0:
-            self.last_detected_nickname = "unknown"
-            self.last_detected_distance = None
-            self.last_detected_emotion = "unknown"
-            self.last_detected_emotion_scores = {}
-            return
+    async def recognize_faces(self, frame, faces):
+        self.last_detected_nicknames.clear()
+        self.last_detected_distances.clear()
+        self.last_face_positions.clear()
+        self.last_detected_emotions.clear()
+        self.last_detected_emotion_scores.clear()
 
         for (x, y, w, h) in faces:
             face_image = frame[y:y + h, x:x + w]
@@ -71,49 +73,58 @@ class FaceRecognition:
 
                 if len(filtered_results) > 0:
                     matched_face_path = filtered_results[0]['identity'].values[0]
-                    self.last_detected_distance = filtered_results[0]['distance'].values[0]
-                    self.last_detected_nickname = self.get_nickname_from_filename(matched_face_path)
-                    self.last_face_position = (x, y, w, h)
+                    self.last_detected_distances.append(filtered_results[0]['distance'].values[0])
+                    self.last_detected_nicknames.append(self.get_nickname_from_filename(matched_face_path))
+                    self.last_face_positions.append((x, y, w, h))
                 else:
-                    self.last_detected_nickname = "unknown"
-                    self.last_detected_distance = None
+                    self.last_detected_nicknames.append("unknown")
+                    self.last_detected_distances.append(None)
+                    self.last_face_positions.append((x, y, w, h))
 
-                self.last_detected_emotion, self.last_detected_emotion_scores = self.recognize_emotion(face_image)
+                emotion, scores = self.recognize_emotion(face_image)
+                self.last_detected_emotions.append(emotion)
+                self.last_detected_emotion_scores.append(scores)
 
             except Exception as e:
                 print("Error in face recognition:", e)
-                self.last_detected_emotion = "unknown"
-                self.last_detected_emotion_scores = {}
+                self.last_detected_emotions.append("unknown")
+                self.last_detected_emotion_scores.append({})
 
-    def draw_faces(self, frame, faces):  # faces를 인자로 추가
-        if self.last_face_position is not None:
-            (x, y, w, h) = self.last_face_position
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    def draw_faces(self, frame, faces):
+        for idx, (x, y, w, h) in enumerate(faces):
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
 
-            if self.last_detected_distance is not None:
-                cv2.putText(frame, f"Detected: {self.last_detected_nickname} ({self.last_detected_distance:.2f})",
-                            (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            # 인덱스가 유효한지 확인
+            if idx < len(self.last_detected_nicknames):
+                nickname = self.last_detected_nicknames[idx]
+                distance = self.last_detected_distances[idx]
+                emotion = self.last_detected_emotions[idx]
+                scores = self.last_detected_emotion_scores[idx]
+
+                if distance is not None:
+                    cv2.putText(frame, f"Detected: {nickname} ({distance:.2f})",
+                                (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                else:
+                    cv2.putText(frame, f"Detected: {nickname}",
+                                (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+                if scores:
+                    sorted_emotions = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+                    top_emotion, top_score = sorted_emotions[0]
+                    cv2.putText(frame, f"{top_emotion}: {top_score:.2f}%", (x + w + 10, y + 25),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
+
+                    for i, (emotion, score) in enumerate(sorted_emotions[1:], start=1):
+                        cv2.putText(frame, f"{emotion}: {score:.2f}%", (x + w + 10, y + 25 + i * 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
             else:
-                cv2.putText(frame, f"Detected: {self.last_detected_nickname}",
-                            (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-            if self.last_detected_emotion_scores:
-                sorted_emotions = sorted(self.last_detected_emotion_scores.items(), key=lambda item: item[1], reverse=True)
-                top_emotion, top_score = sorted_emotions[0]
-                cv2.putText(frame, f"{top_emotion}: {top_score:.2f}%", (x + w + 10, y + 25),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
-
-                for i, (emotion, score) in enumerate(sorted_emotions[1:], start=1):
-                    cv2.putText(frame, f"{emotion}: {score:.2f}%", (x + w + 10, y + 25 + i * 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-        for (x, y, w, h) in faces:  # 여기에 faces가 정의되어야 함
-            if (x, y, w, h) != self.last_face_position:
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                cv2.putText(frame, "No recognition data", (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
     def process_video_stream(self):
         cap = cv2.VideoCapture(0)
         frame_counter = 0
+        self.loop = asyncio.get_event_loop()
 
         while True:
             ret, frame = cap.read()
@@ -122,19 +133,21 @@ class FaceRecognition:
 
             faces = self.detect_faces(frame)
 
-            if frame_counter % 7 == 0:
-                self.recognize_faces(frame, faces)
+            if frame_counter == 0:
+                asyncio.run(self.recognize_faces(frame, faces))
 
-            self.draw_faces(frame, faces)  # faces를 인자로 전달
+            self.draw_faces(frame, faces)
             cv2.imshow('Video Stream', frame)
 
             frame_counter += 1
+            frame_counter %= 12
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         cap.release()
         cv2.destroyAllWindows()
+
 
 # 사용 예시
 if __name__ == "__main__":
