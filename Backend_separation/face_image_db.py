@@ -1,7 +1,13 @@
+import imghdr
+import mimetypes
+import shutil
+import tempfile
+
 import logger
 import pymysql
 import numpy as np
 import cv2
+from io import BytesIO
 from PIL import Image
 import io
 import os
@@ -97,8 +103,80 @@ def get_faces_from_db():
     cursor.close()
     conn.close()
 
-    faces = []
+    faces = {}
     for nickname, photoname in results:
-        faces.append((nickname, photoname))
+        faces[photoname] = nickname
 
     return faces
+
+# 파일 이름에서 닉네임을 가져오는 함수
+def get_nickname_from_filename(filename):
+    faces = get_faces_from_db()
+    base_name = os.path.basename(filename)
+    name_part = base_name.split('.')[0]
+    name_part = name_part.split('(')[0].strip()
+    return faces.get(name_part, name_part)
+
+def load_image_from_blob(blob_data):
+    try:
+        if not blob_data:
+            print("No data in blob.")
+            return None
+
+        # Check if the blob_data is a valid image format
+        with BytesIO(blob_data) as buf:
+            buf.seek(0)
+            image = Image.open(buf)
+            image = image.convert('RGB')  # Ensure RGB format
+            return np.array(image)
+    except Exception as e:
+        print(f"Error loading image from blob: {e}")
+        return None
+
+def fetch_family_photos():
+    # Connect to the database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Query to get family relationships
+    query = """
+        SELECT user1.photoname, user2.photoname 
+        FROM familyship 
+        JOIN userentity user1 ON familyship.user1_id = user1.id
+        JOIN userentity user2 ON familyship.user2_id = user2.id
+        WHERE user1.photoname IS NOT NULL AND user2.photoname IS NOT NULL
+    """
+    cursor.execute(query)
+    results = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Create a dictionary to store family photos
+    family_photos = {}
+
+    for photo1, photo2 in results:
+        if photo1:
+            family_photos[photo1] = 'family_member'
+        if photo2:
+            family_photos[photo2] = 'family_member'
+
+    # Save photos to temporary files
+    temp_dir = tempfile.mkdtemp()
+
+    for photo_path in family_photos.keys():
+        # If photo_path is a bytes object, try to identify it as an image
+        if isinstance(photo_path, bytes):
+            image_type = imghdr.what(None, h=photo_path)  # Detect image type from binary data
+            if image_type:
+                # If valid image, save it to a temporary file
+                temp_file_path = os.path.join(temp_dir, f"image_{os.urandom(4).hex()}.{image_type}")
+                with open(temp_file_path, 'wb') as f:
+                    f.write(photo_path)
+            else:
+                print(f"Unknown binary data, skipping: {photo_path}")
+        else:
+            # Assuming the path is already a string and valid file path
+            temp_file_path = os.path.join(temp_dir, os.path.basename(photo_path))
+            shutil.copy(photo_path, temp_file_path)
+
+    return temp_dir
