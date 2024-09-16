@@ -6,7 +6,7 @@ from datetime import datetime
 
 # 비디오 저장 경로 및 파일명 생성 함수
 def generate_video_filename():
-    base_dir = "videos"  # 비디오 파일 저장 폴더
+    base_dir = "unused/videos"  # 비디오 파일 저장 폴더
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)  # 폴더가 없으면 생성
 

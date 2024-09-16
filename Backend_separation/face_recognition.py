@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-
+from mqtt_client import video_frames
 import boto3
 import cv2
 import numpy as np
@@ -158,7 +158,7 @@ def get_nickname_from_filename(filename):
     return name_part
 
 
-async def recognize_periodically(video_frames):
+async def recognize_periodically():
     logging.info("얼굴 인식 업데이트 시작")
     while True:
         try:
@@ -166,7 +166,7 @@ async def recognize_periodically(video_frames):
             await recognize_faces(frame)
             await recognize_emotion(frame)
             ########################################################
-            await create_video_highlight(video_frames)  # 비디오 생성 호출
+            await create_video_highlight()  # 비디오 생성 호출
             ########################################################
             logging.info("인식 완료")
         except IndexError:
@@ -178,7 +178,7 @@ async def recognize_periodically(video_frames):
 # ##############################################################
 # # S3 클라이언트 생성
 # s3_client = boto3.client('s3')
-# BUCKET_NAME = 'your-bucket-name'  # 실제 버킷 이름으로 변경
+# BUCKET_NAME = 'kairosbucket'  # 실제 버킷 이름으로 변경
 #
 #
 # def upload_to_s3(file_name, bucket, object_name=None):
@@ -192,38 +192,53 @@ async def recognize_periodically(video_frames):
 #         logging.error(f"S3 업로드 실패: {e}")
 #
 #
-# async def create_video_highlight(video_frames):
-#     """조건에 맞는 경우 비디오 생성 및 S3에 업로드"""
-#     frame_count = 0
-#     video_file_name = 'output_video.avi'
-#
-#     logging.info("비디오 작성을 시작")
-#
-#     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-#     out = cv2.VideoWriter(video_file_name, fourcc, 20.0, (640, 480))
-#
-#     start_time = time.time()
-#     while True:
-#         if frame_count >= 10 * 20:  # 10초 동안 프레임 수 (20 FPS 가정)
-#             logging.info("10초분량 프레임 추가 완료")
-#             break
-#
-#         current_emotions = last_detected_emotions
-#         current_emotion_scores = last_detected_emotion_scores
-#
-#         if current_emotions:
-#             for idx, emotion in enumerate(current_emotions):
-#                 score = current_emotion_scores[idx].get(emotion, 0)
-#                 if emotion != "neutral" and score >= 0.95:
-#                     frame = video_frames[-1]
-#                     out.write(frame)  # 비디오에 프레임 추가
-#                     frame_count += 1
-#                     logging.info(f"프레임 {frame_count} 추가: 감정 '{emotion}' (신뢰도: {score:.2f})")
-#                     break
-#
-#         await asyncio.sleep(0.1)  # 다음 프레임까지 대기
-#
-#     out.release()
-#     logging.info(f"비디오 파일 '{video_file_name}' 저장 완료.")
-#     # upload_to_s3(video_file_name, BUCKET_NAME)  # S3에 업로드
-#     # os.remove(video_file_name)  # 로컬 파일 삭제
+
+is_saving_video = False  # 비디오 저장 중인지 여부를 나타내는 플래그
+
+
+async def create_video_highlight():
+    global is_saving_video  # 플래그를 전역으로 사용
+
+
+    current_emotions = last_detected_emotions
+    current_emotion_scores = last_detected_emotion_scores
+    current_nickname = last_detected_nicknames
+
+    if current_nickname != "unkown" and current_emotions and not is_saving_video:  # 비디오 저장 중이 아닐 때만 실행
+        for idx, emotion in enumerate(current_emotions):
+            score = current_emotion_scores[idx].get(emotion, 0)
+            if emotion != "neutral" and score >= 0.95:
+                asyncio.create_task(save_video())
+
+
+async def save_video(fps=20, seconds=10):
+    logging.info("비디오 저장 시작##########################################")
+    global is_saving_video
+    is_saving_video = True  # 비디오 저장 시작
+    if not video_frames :
+        logging.info("비디오 프레임이 없습니다.")
+        is_saving_video = False
+        return
+
+    video_file_name = 'output.avi'
+    first_frame = video_frames[0]
+    h, w = first_frame.shape[:2]
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+
+    out = cv2.VideoWriter(video_file_name, fourcc, fps, (w, h))
+
+    count = 0
+    total_frames = fps * seconds
+    while count < total_frames:
+        frame = video_frames[count % len(video_frames)]  # 지속적으로 프레임을 가져옴
+        out.write(frame)
+        count += 1
+        await asyncio.sleep(1 / fps)
+
+    is_saving_video = False
+
+    out.release()  # 비디오 파일 닫기
+    logging.info("비디오 저장 완료##########################################")
+
+    # upload_to_s3(video_file_name, BUCKET_NAME)  # S3에 업로드
+    # os.remove(video_file_name)  # 로컬 파일 삭제
