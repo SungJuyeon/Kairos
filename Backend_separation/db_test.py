@@ -1,94 +1,31 @@
-# import os
-# import httpx
-# import asyncio
-# from fastapi import FastAPI, Header, HTTPException, Depends
-# from fastapi.middleware.cors import CORSMiddleware
-# from pydantic import BaseModel
-# from face_image_db import fetch_family_photos
-# from face_recognition import recognize_periodically
-# from mqtt_client import setup_mqtt, video_frames
-#
-# app = FastAPI()
-#
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["*"],  # Adjust as necessary
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-#
-# SPRING_BOOT_URL = "http://localhost:8080/user/id"
-# user_token = None  # 전역 변수로 토큰을 저장
-#
-#
-# async def fetch_user_id(token: str):
-#     headers = {"Authorization": f"Bearer {token}"}
-#     async with httpx.AsyncClient() as client:
-#         response = await client.get(SPRING_BOOT_URL, headers=headers)
-#         response.raise_for_status()
-#         return response.json()
-#
-# async def current_userId(token: str):
-#     user_id = await fetch_user_id(token)
-#     return user_id
-#
-# async def get_token(authorization: str = Header(...)):
-#     if not authorization.startswith("Bearer "):
-#         raise HTTPException(status_code=401, detail="Invalid token format")
-#     return authorization[7:]  # "Bearer " 이후의 부분만 추출
-#
-# @app.get("/test-user-id")
-# async def test_user_id(token: str = Depends(get_token)):
-#     user_id = await current_userId(token)
-#     return {"user_id": user_id}
-#
-# # 프론트엔드에서 JWT 토큰을 받는 엔드포인트
-# class TokenRequest(BaseModel):
-#     token: str
-#
-# @app.post("/set-token")
-# async def set_token(token_request: TokenRequest):
-#     global user_token
-#     user_token = token_request.token
-#     return {"message": "Token received"}
-#
-# @app.on_event("startup")
-# async def startup_event():
-#     global user_token
-#     if not user_token:
-#         print("No token provided")
-#         return
-#
-#     await setup_mqtt()
-#
-#     user_id = await current_userId(user_token)
-#     print(f"Fetched User ID: {user_id}")
-#
-#     await fetch_family_photos(user_id)
-#
-#     asyncio.create_task(recognize_periodically(video_frames, user_id))
-#
-# if __name__ == "__main__":
-#     import uvicorn
-#     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
-#     server = uvicorn.Server(config)
-#     loop = asyncio.get_event_loop()
-#     loop.run_until_complete(server.serve())
-
-import os
-import httpx
 import asyncio
-from fastapi import FastAPI, Header, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
+import logging
+import os
+from typing import List
+import json
+
+import cv2
+import httpx
+import uvicorn
+from fastapi import FastAPI, WebSocket, Request
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from face_image_db import fetch_family_photos
-from face_recognition import recognize_periodically
-from mqtt_client import setup_mqtt, video_frames
-from video_processing import generate_frames, video_frame_generator
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse
+from face_image_db import fetch_family_photos
+from face_recognition import recognize_periodically
+from video_processing import generate_frames, video_frame_generator
+#from models import Base, Message
+from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
 
+# Logging 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+templates = Jinja2Templates(directory="templates")
+user_photo_for_comparison = None
 app = FastAPI()
 
 app.add_middleware(
@@ -102,6 +39,25 @@ app.add_middleware(
 SPRING_BOOT_URL = "http://localhost:8080/user/id"
 user_token = None  # 전역 변수로 토큰을 저장
 
+@app.get("/", response_class=HTMLResponse)
+async def read_index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.post("/move/{direction}")
+async def post_move(direction: str):
+    await move(direction)
+
+
+@app.post("/speed/{action}")
+async def post_speed(action: str):
+    await speed(action)
+
+
+@app.get("/distance")
+async def get_distance():
+    return {"distance": distance_data}
+
 async def fetch_user_id(token: str):
     headers = {"Authorization": f"Bearer {token}"}
     async with httpx.AsyncClient() as client:
@@ -113,11 +69,11 @@ async def current_userId(token: str):
     user_id = await fetch_user_id(token)
     return user_id
 
-# 프론트엔드에서 JWT 토큰을 받는 엔드포인트
 class TokenRequest(BaseModel):
     token: str
 
-@app.post("/set-token")
+# 프론트엔드에서 JWT 토큰을 받는 엔드포인트
+@app.post("/token")
 async def set_token(token_request: TokenRequest):
     global user_token
     user_token = token_request.token
@@ -132,12 +88,9 @@ async def initialize_recognition():
     await setup_mqtt()
 
     user_id = await current_userId(user_token)
-    print(f"Fetched User ID: {user_id}")
-
     fetch_family_photos(user_id)
 
     asyncio.create_task(recognize_periodically(video_frames, user_id))
-
 
 
 @app.get("/video")
