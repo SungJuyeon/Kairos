@@ -86,8 +86,6 @@ async def recognize_faces(frame, user_id):
             last_detected_distances.append(None)
             last_detected_rectangles.append(None)
 
-highlight_frames = []
-highlight_start_time = None
 
 async def recognize_emotion(frame):
     global last_detected_emotions, last_detected_emotion_scores, last_face_positions, highlight_start_time, highlight_frames
@@ -104,49 +102,33 @@ async def recognize_emotion(frame):
     for (x, y, w, h) in last_face_positions:
         face_image = frame[y:y + h, x:x + w]
 
-        emotion_result = DeepFace.analyze(face_image, actions=['emotion'], enforce_detection=False)
-        if emotion_result:
-            emotion = emotion_result[0]['dominant_emotion']
-            last_detected_emotions.append(emotion)
-            last_detected_emotion_scores.append(emotion_result[0]['emotion'])
+        try:
+            emotion_result = DeepFace.analyze(face_image, actions=['emotion'], enforce_detection=False)
+            if emotion_result:
+                last_detected_emotions.append(emotion_result[0]['dominant_emotion'])
+                last_detected_emotion_scores.append(emotion_result[0]['emotion'])
+                # 감정 결과 저장 (Neutral 제외)
+                emotion = emotion_result[0]['dominant_emotion']
+                if emotion != 'neutral':
+                    detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
+                    if detected_person_name != "unknown":
+                        save_emotion_result(emotion)
 
-            # 감정 결과 저장 (Neutral 제외)
-            if emotion != 'neutral':
-                detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
-                if detected_person_name != "unknown":
-                    save_emotion_result(emotion)
+                        # 최다 감정이 바뀌었거나 현재 감정이 최다 감정과 일치하면 사진 저장
+                        if emotion == most_frequent_emotion:
+                            save_most_emotion_pic(frame, emotion)
+                        elif get_most_frequent_emotion() != most_frequent_emotion:
+                            save_most_emotion_pic(frame, emotion)
 
-                    # 최다 감정이 바뀌었거나 현재 감정이 최다 감정과 일치하면 사진 저장
-                    if emotion == most_frequent_emotion:
-                        save_most_emotion_pic(frame, emotion)
-                    elif get_most_frequent_emotion() != most_frequent_emotion:
-                        save_most_emotion_pic(frame, emotion)
+            else:
+                last_detected_emotions.append("unknown")
+                last_detected_emotion_scores.append({})
 
-            emotion_scores = {k: v for k, v in emotion_result[0]['emotion'].items() if isinstance(v, (int, float))}
+        except Exception as e:
+            print("Error in emotion recognition:", e)
+            last_detected_emotions.append("unknown")
+            last_detected_emotion_scores.append({})
 
-            # 가장 높은 감정 점수 찾기
-            top_emotion, top_score = max(emotion_scores.items(), key=lambda x: x[1])
-
-            # 감정 점수가 30 이상이고, Neutral이 아닌 경우 하이라이트 저장
-            if top_score > 30 and top_emotion != 'neutral':
-                detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
-                if detected_person_name != "unknown":
-                    highlight_frames.append(frame)
-
-                    # 하이라이트 시작 시간 기록
-                    if highlight_start_time is None:
-                        highlight_start_time = datetime.datetime.now()
-
-                    # 하이라이트 저장
-                    elapsed_time = (datetime.datetime.now() - highlight_start_time).seconds
-                    if elapsed_time >= 10:
-                        video_filename = generate_video_filename(detected_person_name)
-                        save_frames_to_video(video_filename, highlight_frames)
-
-                        # 저장 후 하이라이트 초기화
-                        highlight_frames.clear()
-                        highlight_start_time = None
-                        print(f"Saved highlight video: {video_filename}")
 
 def draw_faces(frame):
     global last_face_positions, last_detected_nicknames, last_detected_distances, last_detected_emotions, \

@@ -2,6 +2,9 @@ import pymysql
 import os
 from dotenv import load_dotenv
 import logging
+from fastapi import Request, HTTPException, Depends
+import jwt  # PyJWT 라이브러리 필요
+from jwt import PyJWKClient
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -11,6 +14,8 @@ db_host = os.getenv('DB_HOST')
 db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
+
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 def get_db_connection():
     return pymysql.connect(
@@ -57,3 +62,17 @@ def fetch_family_photos(user_id):
                 f.write(photo2)
 
     logging.info(f"가족 nicknames: {', '.join(family_nicknames)}")
+
+
+async def current_userId(token: str):
+    try:
+        # JWT 토큰 디코딩
+        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = decoded_token.get("user_id")  # 토큰에서 user_id 가져오기
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")

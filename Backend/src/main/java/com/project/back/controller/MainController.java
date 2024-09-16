@@ -75,4 +75,15 @@ public class MainController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userService.getImageByUsername(username);
     }
+
+    @GetMapping("/user/id")
+    public Long getId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity userEntity = userService.findByUsername(username);
+        if (userEntity != null) {
+            return userEntity.getId();
+        } else {
+            return 0L;
+        }
+    }
 }
