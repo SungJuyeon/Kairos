@@ -14,7 +14,7 @@ from emotion_video import generate_video_filename, save_frames_to_video
 logging.basicConfig(level=logging.INFO)
 
 # 전역 변수 초기화
-model = cv2.dnn.readNetFromCaffe('models/deploy.prototxt', 'models/res10_300x300_ssd_iter_140000.caffemodel')
+model = cv2.dnn.readNetFromCaffe('/Users/c/Desktop/Git/Kairos/Backend_separation/models/deploy.prototxt', '/Users/c/Desktop/Git/Kairos/Backend_separation/models/res10_300x300_ssd_iter_140000.caffemodel')
 last_detected_nicknames = []
 last_detected_distances = []
 last_detected_rectangles = []
