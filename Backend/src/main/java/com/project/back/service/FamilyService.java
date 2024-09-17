@@ -20,9 +20,9 @@ public class FamilyService {
     private final UserRepository userRepository;
 
     // 가족 요청 보내기
-    public FamilyRequest sendFamilyRequest(Long senderId, String receiverUsername){
+    public FamilyRequest sendFamilyRequest(Long senderId, Long receiverId){
         UserEntity sender = userRepository.findById(senderId).orElseThrow(() -> new RuntimeException("Sender not found"));
-        UserEntity receiver = userRepository.findByUsername(receiverUsername);
+        UserEntity receiver = userRepository.findById(receiverId).orElseThrow(() -> new RuntimeException("Receiver not found"));
 
         FamilyRequest familyRequest = new FamilyRequest();
         familyRequest.setSender(sender);
