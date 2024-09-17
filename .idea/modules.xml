@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Kairos.iml" filepath="$PROJECT_DIR$/Kairos.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.iml" filepath="$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Backend/Kairos.Backend.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Kairos.iml" filepath="$PROJECT_DIR$/.idea/Kairos.iml" />
     </modules>
   </component>
 </project>

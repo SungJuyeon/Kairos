@@ -2,11 +2,14 @@
 # 비디오 프레임 처리 관련 로직을 포함하는 파일
 
 import asyncio
-import cv2
 import logging
-from mqtt_client import video_frames
-from Backend_separation.face_recognition import detect_faces, recognize_emotion, recognize_faces, draw_faces
+
+import cv2
 import numpy as np
+
+from face_recognition import detect_faces, draw_faces
+from mqtt_client import video_frames
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,10 +31,8 @@ async def generate_frames():
 
 async def video_frame_generator(face=True):
     while True:
-        logging.info(f"Current video frames count: {len(video_frames)}")
         if len(video_frames) > 0:
             frame = video_frames[-1]
-            logging.info(f"Processing frame: {frame.shape}.")
 
             if frame is None or not isinstance(frame, np.ndarray):
                 logging.error("Invalid frame received.")

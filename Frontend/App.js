@@ -1,30 +1,54 @@
-import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import ControlNavigator from "./src/screen/ControlNavigator";
+import MyPageNavigator from "./src/screen/MyPageNavigator";
+import ChatNavigator from "./src/screen/ChatNavigator";
+import HighlightNavigator from "./src/screen/HighlightNavigator";
+import { StatusBar } from 'react-native';
+import React from "react";
+import { AuthProvider } from './src/screen/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
-const App = () => {
-  const videoStreamUrl = 'http://YOUR_SERVER_IP:8000/video_feed'; // FastAPI 서버의 URL
+const BottomTab = createBottomTabNavigator();
 
+export default function App() {
   return (
-    <View style={styles.container}>
-      <Image
-        style={styles.video}
-        source={{ uri: videoStreamUrl }}
-        resizeMode="contain"
-      />
-    </View>
+    <AuthProvider>
+    <StatusBar
+      barStyle="light-content"
+    />
+    <NavigationContainer>
+      <BottomTab.Navigator
+                screenOptions={({ route }) => ({
+                  headerShown: false,
+                  tabBarStyle: {
+                    backgroundColor: '#1B0C5D',
+                    activeTintColor: '#FFFFFF',
+                    inactiveTintColor: 'gray'
+                  },
+                  tabBarIcon: ({ color, size, focused }) => {
+                    let iconName;
+                    const iconColor = '#FFFFFF'
+
+                    if (route.name === 'Control') {
+                      iconName = focused ? 'camera' : 'camera-outline';
+                    } else if (route.name === 'MyPage') {
+                      iconName = focused ? 'person' : 'person-outline';
+                    } else if (route.name === 'Chat') {
+                      iconName = focused ? 'chatbox' : 'chatbox-outline';
+                    } else if (route.name === 'Highlight') {
+                      iconName = focused ? 'star' : 'star-outline';
+                    }
+                    return <Ionicons name={iconName} size={size} color={iconColor} />;
+                  },
+                  tabBarLabel: () => null, // 탭 바 텍스트를 숨깁니다.
+                })}>
+        <BottomTab.Screen name="Control" component={ControlNavigator} />
+        <BottomTab.Screen name="Chat" component={ChatNavigator} />
+        <BottomTab.Screen name="Highlight" component={HighlightNavigator} />
+        <BottomTab.Screen name="MyPage" component={MyPageNavigator} />
+      </BottomTab.Navigator>
+    </NavigationContainer>
+    </AuthProvider>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  video: {
-    width: '100%',
-    height: '100%',
-  },
-});
-
-export default App;
+}

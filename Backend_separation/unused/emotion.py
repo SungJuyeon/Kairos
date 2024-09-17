@@ -6,7 +6,7 @@ import time
 from flask import Flask, jsonify, render_template, Response
 
 from Backend_Logic.unused.compare_faces import get_similarity_percentage
-from emotion_video import save_frames_to_video
+from Backend_separation.emotion_video import save_frames_to_video
 from face_register import detect_face, extract_face_features
 from emotion_record import manage_daily_files, get_most_frequent_emotion, record_emotion
 
