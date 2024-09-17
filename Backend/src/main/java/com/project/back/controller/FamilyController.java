@@ -34,8 +34,9 @@ public class FamilyController {
             throw new RuntimeException("User not found");
         }
         Long senderId = sender.getId();  // UserEntity에서 ID를 얻기
-        String receiverUsername = request.getSenderUsername();
-        return familyService.sendFamilyRequest(senderId, receiverUsername);
+        String receiverUsername = request.getReceiverUsername();
+        UserEntity receiver = userRepository.findByUsername(receiverUsername);
+        return familyService.sendFamilyRequest(senderId, receiver.getId());
     }
 
 
@@ -95,6 +96,7 @@ public class FamilyController {
                 .map(request -> new FamilyRequestDTO(
                         request.getId(),
                         request.getReceiver().getUsername(),
+                        request.getSender().getUsername(),
                         request.getStatus().name()
                 ))
                 .collect(Collectors.toList());
@@ -118,6 +120,7 @@ public class FamilyController {
         List<FamilyRequestDTO> requestDTOs = receivedRequests.stream()
                 .map(request -> new FamilyRequestDTO(
                         request.getId(),
+                        request.getSender().getUsername(),
                         request.getSender().getUsername(),
                         request.getStatus().name()
                 ))

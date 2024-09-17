@@ -2,7 +2,6 @@ package com.project.back.dto;
 
 
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class JoinDTO {

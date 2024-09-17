@@ -3,16 +3,28 @@
 
 import asyncio
 import logging
+import os
+from typing import List
+import json
 
+import cv2
+import httpx
 import uvicorn
-from fastapi import FastAPI
-from fastapi import Request
+from dotenv import load_dotenv
+from fastapi import FastAPI, WebSocket
+from fastapi import Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse
-
+import jwt  # PyJWT 라이브러리 필요
+from jwt import PyJWKClient
+from face_image_db import fetch_family_photos
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
+#from models import Base, Message
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
 
 # Logging 설정
@@ -20,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory="templates")
-
+user_photo_for_comparison = None
 app = FastAPI()
 
 app.add_middleware(
@@ -30,12 +42,30 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+SPRING_BOOT_URL = "http://localhost:8080/user/id"
 
+async def fetch_user_id():
+    async with httpx.AsyncClient() as client:
+        response = await client.get(SPRING_BOOT_URL)
+        response.raise_for_status()
+        return response.json()
+
+async def current_userId():
+    user_id = await fetch_user_id()
+    return user_id
+
+# async def current_userId():
+#     return "3052"
 
 @app.on_event("startup")
 async def startup_event():
+    global user_photo_for_comparison
     await setup_mqtt()
-    asyncio.create_task(recognize_periodically())
+    user_id = await current_userId()
+    fetch_family_photos(user_id)  # 가족 사진 저장
+    print(f"Fetched User ID: {user_id}")
+    asyncio.create_task(recognize_periodically(video_frames, user_id))
+
 
 
 @app.get("/", response_class=HTMLResponse)
