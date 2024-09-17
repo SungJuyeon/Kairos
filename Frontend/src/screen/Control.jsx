@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions, Text } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Alert, Platform, Dimensions, Text } from "react-native";
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
-import { WebView } from 'react-native-webview';
+import { WebView } from 'react-native-webview'
+import * as MediaLibrary from 'expo-media-library';
 
 
     // 스타일 컴포넌트를 위함
@@ -22,14 +23,13 @@ export default function Control() {
     const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
     const [isOn, setIsOn] = useState(false); // on/off 상태 추가
 
+    // 웹뷰 캡쳐
+    const webViewRef = React.useRef(null);
+
     // 속도 조절
     const [value, setValue] = useState(5);
 
-    
-
     const BASE_URL = 'http://localhost:8000';
-
-
     const imageURL = `${BASE_URL}/video`;
 
     // 안드로이드에서 사진 저장 권한을 위한 함수
@@ -96,149 +96,76 @@ export default function Control() {
     };
 
 
-async function handleCapturePhoto(imageUrl) {
-    try {
-        if (Platform.OS === 'web') {
-            // 웹 플랫폼에서 이미지를 다운로드
-            await downloadImage();
-
-        } else {
-            // 네이티브 플랫폼에서 expo-file-system 사용
-            const response = await fetch(imageUrl);
-            if (!response.ok) {
-                throw new Error('Failed to fetch image from URL');
-            }
-            const imageData = await response.blob(); // Blob으로 변환
-            const base64Data = await convertBlobToBase64(imageData); // Base64로 변환
-            await FileSystem.writeAsStringAsync(FileSystem.documentDirectory + 'image.jpg', base64Data, {
-                encoding: FileSystem.EncodingType.Base64,
-            });
-            console.log('Image saved to file system');
-        }
-    } catch (error) {
-        console.error('Error saving image:', error);
-    }
-}
-
-
-
-async function downloadImage() {
-    try {
-        console.log('Fetching image from URL:', 'http://localhost:8000/video_feed');
-
-        const response = await fetch('http://localhost:8000/video_feed');
-        console.log('Response status:', response.status);
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let accumulatedChunk = ''; // 청크를 누적할 변수 추가
-        
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                console.log('Stream reading finished.');
-                break;
-            }
-
-            // Read chunk and decode
-            accumulatedChunk += decoder.decode(value, { stream: true });
-            console.log('Current accumulated chunk length:', accumulatedChunk.length);
-
-            // 'frame' 경계로 이미지 파싱
-            let startIndex = accumulatedChunk.indexOf('--frame');
-            while (startIndex !== -1) {
-                console.log('Frame start found at index:', startIndex);
-
-                // 다음 프레임 시작 위치로 이동
-                let headerEndIndex = accumulatedChunk.indexOf('\r\n\r\n', startIndex) + 4;
-                const endIndex = accumulatedChunk.indexOf('\r\n--frame', headerEndIndex);
-                
-                if (endIndex !== -1) {
-                    console.log('Frame end found at index:', endIndex);
-
-                    // JPEG 이미지 데이터 추출
-                    const imageData = accumulatedChunk.slice(headerEndIndex, endIndex);
-                    console.log('Extracted image data length:', imageData.length);
-
-                    const byteArray = new Uint8Array(imageData.length);
-                    for (let i = 0; i < imageData.length; i++) {
-                        byteArray[i] = imageData.charCodeAt(i);
-                    }
-
-                    console.log('Byte array created with length:', byteArray.length);
-                    
-                    // Blob 생성
-                    const blob = new Blob([byteArray], { type: 'image/jpeg' });
-                    console.log('Blob created successfully.');
-
-                    // 이미지 저장 로직
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'image.jpg'; // 저장할 파일 이름
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    console.log('Image downloaded successfully');
-                    break; // 첫 번째 이미지만 처리
-                } else {
-                    console.log('End of frame not found in accumulated chunk.');
-                    break; // 다음 루프에서 계속 시도
-                }
-            }
-
-            // 마지막 청크가 남아있을 경우, 계속해서 누적
-            if (startIndex === -1) {
-                console.log('Frame start not found in current accumulated chunk.');
-                // 누적된 청크가 너무 커지면 자르기
-                if (accumulatedChunk.length > 100000) {
-                    accumulatedChunk = accumulatedChunk.slice(accumulatedChunk.indexOf('--frame'));
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Error downloading image:', error);
-    }
-}
-
-
-
-
-
-
-async function convertBlobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]); // Base64 데이터만 반환
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-    });
-}
 
     
 
-    // 동영상 촬영 버튼 클릭 시
-    const handleCaptureVideo = () => {
-        setIsCaptureVideoPressed(!isCaptureVideoPressed);
-        // 동영상 촬영 기능 구현
+// 웹뷰 캡쳐 함수
+useEffect(() => {
+    const requestPermission = async () => {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission needed', 'This app needs access to your photo library.');
+        }
     };
+    requestPermission();
+}, []);
 
-    // on/off 버튼 클릭 시
-    const handleOnOffPress = () => {
-        setIsOn(!isOn);
-    };
+const handleCapturePhoto = async () => {
+    if (webViewRef.current) {
+        console.log('Capturing photo from WebView...');
+        webViewRef.current.injectJavaScript(`
+            (function() {
+                const img = document.querySelector('img'); // 캡처할 이미지 선택
+                if (img) {
+                    console.log('Image found in WebView'); // 이미지 발견 로그
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL('image/jpeg');
+                    console.log('Image captured as dataURL:', dataURL); // 데이터 URL 캡처 로그
+                    window.ReactNativeWebView.postMessage(dataURL);
+                } else {
+                    console.log('No image found in WebView'); // 이미지 미발견 로그
+                }
+            })();
+        `);
+    }
+};
+
+const onMessage = async (event) => {
+    const base64Data = event.nativeEvent.data;
+    console.log('Received data from WebView', base64Data.length); // 데이터 수신 로그 및 길이
+    try {
+        console.log('Saving image to photo library...');
+        // Base64 데이터에서 메타데이터 제거
+        const base64Image = base64Data.split(',')[1]; // 'data:image/jpeg;base64,' 부분을 제거
+        
+        // 임시 파일 경로 생성
+        const fileUri = FileSystem.documentDirectory + 'image.jpg';
+        
+        // Base64 데이터를 파일로 저장
+        await FileSystem.writeAsStringAsync(fileUri, base64Image, {
+            encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // MediaLibrary에 저장
+        const asset = await MediaLibrary.createAssetAsync(fileUri);
+        console.log('Image saved to photo library successfully:', asset); // 저장 성공 로그
+        Alert.alert('사진 찍기 완료', '사진이 갤러리에 저장되었습니다.');
+    } catch (error) {
+        console.error('Error saving image:', error); // 에러 로그
+        Alert.alert('사진 찍기 실패', '오류가 발생했습니다.');
+    }
+};
+
 
 
     // 속도 조절 코드
     const handleValueChange = async (newValue) => {
         setValue(newValue); // 새로운 값으로 업데이트
 
-        
 
         // 서버에 fetch 요청
         await fetch(`http://localhost:8000/speed/${newValue > value ? 'up' : 'down'}`, { method: 'POST' });
@@ -247,29 +174,29 @@ async function convertBlobToBase64(blob) {
 
 
 
-      // 갤러리 열기
+    // 갤러리 열기
 
-      const openGallery = async () => {
-        // 권한 요청
-        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-        if (permissionResult.granted === false) {
-          alert('사진 접근 권한이 필요합니다!');
-          return;
-        }
-    
-        // 갤러리 열기
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.All,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 1,
-        });
-    
-        if (!result.canceled) {
-          setImage(result.assets[0].uri);
-        }
-      };
+    const openGallery = async () => {
+    // 권한 요청
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+        alert('사진 접근 권한이 필요합니다!');
+        return;
+    }
+
+    // 갤러리 열기
+    const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+    });
+
+    if (!result.canceled) {
+        setImage(result.assets[0].uri);
+    }
+    };
     
 
 
@@ -280,10 +207,18 @@ async function convertBlobToBase64(blob) {
 
             <ImageContainer>
                 {Platform.OS === 'web' ? (
-                     <img src={imageURL} width="100%" alt="Live Stream" />
+                    <img src={imageURL} width="100%" alt="Live Stream" />
+                ) : Platform.OS === 'android' ? (
+                    <StyledWebView
+                        source={{ uri: 'http://10.0.2.2:8000/video' }}
+                        ref={webViewRef}
+                        onMessage={onMessage}
+                    />
                 ) : (
                     <StyledWebView
                         source={{ uri: imageURL }}
+                        ref={webViewRef}
+                        onMessage={onMessage}
                     />
                 )}
             </ImageContainer>
@@ -295,8 +230,7 @@ async function convertBlobToBase64(blob) {
 
             <CaptureButtonContainer>
                 <CaptureButtonStyle
-                    onPress={handleCapturePhoto}
-                >
+                    onPress={() => handleCapturePhoto(webViewRef)}>
                     <CaptureButtonText>Picture</CaptureButtonText>
                 </CaptureButtonStyle>
                 <RemoveContainer>
@@ -314,7 +248,7 @@ async function convertBlobToBase64(blob) {
 
                 
             <SpeedSliderContainer>
-            <SliderText>현재 값: {value}</SliderText>
+            <SliderText>속도: {value}</SliderText>
             <StyledSlider
                 minimumValue={0}
                 maximumValue={10}
@@ -393,6 +327,8 @@ const RemoveContainer = styled.View`
 const Container = styled.SafeAreaView`
     background-color: #1B0C5D;
     flex: 1;
+    justify-content: center;
+    align-items: center;
 `;
 
 const MarginContainer = styled.View`
@@ -541,7 +477,7 @@ const CaptureButtonStyle = styled.TouchableOpacity`
 
 const ImageContainer = styled.View`
     width: 90%;
-    height: 45%;
+    height: 34%;
     border-width: 2px; 
     border-color: #F8098B;
     background-color: #222222; 

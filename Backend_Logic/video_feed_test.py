@@ -18,7 +18,7 @@ def generate_frames():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # HTTP 스트리밍 포맷
 
-@app.get('/video_feed')
+@app.get('/video')
 def video_feed():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
