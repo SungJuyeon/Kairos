@@ -62,17 +62,13 @@ def fetch_family_photos(user_id):
                 f.write(photo2)
 
     logging.info(f"가족 nicknames: {', '.join(family_nicknames)}")
-
-
-async def current_userId(token: str):
+    
+async def validate_token(token: str):
     try:
-        # JWT 토큰 디코딩
-        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user_id = decoded_token.get("user_id")  # 토큰에서 user_id 가져오기
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
         if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return user_id
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+            return None
+        return {"id": user_id, "username": payload.get("username")}
+    except jwt.PyJWTError:
+        return None

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로봇 제어 인터페이스</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .control-panel {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #video-feed {
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            display: block;
+        }
+        #distance {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>로봇 제어 인터페이스</h1>
+    
+    <div class="control-panel">
+        <button onclick="move('forward')">전진</button>
+        <button onclick="move('backward')">후진</button>
+        <button onclick="move('left')">좌회전</button>
+        <button onclick="move('right')">우회전</button>
+    </div>
+    
+    <div class="control-panel">
+        <button onclick="changeSpeed('increase')">속도 증가</button>
+        <button onclick="changeSpeed('decrease')">속도 감소</button>
+    </div>
+    
+    <img id="video-feed" src="/video_feed/false" alt="비디오 피드">
+    
+    <div id="distance">거리: <span id="distance-value">측정 중...</span></div>
+
+    <script>
+        function move(direction) {
+            fetch(`/move/${direction}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function changeSpeed(action) {
+            fetch(`/speed/${action}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateDistance() {
+            fetch('/distance')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('distance-value').textContent = data.distance;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // 1초마다 거리 업데이트
+        setInterval(updateDistance, 1000);
+    </script>
+</body>
+</html>

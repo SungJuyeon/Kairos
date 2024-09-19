@@ -7,7 +7,6 @@ import logging
 import json
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
-import sounddevice as sd
 
 # 핀 번호 설정
 WHEEL_PINS = {
@@ -47,8 +46,6 @@ pwm_B.start(0)
 
 # 카메라 설정
 cap = cv2.VideoCapture(0)
-# 음성 캡처 큐
-audio_queue = queue.Queue()
 
 # 현재 모터 상태를 저장하는 변수
 wheel_direction = None
@@ -203,11 +200,8 @@ def measure_distance():
 #############################################################################
 
 
-# 영상, 음성 전송 ####################################################################
+# 영상 전송 ####################################################################
 async def generate_frames(client):
-    # 음성 스트리밍 시작
-    stream = sd.InputStream(callback=audio_callback)
-    stream.start()
     while True:
         try:
             ret, frame = cap.read()
@@ -221,25 +215,11 @@ async def generate_frames(client):
             client.publish(MQTT_TOPIC_VIDEO, frame_data)  # 비디오 프레임 전송
             # logging.info("Sent a video frame")
 
-            if not audio_queue.empty():
-                audio_data = audio_queue.get()
-                client.publish(MQTT_TOPIC_AUDIO, audio_data.tobytes())
-
             await asyncio.sleep(0.1)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
-    stream.stop()
 
-
-# 음성 캡처 콜백 함수
-def audio_callback(indata, frames, time, status):
-    if status:
-        logging.error(status)  # 오류 로그 남기기
-    try:
-        audio_queue.put(indata.copy())
-    except Exception as e:
-        logging.error(f"Error in audio callback: {e}")
 
 #############################################################################
 
@@ -250,7 +230,6 @@ MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
-MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="robot_controller")
 
