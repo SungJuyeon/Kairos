@@ -9,6 +9,7 @@ import numpy as np
 
 from face_recognition import detect_faces, draw_faces
 from mqtt_client import video_frames
+from handgesture_recognition import detect_gesture, draw_gesture
 
 logger = logging.getLogger(__name__)
 
@@ -29,19 +30,23 @@ async def generate_frames():
         await asyncio.sleep(0.1)  # 프레임을 가져오는 간격 조절
 
 
-async def video_frame_generator(face=True):
+async def video_frame_generator(face=True, gesture=True):
     while True:
         if len(video_frames) > 0:
             frame = video_frames[-1]
 
             if frame is None or not isinstance(frame, np.ndarray):
                 logging.error("Invalid frame received.")
-                await asyncio.sleep(0.1)  # 잠깐 대기 후 다음 루프 실행
+                await asyncio.sleep(0.1)
                 continue
 
             if face:
-                detect_faces(frame)  # 동기 호출
-                frame = draw_faces(frame)  # 동기 호출
+                detect_faces(frame)
+                frame = draw_faces(frame)
+
+            if gesture:
+                action, multi_hand_landmarks = detect_gesture(frame)
+                frame = draw_gesture(frame, multi_hand_landmarks, action)
 
             success, buffer = cv2.imencode('.jpg', frame)
             if success:

@@ -1,6 +1,7 @@
 # gesture_action.py
 # 손동작 관련 명령을 처리하는 파일
 
+import asyncio
 import json
 import time
 import logging

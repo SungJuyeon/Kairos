@@ -57,16 +57,19 @@ logging.basicConfig(level=logging.INFO)
 
 
 # 바퀴 설정 #######################################################################
-async def wheel_control(direction):
+async def wheel_control(direction, duration=None):
     global wheel_direction
     wheel_direction = direction
     logging.info(f"wheel {direction}, speed {wheel_speed}")
     set_wheel_state(direction)
 
-    while wheel_direction == direction:
-        await asyncio.sleep(0.05)
-
-    stop_wheel()
+    if duration:
+        await asyncio.sleep(duration)
+        stop_wheel()
+    else:
+        while wheel_direction == direction:
+            await asyncio.sleep(0.05)
+        stop_wheel()
 
 
 def set_wheel_state(direction):
@@ -179,14 +182,16 @@ def measure_distance():
         GPIO.output(ULTRASONIC_PINS['TRIG'], False)
 
         pulse_start = time.time()
+        timeout = pulse_start + 0.1
         while GPIO.input(ULTRASONIC_PINS['ECHO']) == 0:
+            if time.time() > timeout:
+                raise Exception("Echo start timeout")
             pulse_start = time.time()
 
-        # 타임아웃 설정 (예: 0.1초)
-        timeout = time.time() + 0.1
+        pulse_end = pulse_start
         while GPIO.input(ULTRASONIC_PINS['ECHO']) == 1:
             if time.time() > timeout:
-                raise Exception("Echo timeout")
+                raise Exception("Echo end timeout")
             pulse_end = time.time()
 
         pulse_duration = pulse_end - pulse_start
@@ -288,19 +293,24 @@ async def lifespan():
 
 async def main():
     async with lifespan():
-        while True:
-            await asyncio.sleep(1)
+        stop_event = asyncio.Event()
+        try:
+            await stop_event.wait()
+        except asyncio.CancelledError:
+            logging.info("Main loop cancelled")
+        finally:
+            # 정리 작업 수행
+            cleanup()
 
+def cleanup():
+    cap.release()
+    GPIO.cleanup()
+    logging.info("Cleanup completed")
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
     try:
-        # asyncio.run(main())
-        loop.run_until_complete(main())
+        asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Interrupted by user, cleaning up...")
+        logging.info("Program interrupted by user")
     finally:
-        # 종료 처리
-        GPIO.cleanup()
-        cap.release()
-        logging.info("Cleanup completed")
+        cleanup()
