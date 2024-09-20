@@ -4,6 +4,7 @@ import time
 import re
 from datetime import datetime
 
+
 # 비디오 저장 경로 및 파일명 생성 함수
 def generate_video_filename():
     base_dir = "unused/videos"  # 비디오 파일 저장 폴더
@@ -29,6 +30,7 @@ def generate_video_filename():
 
     return os.path.join(base_dir, f"{today}{next_number}.avi")  # 비디오 파일 경로, 이름 반환
 
+
 # 비디오 파일에 프레임을 저장하는 함수
 def save_frames_to_video(filename, frames, frame_rate=5):
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -39,3 +41,17 @@ def save_frames_to_video(filename, frames, frame_rate=5):
         out.write(frame)
 
     out.release()
+
+
+def delete_old_videos(directory, days=2):
+    now = datetime.datetime.now()
+    for filename in os.listdir(directory):
+        if filename.endswith(".avi"):
+            try:
+                date_part = filename.split('_')[-1].replace('.avi', '')
+                video_date = datetime.datetime.strptime(date_part, '%Y-%m-%d')
+                if (now - video_date).days >= days:
+                    os.remove(os.path.join(directory, filename))
+                    print(f"Deleted old video file: {filename}")
+            except Exception as e:
+                print(f"Error parsing date from filename: {filename}, {e}")

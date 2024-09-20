@@ -14,7 +14,12 @@ from deepface import DeepFace
 logging.basicConfig(level=logging.INFO)
 
 # 전역 변수 초기화
-model = cv2.dnn.readNetFromCaffe('models/deploy.prototxt', 'models/res10_300x300_ssd_iter_140000.caffemodel')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+prototxt_path = os.path.join(current_dir, 'models', 'deploy.prototxt')
+model_path = os.path.join(current_dir, 'models', 'res10_300x300_ssd_iter_140000.caffemodel')
+faces_dir = os.path.join(current_dir, 'faces')  # faces 폴더의 절대 경로
+
+model = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 last_detected_nicknames = []
 last_detected_distances = []
 last_detected_rectangles = []
@@ -60,7 +65,7 @@ async def recognize_faces(frame):
         face_image = frame[y:y + h, x:x + w]
 
         try:
-            result = DeepFace.find(face_image, db_path='faces', model_name='VGG-Face', enforce_detection=False)
+            result = DeepFace.find(face_image, db_path=faces_dir, model_name='VGG-Face', enforce_detection=False)
 
             if result and len(result) > 0:
                 threshold = 0.4
