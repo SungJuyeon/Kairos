@@ -98,7 +98,7 @@ export default function FindPassword() {
 }
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     padding: 5%;
     justify-content: center;
@@ -142,7 +142,7 @@ const StyledTextInput = styled.TextInput`
     margin-bottom: 15px;
     color: white;
     font-size: 18px;
-    background-color: #1B0C5D;
+    background-color: #222222;
 `;
 
 const RowContainer = styled.View`

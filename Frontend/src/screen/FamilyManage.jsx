@@ -4,14 +4,9 @@ import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 
 const initialData = [
-    { id: '1', title: '가족 구성원 1', image: require('./../../assets/duck.png') },
-    { id: '2', title: '가족 구성원 2', image: require('./../../assets/duck.png') },
-    { id: '3', title: '가족 구성원 3', image: require('./../../assets/duck.png') },
-    { id: '4', title: '가족 구성원 4', image: require('./../../assets/duck.png') },
-    { id: '5', title: '가족 구성원 5', image: require('./../../assets/duck.png') },
-    { id: '6', title: '가족 구성원 6', image: require('./../../assets/duck.png') },
-    { id: '7', title: '가족 구성원 7', image: require('./../../assets/duck.png') },
-    { id: '8', title: '가족 구성원 8', image: require('./../../assets/duck.png') },
+    { id: '1', title: '엄마', image: require('./../../assets/mom.jpg') },
+    { id: '2', title: '아빠', image: require('./../../assets/dad.jpg') },
+    { id: '3', title: '동생', image: require('./../../assets/duck.png') },
 ];
 
 export default function FamilyManage() {
@@ -56,7 +51,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -70,7 +65,7 @@ const Item = styled.View`
     margin: 5px;
     width: 200px;
     align-items: center;
-    height: 150px;
+    height: 170px;
     justify-content: center;
 `;
 
@@ -79,6 +74,7 @@ const ItemImage = styled.Image`
     height: 80px;
     border-radius: 40px;
     margin-bottom: 5px;
+    margin-top: 5px;
 `;
 
 const ItemText = styled.Text`
@@ -100,7 +96,7 @@ const RemoveButtonText = styled.Text`
 `;
 
 const Button = styled.TouchableOpacity`
-    background-color: #FFFFFF;
+    background-color: #FFCEFF;
     padding: 10px 20px;
     border-radius: 5px;
     margin: 5px;

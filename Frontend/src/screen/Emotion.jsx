@@ -15,7 +15,7 @@ import { WebView } from 'react-native-webview';
 export default function Control() {
     const { navigate } = useNavigation();
 
-    const [mostEmotion, setMostEmotion] = useState("Haapy");
+    const [mostEmotion, setMostEmotion] = useState("Happy");
     
 
     const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
@@ -68,36 +68,37 @@ export default function Control() {
 
 const Title = styled.Text`
     color: white;
-    font-size: 35px;
+    font-size: 30px;
     font-weight: bold;
-    margin-left: 20px;
+    margin-bottom: 20px;
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
 `;
 
 const RowContainer = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex-direction: row;
     justify-content: center;
     align-items: center;
 `;
 
 const BorderContainer = styled.View`
-    border: 1px solid #FFFFFF;
+    border: 3px solid #ADCDFF;
     width: ${width * 0.90}px;
-    margin: 2%;
+    margin-top: 20px;
+    margin-bottom: 10px;
 `;
 
 const ImageContainer = styled.View`
     width: 90%;
     height: 34%;
     border-width: 2px; 
-    border-color: #F8098B;
+    border-color: #FFCEFF;
     background-color: #222222; 
 `;
 
@@ -111,14 +112,15 @@ const RepositoryButton = styled.TouchableOpacity`
     height: ${scale * 50}px;
     justify-content: center;
     align-items: center;
-    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#F8098B')};
+    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#FFCEFF')};
     border-radius: 10px;
     padding: 10px 10px;
     margin-left: 15px;
+    margin-bottom: 15px;
 `;
 
 const RepositoryButtonText = styled.Text`
-    color: white;
+    color: black;
     font-size: ${scale * 18}px;
     font-weight: bold;
 `;
