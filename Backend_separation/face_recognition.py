@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from emotion_record import get_most_frequent_emotion, save_emotion_result, save_most_emotion_pic
 from mqtt_client import video_frames
 import boto3
 import cv2
@@ -88,6 +89,15 @@ async def recognize_faces(frame):
 
 async def recognize_emotion(frame):
     global last_detected_emotions, last_detected_emotion_scores, last_face_positions
+    detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
+
+    if detected_person_name == "unknown":
+        last_detected_emotions = ["unknown"]
+        last_detected_emotion_scores = [{}]
+        return
+
+    most_frequent_emotion = get_most_frequent_emotion(detected_person_name)
+
     if last_face_positions is None:
         last_detected_emotions = ["unknown"]
         last_detected_emotion_scores = [{}]
@@ -102,8 +112,20 @@ async def recognize_emotion(frame):
         try:
             emotion_result = DeepFace.analyze(face_image, actions=['emotion'], enforce_detection=False)
             if emotion_result:
-                last_detected_emotions.append(emotion_result[0]['dominant_emotion'])
+                current_emotion = emotion_result[0]['dominant_emotion']
+                last_detected_emotions.append(current_emotion)
                 last_detected_emotion_scores.append(emotion_result[0]['emotion'])
+
+
+                if current_emotion != 'fear' and detected_person_name != "unknown":
+                    #emotion_today_{detected_person_name}.json 으로 감정 수치 저장
+                    save_emotion_result(detected_person_name, current_emotion)
+                    #최다 감정 사진 저장
+                    new_most_frequent_emotion = get_most_frequent_emotion(detected_person_name)
+                    if new_most_frequent_emotion != most_frequent_emotion:
+                        save_most_emotion_pic(frame, new_most_frequent_emotion, detected_person_name)
+                        logging.info(f"Updated most emotion photo for {detected_person_name} with emotion: {new_most_frequent_emotion}")
+
             else:
                 last_detected_emotions.append("unknown")
                 last_detected_emotion_scores.append({})
