@@ -1,12 +1,10 @@
-import logger
 import pymysql
-import numpy as np
-import cv2
-from PIL import Image
-import io
 import os
 from dotenv import load_dotenv
 import logging
+from fastapi import Request, HTTPException, Depends
+import jwt  # PyJWT 라이브러리 필요
+from jwt import PyJWKClient
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -17,67 +15,7 @@ db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
 
-def get_all_user_ids():
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            query = "SELECT id FROM userentity"
-            cursor.execute(query)
-            # 모든 사용자 ID 가져오기
-            user_ids = [row[0] for row in cursor.fetchall()]
-    finally:
-        connection.close()
-
-    return user_ids
-
-def get_nickname_from_user_id(user_id):
-    """ID에 해당하는 닉네임"""
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            query = "SELECT nickname FROM userentity WHERE id = %s"
-            cursor.execute(query, (user_id,))
-            result = cursor.fetchone()
-    finally:
-        connection.close()
-
-    return result[0] if result else "unknown"
-
-def get_face_image_from_blob(user_id):
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            # Query to get the BLOB data for the given user_id
-            sql = "SELECT photoname FROM userentity WHERE id = %s"
-            cursor.execute(sql, (user_id,))
-            result = cursor.fetchone()
-            if result:
-                # Get the BLOB data
-                blob_data = result[0]
-                if blob_data:
-                    # Convert BLOB to numpy array
-                    image_np = np.frombuffer(blob_data, np.uint8)
-                    # Decode numpy array to image
-                    image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
-                    if image is not None:
-                        nickname = get_nickname_from_user_id(user_id)
-                        logging.info(f"Successfully loaded image for nickname: {nickname}")
-                        return image, nickname
-                    else:
-                        logging.error("Failed to decode image from BLOB data.")
-                        return None, None
-                else:
-                    logging.error("BLOB data is empty.")
-                    return None, None
-            else:
-                logging.error("No image found for the given user_id.")
-                return None, None
-    except pymysql.MySQLError as e:
-        logging.error(f"Database error: {e}")
-        return None, None
-    finally:
-        connection.close()
-
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 def get_db_connection():
     return pymysql.connect(
@@ -87,18 +25,50 @@ def get_db_connection():
         database=os.getenv('DB_NAME')
     )
 
-###face_recog_db_test.py에서 사용
-def get_faces_from_db():
+def fetch_family_photos(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    query = "SELECT nickname, photoname FROM userentity WHERE photoname IS NOT NULL"
-    cursor.execute(query)
+
+    query = """
+        SELECT user1.photoname, user1.nickname, user2.photoname, user2.nickname 
+        FROM familyship 
+        JOIN userentity user1 ON familyship.user1_id = user1.id
+        JOIN userentity user2 ON familyship.user2_id = user2.id
+        WHERE (user1.id = %s OR user2.id = %s) AND user1.photoname IS NOT NULL AND user2.photoname IS NOT NULL
+    """
+    cursor.execute(query, (user_id, user_id))
     results = cursor.fetchall()
     cursor.close()
     conn.close()
 
-    faces = []
-    for nickname, photoname in results:
-        faces.append((nickname, photoname))
+    # 'faces' 디렉토리에 사진 저장
+    faces_dir = 'faces'
+    if not os.path.exists(faces_dir):
+        os.makedirs(faces_dir)
 
-    return faces
+    family_nicknames = set()
+
+    for idx, (photo1, nickname1, photo2, nickname2) in enumerate(results):
+        family_nicknames.update([nickname1, nickname2])
+
+        if photo1:
+            photo1_path = os.path.join(faces_dir, f"{nickname1}.jpg")
+            with open(photo1_path, 'wb') as f:
+                f.write(photo1)
+
+        if photo2:
+            photo2_path = os.path.join(faces_dir, f"{nickname2}.jpg")
+            with open(photo2_path, 'wb') as f:
+                f.write(photo2)
+
+    logging.info(f"가족 nicknames: {', '.join(family_nicknames)}")
+    
+async def validate_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        return {"id": user_id, "username": payload.get("username")}
+    except jwt.PyJWTError:
+        return None

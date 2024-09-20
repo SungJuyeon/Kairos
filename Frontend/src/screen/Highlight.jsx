@@ -17,10 +17,6 @@ export default function Highlight() {
             <Title>Herobot이 만든</Title>
             <Title>하이라이트 영상</Title>
 
-            <Image
-                source={{ uri: `${BASE_URL}/video_feed` }}
-                style={{ width: 640, height: 360 }}
-            />
 
             <Button onPress={() => navigate("Emotion")}>
               <ButtonText>감정 보러가기</ButtonText>
@@ -37,7 +33,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;

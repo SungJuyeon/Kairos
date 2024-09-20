@@ -7,7 +7,6 @@ import logging
 import json
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
-import sounddevice as sd
 
 # 핀 번호 설정
 WHEEL_PINS = {
@@ -47,8 +46,6 @@ pwm_B.start(0)
 
 # 카메라 설정
 cap = cv2.VideoCapture(0)
-# 음성 캡처 큐
-audio_queue = queue.Queue()
 
 # 현재 모터 상태를 저장하는 변수
 wheel_direction = None
@@ -60,16 +57,19 @@ logging.basicConfig(level=logging.INFO)
 
 
 # 바퀴 설정 #######################################################################
-async def wheel_control(direction):
+async def wheel_control(direction, duration=None):
     global wheel_direction
     wheel_direction = direction
     logging.info(f"wheel {direction}, speed {wheel_speed}")
     set_wheel_state(direction)
 
-    while wheel_direction == direction:
-        await asyncio.sleep(0.05)
-
-    stop_wheel()
+    if duration:
+        await asyncio.sleep(duration)
+        stop_wheel()
+    else:
+        while wheel_direction == direction:
+            await asyncio.sleep(0.05)
+        stop_wheel()
 
 
 def set_wheel_state(direction):
@@ -182,14 +182,16 @@ def measure_distance():
         GPIO.output(ULTRASONIC_PINS['TRIG'], False)
 
         pulse_start = time.time()
+        timeout = pulse_start + 0.1
         while GPIO.input(ULTRASONIC_PINS['ECHO']) == 0:
+            if time.time() > timeout:
+                raise Exception("Echo start timeout")
             pulse_start = time.time()
 
-        # 타임아웃 설정 (예: 0.1초)
-        timeout = time.time() + 0.1
+        pulse_end = pulse_start
         while GPIO.input(ULTRASONIC_PINS['ECHO']) == 1:
             if time.time() > timeout:
-                raise Exception("Echo timeout")
+                raise Exception("Echo end timeout")
             pulse_end = time.time()
 
         pulse_duration = pulse_end - pulse_start
@@ -203,11 +205,8 @@ def measure_distance():
 #############################################################################
 
 
-# 영상, 음성 전송 ####################################################################
+# 영상 전송 ####################################################################
 async def generate_frames(client):
-    # 음성 스트리밍 시작
-    stream = sd.InputStream(callback=audio_callback)
-    stream.start()
     while True:
         try:
             ret, frame = cap.read()
@@ -221,25 +220,11 @@ async def generate_frames(client):
             client.publish(MQTT_TOPIC_VIDEO, frame_data)  # 비디오 프레임 전송
             # logging.info("Sent a video frame")
 
-            if not audio_queue.empty():
-                audio_data = audio_queue.get()
-                client.publish(MQTT_TOPIC_AUDIO, audio_data.tobytes())
-
             await asyncio.sleep(0.1)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
-    stream.stop()
 
-
-# 음성 캡처 콜백 함수
-def audio_callback(indata, frames, time, status):
-    if status:
-        logging.error(status)  # 오류 로그 남기기
-    try:
-        audio_queue.put(indata.copy())
-    except Exception as e:
-        logging.error(f"Error in audio callback: {e}")
 
 #############################################################################
 
@@ -250,7 +235,6 @@ MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
-MQTT_TOPIC_AUDIO = "robot/audio"
 
 client = MQTTClient(client_id="robot_controller")
 
@@ -309,19 +293,24 @@ async def lifespan():
 
 async def main():
     async with lifespan():
-        while True:
-            await asyncio.sleep(1)
+        stop_event = asyncio.Event()
+        try:
+            await stop_event.wait()
+        except asyncio.CancelledError:
+            logging.info("Main loop cancelled")
+        finally:
+            # 정리 작업 수행
+            cleanup()
 
+def cleanup():
+    cap.release()
+    GPIO.cleanup()
+    logging.info("Cleanup completed")
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
     try:
-        # asyncio.run(main())
-        loop.run_until_complete(main())
+        asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Interrupted by user, cleaning up...")
+        logging.info("Program interrupted by user")
     finally:
-        # 종료 처리
-        GPIO.cleanup()
-        cap.release()
-        logging.info("Cleanup completed")
+        cleanup()

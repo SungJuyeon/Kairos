@@ -1,19 +1,20 @@
-import asyncio
 import logging
 import os
-import time
-from concurrent.futures import ThreadPoolExecutor
-
-import boto3
+import datetime
 import cv2
 import numpy as np
 from deepface import DeepFace
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+from emotion_record import get_most_frequent_emotion, save_emotion_result, get_emotion_file_today, save_most_emotion_pic
+from emotion_video import generate_video_filename, save_frames_to_video
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 
 # 전역 변수 초기화
-model = cv2.dnn.readNetFromCaffe('models/deploy.prototxt', 'models/res10_300x300_ssd_iter_140000.caffemodel')
+model = cv2.dnn.readNetFromCaffe('/Users/c/Desktop/Git/Kairos/Backend_separation/models/deploy.prototxt', '/Users/c/Desktop/Git/Kairos/Backend_separation/models/res10_300x300_ssd_iter_140000.caffemodel')
 last_detected_nicknames = []
 last_detected_distances = []
 last_detected_rectangles = []
@@ -22,7 +23,6 @@ last_detected_emotions = []
 last_detected_emotion_scores = []
 faces = []
 executor = ThreadPoolExecutor(max_workers=4)
-
 
 def detect_faces(frame):
     global faces, last_face_positions
@@ -42,9 +42,10 @@ def detect_faces(frame):
 
     last_face_positions = faces if faces else None  # 얼굴이 감지되지 않은 경우 None으로 설정
 
-
-async def recognize_faces(frame):
+async def recognize_faces(frame, user_id):
     global last_detected_nicknames, last_detected_distances, last_detected_rectangles, last_face_positions
+    logging.info(user_id)
+
     if last_face_positions is None:
         last_detected_nicknames = ["unknown"]
         last_detected_distances = [None]
@@ -87,7 +88,9 @@ async def recognize_faces(frame):
 
 
 async def recognize_emotion(frame):
-    global last_detected_emotions, last_detected_emotion_scores, last_face_positions
+    global last_detected_emotions, last_detected_emotion_scores, last_face_positions, highlight_start_time, highlight_frames
+    most_frequent_emotion = get_most_frequent_emotion()
+
     if last_face_positions is None:
         last_detected_emotions = ["unknown"]
         last_detected_emotion_scores = [{}]
@@ -104,6 +107,19 @@ async def recognize_emotion(frame):
             if emotion_result:
                 last_detected_emotions.append(emotion_result[0]['dominant_emotion'])
                 last_detected_emotion_scores.append(emotion_result[0]['emotion'])
+                # 감정 결과 저장 (Neutral 제외)
+                emotion = emotion_result[0]['dominant_emotion']
+                if emotion != 'neutral':
+                    detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
+                    if detected_person_name != "unknown":
+                        save_emotion_result(emotion)
+
+                        # 최다 감정이 바뀌었거나 현재 감정이 최다 감정과 일치하면 사진 저장
+                        if emotion == most_frequent_emotion:
+                            save_most_emotion_pic(frame, emotion)
+                        elif get_most_frequent_emotion() != most_frequent_emotion:
+                            save_most_emotion_pic(frame, emotion)
+
             else:
                 last_detected_emotions.append("unknown")
                 last_detected_emotion_scores.append({})
@@ -150,80 +166,21 @@ def draw_faces(frame):
 
     return frame
 
-
 def get_nickname_from_filename(filename):
-    base_name = filename.split('/')[-1]  # 파일 경로에서 파일 이름만 추출
+    base_name = os.path.basename(filename)  # 파일 경로에서 파일 이름만 추출
     name_part = base_name.split('.')[0]  # 확장자 제거
     name_part = name_part.split('(')[0].strip()  # 괄호 앞부분을 가져옴
     return name_part
 
-
-async def recognize_periodically(video_frames):
+async def recognize_periodically(video_frames, user_id):
     logging.info("얼굴 인식 업데이트 시작")
     while True:
         try:
             frame = video_frames[-1]
-            await recognize_faces(frame)
+            await recognize_faces(frame, user_id)
             await recognize_emotion(frame)
-            ########################################################
-            await create_video_highlight(video_frames)  # 비디오 생성 호출
-            ########################################################
             logging.info("인식 완료")
         except IndexError:
             logging.info("리스트가 비어 있습니다.")
         finally:
             await asyncio.sleep(2)
-
-
-# ##############################################################
-# # S3 클라이언트 생성
-# s3_client = boto3.client('s3')
-# BUCKET_NAME = 'your-bucket-name'  # 실제 버킷 이름으로 변경
-#
-#
-# def upload_to_s3(file_name, bucket, object_name=None):
-#     """파일을 S3에 업로드하는 함수"""
-#     if object_name is None:
-#         object_name = os.path.basename(file_name)
-#     try:
-#         s3_client.upload_file(file_name, bucket, object_name)
-#         logging.info(f"{file_name} 를 {bucket}에 업로드 성공")
-#     except Exception as e:
-#         logging.error(f"S3 업로드 실패: {e}")
-#
-#
-# async def create_video_highlight(video_frames):
-#     """조건에 맞는 경우 비디오 생성 및 S3에 업로드"""
-#     frame_count = 0
-#     video_file_name = 'output_video.avi'
-#
-#     logging.info("비디오 작성을 시작")
-#
-#     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-#     out = cv2.VideoWriter(video_file_name, fourcc, 20.0, (640, 480))
-#
-#     start_time = time.time()
-#     while True:
-#         if frame_count >= 10 * 20:  # 10초 동안 프레임 수 (20 FPS 가정)
-#             logging.info("10초분량 프레임 추가 완료")
-#             break
-#
-#         current_emotions = last_detected_emotions
-#         current_emotion_scores = last_detected_emotion_scores
-#
-#         if current_emotions:
-#             for idx, emotion in enumerate(current_emotions):
-#                 score = current_emotion_scores[idx].get(emotion, 0)
-#                 if emotion != "neutral" and score >= 0.95:
-#                     frame = video_frames[-1]
-#                     out.write(frame)  # 비디오에 프레임 추가
-#                     frame_count += 1
-#                     logging.info(f"프레임 {frame_count} 추가: 감정 '{emotion}' (신뢰도: {score:.2f})")
-#                     break
-#
-#         await asyncio.sleep(0.1)  # 다음 프레임까지 대기
-#
-#     out.release()
-#     logging.info(f"비디오 파일 '{video_file_name}' 저장 완료.")
-#     # upload_to_s3(video_file_name, BUCKET_NAME)  # S3에 업로드
-#     # os.remove(video_file_name)  # 로컬 파일 삭제

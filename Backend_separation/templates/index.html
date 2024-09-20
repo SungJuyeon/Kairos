@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로봇 제어 인터페이스</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        h1 { color: #333; }
+        button { margin: 5px; padding: 10px; }
+        #videoFeed { max-width: 100%; height: auto; }
+        #distanceDisplay, #gestureDisplay { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>로봇 제어 인터페이스</h1>
+    
+    <h2>비디오 피드</h2>
+    <img id="videoFeed" src="/video_feed/true" alt="Video Feed">
+    
+    <h2>로봇 제어</h2>
+    <button onclick="move('forward')">전진</button>
+    <button onclick="move('backward')">후진</button>
+    <button onclick="move('left')">좌회전</button>
+    <button onclick="move('right')">우회전</button>
+    
+    <h2>속도 제어</h2>
+    <button onclick="changeSpeed('up')">속도 증가</button>
+    <button onclick="changeSpeed('down')">속도 감소</button>
+    
+    <div id="distanceDisplay">거리: 측정 중...</div>
+    <div id="gestureDisplay">감지된 제스처: 없음</div>
+
+    <script>
+        function move(direction) {
+            fetch(`/move/${direction}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function changeSpeed(action) {
+            fetch(`/speed/${action}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateDistance() {
+            fetch('/distance')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('distanceDisplay').innerText = `거리: ${data.distance}`;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateGesture() {
+            fetch('/gesture')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('gestureDisplay').innerText = `감지된 제스처: ${data.gesture}`;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        setInterval(updateDistance, 1000);
+        setInterval(updateGesture, 1000);
+    </script>
+</body>
+</html>

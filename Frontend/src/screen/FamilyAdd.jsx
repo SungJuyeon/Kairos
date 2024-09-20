@@ -69,9 +69,9 @@ export default function SignIn() {
                 />
             </InputContainer>
             <RowContainer>
-                <Button onPress={addFamily}>
+                <Button2 onPress={addFamily}>
                     <ButtonText>가족 추가</ButtonText>
-                </Button>
+                </Button2>
                 <Button>
                     <ButtonText>파일 업로드</ButtonText>
                 </Button>
@@ -89,7 +89,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -105,14 +105,21 @@ const BackButton = styled.TouchableOpacity`
     background-color: #AAAAAA;
     padding: 12px 24px;
     border-radius: 10px;
-    margin: 0 10px;
+    margin: 10 10px;
+`;
+
+const Button2 = styled.TouchableOpacity`
+    background-color: #FFCEFF;
+    padding: 12px 24px;
+    border-radius: 10px;
+    margin: 10px;
 `;
 
 const Button = styled.TouchableOpacity`
     background-color: #FFFFFF;
     padding: 12px 24px;
     border-radius: 10px;
-    margin: 0 10px;
+    margin: 10px;
 `;
 
 const ButtonText = styled.Text`
@@ -131,7 +138,7 @@ const StyledTextInput = styled.TextInput`
     margin-bottom: 15px;
     color: white;
     font-size: 18px;
-    background-color: #1B0C5D;
+    background-color: #222222;
 `;
 
 const RowContainer = styled.View`

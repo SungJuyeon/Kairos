@@ -207,7 +207,13 @@ const onMessage = async (event) => {
 
             <ImageContainer>
                 {Platform.OS === 'web' ? (
-                     <img src={imageURL} width="100%" alt="Live Stream" />
+                    <img src={imageURL} width="100%" alt="Live Stream" />
+                ) : Platform.OS === 'android' ? (
+                    <StyledWebView
+                        source={{ uri: 'http://10.0.2.2:8000/video' }}
+                        ref={webViewRef}
+                        onMessage={onMessage}
+                    />
                 ) : (
                     <StyledWebView
                         source={{ uri: imageURL }}
@@ -228,7 +234,7 @@ const onMessage = async (event) => {
                     <CaptureButtonText>Picture</CaptureButtonText>
                 </CaptureButtonStyle>
                 <RemoveContainer>
-                    <StyledText>__________</StyledText>
+                    <StyledText>____________________</StyledText>
                     <OnOffButton
                         onPress={openGallery}
                         isOn={isOn}>
@@ -319,7 +325,7 @@ const RemoveContainer = styled.View`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -334,14 +340,14 @@ const Margin2Container = styled.View`
 `;
 
 const BorderContainer = styled.View`
-    border: 1px solid #FFFFFF;
+    border: 3px solid #ADCDFF;
     width: ${width * 0.90}px;
     margin: 2%;
 `;
 
 const Border2Container = styled.View`
-    background-color: #2D1F80;
-    border: 2px solid #F8098B;
+    background-color: #222222;
+    border: 2px solid #FFCEFF;
     border-radius: 10px;
     padding: 10px;
     width: ${width * 0.95}px;
@@ -352,12 +358,12 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-left: 10px;
+    margin-left: 0px;
 `;
 
 const UpButtonContainer = styled.View`
     margin-bottom: 20px;
-    margin-left: 15px;
+    margin-left: 0px;
 `;
 
 const DirectionButtonContainer = styled.View`
@@ -369,7 +375,7 @@ const DirectionButtonContainer = styled.View`
 
 const DownButtonContainer = styled.View`
     margin-top: 0px;
-    margin-left: 15px;
+    margin-left: 0px;
 `;
 
 
@@ -419,14 +425,14 @@ const OnOffButton = styled.TouchableOpacity`
     height: ${scale * 50}px;
     justify-content: center;
     align-items: center;
-    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#F8098B')};
+    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#ADCDFF')};
     border-radius: 10px;
     padding: 10px 10px;
     margin-left: 15px;
 `;
 
 const OnOffButtonText = styled.Text`
-    color: white;
+    color: black;
     font-size: ${scale * 18}px;
     font-weight: bold;
 `;
@@ -473,7 +479,7 @@ const ImageContainer = styled.View`
     width: 90%;
     height: 34%;
     border-width: 2px; 
-    border-color: #F8098B;
+    border-color: #FFCEFF;
     background-color: #222222; 
 `;
 
@@ -484,14 +490,15 @@ const StyledImage = styled.Image`
 
 const SliderText = styled(Text)`
     font-size: 20px;
-    margin-bottom: 70px;
-    color: white;
+    margin-bottom: 80px;
+    color: #FFCEFF;
 `;
 
 const StyledSlider = styled(Slider)`
     height: 10px;
     width: 150px;
     transform: rotate(-90deg);
+    margin-bottom: 60px;
 `;
 
 
