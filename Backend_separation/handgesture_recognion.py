@@ -4,13 +4,22 @@ import mediapipe as mp
 from tensorflow import keras
 import logging
 import asyncio
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 actions = ['come', 'away', 'spin']
 seq_length = 30
-model = keras.models.load_model('model.keras')
+
+# 현재 스크립트의 디렉토리 경로를 가져옵니다
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# 모델 파일의 전체 경로를 생성합니다
+model_path = os.path.join(current_dir, 'model.keras')
+
+# 모델을 로드합니다
+model = keras.models.load_model(model_path)
 
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils

@@ -20,13 +20,13 @@ from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse
 import jwt
+from handgesture_recognion import recognize_gesture_periodically
 from face_image_db import fetch_family_photos, validate_token
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
 
-# 환경 변수에서 테스트 모드 설정 확인
-TEST_MODE = True
+
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -70,9 +70,9 @@ async def get_distance():
 async def video_stream():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
-@app.get("/video_feed/{face}")
-async def get_video_feed(face: bool):
-    return StreamingResponse(video_frame_generator(face),
+@app.get("/video_feed/{face}/{gesture}")
+async def get_video_feed(face: bool, gesture: bool):
+    return StreamingResponse(video_frame_generator(face, gesture),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 @app.get("/gesture")

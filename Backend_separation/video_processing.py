@@ -7,9 +7,9 @@ import logging
 import cv2
 import numpy as np
 
+from handgesture_recognion import detect_gesture, draw_gesture
 from face_recognition import detect_faces, draw_faces
 from mqtt_client import video_frames
-from handgesture_recognition import detect_gesture, draw_gesture
 
 logger = logging.getLogger(__name__)
 
