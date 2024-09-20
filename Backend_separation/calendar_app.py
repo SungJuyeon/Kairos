@@ -45,11 +45,8 @@ def schedule_date(date):
 #     ]
 # }
 
-@app.get("/calendar")
-def calendar(date: str):
-    schedules = schedule_date(date)
-    return {"date": date, "schedules": schedules}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+#
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)

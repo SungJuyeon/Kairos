@@ -1,8 +1,7 @@
 import pymysql
 import os
-from dotenv import load_dotenv
 import logging
-from jose import jwt
+from dotenv import load_dotenv
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -12,19 +11,37 @@ db_host = os.getenv('DB_HOST')
 db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
-
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 def get_db_connection():
     return pymysql.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_NAME')
+        host=db_host,
+        user=db_user,
+        password=db_password,
+        database=db_name
     )
 
-def fetch_family_photos(user_id):
-    logging.info(f"Fetching family photos for user_id: {user_id}")
+def fetch_user_id_by_username(username):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT id FROM userentity WHERE username = %s"
+    cursor.execute(query, (username,))
+    result = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if result:
+        return result[0]
+    return None
+
+def fetch_family_photos(username):
+    user_id = fetch_user_id_by_username(username)
+    if user_id is None:
+        logging.error(f"User with username {username} not found.")
+        return
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -47,18 +64,20 @@ def fetch_family_photos(user_id):
 
     family_nicknames = set()
 
-    for idx, (photo1, nickname1, photo2, nickname2) in enumerate(results):
-        family_nicknames.update([nickname1, nickname2])
+    for photo1, nickname1, photo2, nickname2 in results:
+        if nickname1:
+            family_nicknames.add(nickname1)
+            if photo1:
+                photo1_path = os.path.join(faces_dir, f"{nickname1}.jpg")
+                with open(photo1_path, 'wb') as f:
+                    f.write(photo1)
 
-        if photo1:
-            photo1_path = os.path.join(faces_dir, f"{nickname1}.jpg")
-            with open(photo1_path, 'wb') as f:
-                f.write(photo1)
-
-        if photo2:
-            photo2_path = os.path.join(faces_dir, f"{nickname2}.jpg")
-            with open(photo2_path, 'wb') as f:
-                f.write(photo2)
+        if nickname2:
+            family_nicknames.add(nickname2)
+            if photo2:
+                photo2_path = os.path.join(faces_dir, f"{nickname2}.jpg")
+                with open(photo2_path, 'wb') as f:
+                    f.write(photo2)
 
     logging.info(f"가족 nicknames: {', '.join(family_nicknames)}")
 
@@ -66,6 +85,7 @@ def fetch_family_photos(user_id):
 
 async def current_userId(token: str):
     try:
+        from jose import jwt
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         user_id = payload.get('username')
 
@@ -74,3 +94,18 @@ async def current_userId(token: str):
         return user_id
     except jwt.JWTError as e:
         raise ValueError(f"Invalid token: {str(e)}")
+
+def find_photoname(photoname):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT id FROM userentity WHERE photoname = %s"
+    cursor.execute(query, (photoname,))
+    result = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if result:
+        return result[0]
+    return None
