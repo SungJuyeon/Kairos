@@ -14,7 +14,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse
-from face_image_db import fetch_family_photos
+from emotion_record import manage_daily_files
+from calendar_app import schedule_date
+from face_image_db import fetch_family_photos, current_userId
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 #from models import Base, Message
@@ -36,7 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SPRING_BOOT_URL = "http://localhost:8080/user/id"
+#SPRING_BOOT_URL = "http://localhost:8080/user/id"
 user_token = None  # 전역 변수로 토큰을 저장
 
 @app.get("/", response_class=HTMLResponse)
@@ -58,16 +60,21 @@ async def post_speed(action: str):
 async def get_distance():
     return {"distance": distance_data}
 
-async def fetch_user_id(token: str):
-    headers = {"Authorization": f"Bearer {token}"}
-    async with httpx.AsyncClient() as client:
-        response = await client.get(SPRING_BOOT_URL, headers=headers)
-        response.raise_for_status()
-        return response.json()
+@app.get("/calendar")
+def calendar(date: str):
+    schedules = schedule_date(date)
+    return {"date": date, "schedules": schedules}
 
-async def current_userId(token: str):
-    user_id = await fetch_user_id(token)
-    return user_id
+# async def fetch_user_id(token: str):
+#     headers = {"Authorization": f"Bearer {token}"}
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(SPRING_BOOT_URL, headers=headers)
+#         response.raise_for_status()
+#         return response.json()
+#
+# async def current_userId(token: str):
+#     user_id = await fetch_user_id(token)
+#     return user_id
 
 class TokenRequest(BaseModel):
     token: str
@@ -87,6 +94,7 @@ async def initialize_recognition():
 
     await setup_mqtt()
 
+    manage_daily_files()
     user_id = await current_userId(user_token)
     fetch_family_photos(user_id)
 
@@ -104,7 +112,6 @@ async def get_video_feed(face: bool):
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
-    import uvicorn
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
     server = uvicorn.Server(config)
     loop = asyncio.get_event_loop()

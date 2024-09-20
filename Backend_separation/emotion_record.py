@@ -2,28 +2,20 @@ import os
 import json
 from datetime import datetime
 import cv2
-from emotion_video import delete_old_videos
+from dateutil.utils import today
 
-def get_emotion_file_today():
+from emotion_video import delete_old_videos
+def get_emotion_file_today(person_name):
     base_dir = os.path.abspath("../Backend_separation/emotions")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
-    return os.path.join(base_dir, "emotion_today.json")
+    return os.path.join(base_dir, f"emotion_today_{person_name}.json")
 
-def initialize_emotion_data():
-    return {emotion: 0 for emotion in ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']}
-
-def reset_emotion_file():
-    file_path = get_emotion_file_today()
-    with open(file_path, 'w') as file:
-        json.dump(initialize_emotion_data(), file)
-    print(f"{file_path} has been reset.")
-
-def save_emotion_result(emotion):
+def save_emotion_result(person_name, emotion):
     if emotion == 'Neutral':
         return
 
-    file_path = get_emotion_file_today()
+    file_path = get_emotion_file_today(person_name)
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             emotion_data = json.load(file)
@@ -39,9 +31,9 @@ def save_emotion_result(emotion):
         json.dump(emotion_data, file, indent=4)
     print(f"Emotion data saved to {file_path}")
 
-def get_most_frequent_emotion():
+def get_most_frequent_emotion(person_name):
     try:
-        emotion_file_path = get_emotion_file_today()
+        emotion_file_path = get_emotion_file_today(person_name)
         with open(emotion_file_path, 'r') as f:
             emotion_data = json.load(f)
 
@@ -54,15 +46,27 @@ def get_most_frequent_emotion():
         print(f"Error while retrieving most frequent emotion: {e}")
         return None
 
-def get_emotion_ranking():
+def save_most_emotion_pic(frame, emotion, person_name):
+    if emotion != 'fear':
+        path = get_most_emotion_pic_path(person_name)
+        cv2.imwrite(path, frame)
+        print(f"Saved most emotion picture for {person_name}: {path}")
+
+
+def get_most_emotion_pic_path(person_name):
+    base_dir = os.path.abspath("../Backend_separation/emotions")
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+    return os.path.join(base_dir, f"most_emotion_pic_{person_name}.jpg")
+
+def initialize_emotion_data():
+    return {emotion: 0 for emotion in ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']}
+
+def reset_emotion_file():
     file_path = get_emotion_file_today()
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            emotion_data = json.load(file)
-        sorted_emotions = sorted(emotion_data.items(), key=lambda x: x[1], reverse=True)
-        return sorted_emotions
-    else:
-        return []
+    with open(file_path, 'w') as file:
+        json.dump(initialize_emotion_data(), file)
+    print(f"{file_path} has been reset.")
 
 def manage_daily_files():
     today = datetime.today().strftime('%Y-%m-%d') # 오늘 날짜
@@ -77,15 +81,3 @@ def manage_daily_files():
 
     # 이전 하이라이트 영상 삭제
     delete_old_videos(os.path.dirname(file_path), days=2)
-
-def get_most_emotion_pic_path():
-    base_dir = os.path.abspath("../Backend_separation/emotions")
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
-    return os.path.join(base_dir, "most_emotion_pic.jpg")
-
-def save_most_emotion_pic(frame, emotion):
-    if emotion != 'Neutral':
-        path = get_most_emotion_pic_path()
-        cv2.imwrite(path, frame)
-        print(f"Saved most emotion picture: {path}")
