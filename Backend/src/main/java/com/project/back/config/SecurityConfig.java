@@ -1,5 +1,6 @@
 package com.project.back.config;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import com.project.back.jwt.CustomLogoutFilter;
@@ -50,7 +51,7 @@ public class SecurityConfig {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration configuration = new CorsConfiguration();
-                        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:8082"));
+                        configuration.setAllowedOrigins(Arrays.asList("http://10.0.2.2:8081", "http://localhost:8081"));
                         configuration.setAllowedMethods(Collections.singletonList("*"));
                         configuration.setAllowCredentials(true);
                         configuration.setAllowedHeaders(Collections.singletonList("*"));

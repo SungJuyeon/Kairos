@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from 'axios';
 import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions, Alert } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
@@ -24,25 +23,24 @@ export default function Login() {
     
     useEffect(() => {
         const checkLoginStatus = async () => {
-          try {
-            const userInfo = await AsyncStorage.getItem('userInfo');
-            if (userInfo) {
-              login();
-            } else {
-              logout();
+            try {
+                const token = await AsyncStorage.getItem('token');
+                if (token) {
+                    login();
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                console.error('로그인 상태 불러오기 실패', error);
             }
-          } catch (error) {
-            console.error('로그인 상태 불러오기 실패', error);
-          }
         };
-    
+
         checkLoginStatus();
-      }, []);
-    
+    }, []);
+
 
     // 로그인 버튼 클릭시 실행
     const tryLogin = async () => {
-        setUsername(id);
 
         try {
             const response = await fetch('http://localhost:8080/login', {
@@ -51,24 +49,39 @@ export default function Login() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    username,
+                    username: id,
                     password,
                 }),
             });
-            
-            const data = await response.text();
+
+        // 응답 상태 로그 추가
+            console.log('응답 상태:', response.status);
+
+
             if (response.ok) {
-                login();
-                Alert.alert('로그인 성공', data);
+                // 헤더에서 access 토큰을 가져오기
+                const accessToken = response.headers.get('access'); // 'access' 헤더에서 토큰 가져오기
+                //console.log('Access Token:', accessToken); // 토큰 로그 출력
+
+                if (accessToken) {
+                    await AsyncStorage.setItem('token', accessToken); // AsyncStorage에 토큰 저장
+                    login();
+                    Alert.alert('로그인 성공', '환영합니다!');
+                } else {
+                    Alert.alert('로그인 실패', '토큰을 찾을 수 없습니다.');
+                }
             } else {
-                console.log(data);
-                Alert.alert('로그인 실패', data);
+                const errorText = await response.text();  // 오류 메시지 텍스트 가져오기
+                console.log('로그인 실패 내용:', errorText);
+                Alert.alert('로그인 실패', errorText);
             }
         } catch (error) {
-            console.error(error);
+            console.error('오류 발생:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
+
+
 
     return (
         <Container>
@@ -132,7 +145,7 @@ const StyledTextInput = styled.TextInput`
     margin: 10px 0;
     color: white;
     font-size: ${height * 0.022}px;
-    background-color: #1B0C5D;
+    background-color: #222222;
 `;
 
 const Title = styled.Text`
@@ -143,7 +156,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;

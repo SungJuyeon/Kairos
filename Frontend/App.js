@@ -22,7 +22,7 @@ export default function App() {
                 screenOptions={({ route }) => ({
                   headerShown: false,
                   tabBarStyle: {
-                    backgroundColor: '#1B0C5D',
+                    backgroundColor: '#222222',
                     activeTintColor: '#FFFFFF',
                     inactiveTintColor: 'gray'
                   },

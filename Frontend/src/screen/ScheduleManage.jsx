@@ -75,9 +75,9 @@ export default function ScheduleManage() {
                 renderItem={({ item }) => (
                     <ScheduleItem>
                         <ScheduleText>{`${new Date(item.date).toLocaleString()}: ${item.task}`}</ScheduleText>
-                        <Button onPress={() => removeSchedule(item.id)} activeOpacity={0.7}>
+                        <Button2 onPress={() => removeSchedule(item.id)} activeOpacity={0.7}>
                             <ButtonText>제거</ButtonText>
-                        </Button>
+                        </Button2>
                     </ScheduleItem>
                 )}
             />
@@ -98,7 +98,7 @@ const Container = styled.SafeAreaView`
   padding: 20px;
   align-items: center;
   justify-content: center;
-  background-color: #1B0C5D;
+  background-color: #222222;
 `;
 
 const Input = styled.TextInput`
@@ -113,7 +113,7 @@ const ScheduleItem = styled.View`
   justify-content: space-between;
   align-items: center;
   margin-vertical: 5px;
-  background-color: #1B0C5D; /* 항목 배경색 추가 */
+  background-color: #222222; /* 항목 배경색 추가 */
   padding: 10px; /* 패딩 추가 */
   border-radius: 5px; /* 모서리 둥글게 */
 `;
@@ -123,14 +123,21 @@ const ScheduleText = styled.Text`
 `;
 
 const Button = styled.TouchableOpacity`
-  background-color: #007BFF; /* 버튼 배경색 추가 */
+  background-color: #FFCEFF;
   padding: 10px 20px;
   border-radius: 5px;
   margin: 5px;
 `;
 
 const ButtonText = styled.Text`
-  color: white; /* 버튼 텍스트 색상 변경 */
+  color: black;
   font-size: 16px;
   font-weight: bold;
+`;
+
+const Button2 = styled.TouchableOpacity`
+  background-color: #ADCDFF;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 5px;
 `;

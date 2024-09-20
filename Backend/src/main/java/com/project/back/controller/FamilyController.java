@@ -24,6 +24,8 @@ public class FamilyController {
     private final FamilyService familyService;
     private final UserRepository userRepository;  // UserRepository를 주입받습니다.
 
+    // 로그인 된 사용자가 가족 요청할 사람의 유저 네임 받고 여기에 전달
+    //senderUsername, receiverUsername
     @PostMapping("/request")
     public FamilyRequest sendFamilyRequest(@RequestBody FamilyRequestDTO request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -42,6 +44,7 @@ public class FamilyController {
 
     // URL 쿼리 파라미터 http://localhost:8080/family/accept?requestId=2902 형식으로 요청받음
     // requestId 는 /requests/received 에서 확인
+    // 수락 하는 것
     @PostMapping("/request/accept")
     public ResponseEntity<String> acceptFamilyRequest(@RequestParam(name = "requestId") Long requestId) {
         System.out.println("Attempting to accept family request with ID: " + requestId);
@@ -53,6 +56,7 @@ public class FamilyController {
         }
     }
 
+    // accept랑 완전 반대, 거절하는 것
     @PostMapping("/request/reject")
     public ResponseEntity<String> rejectFamilyRequest(@RequestParam(name = "requestId") Long requestId) {
         System.out.println("Attempting to accept family request with ID: " + requestId);
@@ -64,6 +68,7 @@ public class FamilyController {
         }
     }
 
+    // 가족들 리스트, 닉네일과 포토네임(사진)만 전달
     @GetMapping("/list")
     public List<FamilyUserDTO> getFamily(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -81,6 +86,7 @@ public class FamilyController {
     }
 
     //사용자가 보낸 친구 요청들을 조회
+    // requesrId, senderUsername, receiverUsername, status 들이 옴
     @GetMapping("/requests/sent")
     public ResponseEntity<List<FamilyRequestDTO>> getSentRequests() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -106,6 +112,8 @@ public class FamilyController {
 
 
     //사용자가 받은 친구 요청들을 조회
+    // requestId를 여기서 가져옴
+    // requesrId, senderUsername, receiverUsername, status 들이 옴
     @GetMapping("/requests/received")
     public ResponseEntity<List<FamilyRequestDTO>> getReceivedRequests() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

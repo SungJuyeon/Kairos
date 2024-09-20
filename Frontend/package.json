@@ -39,7 +39,7 @@
     "react-native-svg": "^15.6.0",
     "react-native-voice": "^0.3.0",
     "react-native-web": "~0.19.10",
-    "react-native-webview": "^13.12.2",
+    "react-native-webview": "^13.6.4",
     "styled-components": "^6.1.12"
   },
   "devDependencies": {
