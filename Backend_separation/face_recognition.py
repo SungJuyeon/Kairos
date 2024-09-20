@@ -117,17 +117,16 @@ async def recognize_emotion(frame):
 
 
                 if current_emotion != 'fear' and detected_person_name != "unknown":
-                    #emotion_today_{detected_person_name}.json 으로 감정 수치 저장
+                    # emotion_today_{detected_person_name}.json 으로 감정 수치 저장
                     save_emotion_result(detected_person_name, current_emotion)
-                    #최다 감정 사진 저장
-                    new_most_frequent_emotion = get_most_frequent_emotion(detected_person_name)
-                    if new_most_frequent_emotion != most_frequent_emotion:
-                        save_most_emotion_pic(frame, new_most_frequent_emotion, detected_person_name)
-                        logging.info(f"Updated most emotion photo for {detected_person_name} with emotion: {new_most_frequent_emotion}")
 
-            else:
-                last_detected_emotions.append("unknown")
-                last_detected_emotion_scores.append({})
+                    # 최다 감정 사진 저장
+                    # new_frequent_emotion = get_most_frequent_emotion(detected_person_name)
+                    # logging.info(new_frequent_emotion)
+
+                    save_most_emotion_pic(frame, current_emotion, detected_person_name)
+                    #logging.info(f"{detected_person_name} | {current_emotion}")
+
 
         except Exception as e:
             print("Error in emotion recognition:", e)

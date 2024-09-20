@@ -37,20 +37,36 @@ def get_most_frequent_emotion(person_name):
         with open(emotion_file_path, 'r') as f:
             emotion_data = json.load(f)
 
-        # 'Neutral'을 제외하고 최다 감정을 찾음
-        non_neutral_emotions = {k: v for k, v in emotion_data.items() if k != 'Neutral'}
+
+        #non_neutral_emotions = {k: v for k, v in emotion_data.items() if k != 'Neutral'}
+        non_neutral_emotions = {k: v for k, v in emotion_data.items() }
         most_frequent_emotion = max(non_neutral_emotions, key=non_neutral_emotions.get)
+
 
         return most_frequent_emotion
     except Exception as e:
         print(f"Error while retrieving most frequent emotion: {e}")
         return None
 
-def save_most_emotion_pic(frame, emotion, person_name):
-    if emotion != 'fear':
-        path = get_most_emotion_pic_path(person_name)
-        cv2.imwrite(path, frame)
-        print(f"Saved most emotion picture for {person_name}: {path}")
+def save_most_emotion_pic(frame, current_emotion, person_name):
+    # 최다 감정 사진 경로 설정
+    pic_path = get_most_emotion_pic_path(person_name)
+
+    # 현재 감정이 'fear'가 아닌 경우에만 처리
+    if current_emotion != 'Fear':
+        # 현재 감정이 최다 감정인지 확인
+        most_frequent_emotion = get_most_frequent_emotion(person_name)
+
+        # 현재 감정이 최다 감정이거나 새로운 최다 감정이 되었을 때 사진을 저장
+        if current_emotion == most_frequent_emotion:
+            # 현재 감정이 이미 최다 감정인 경우에도 사진을 저장
+            cv2.imwrite(pic_path, frame)
+            print(f"Updated most emotion picture for {person_name} with emotion: {current_emotion}")
+
+        elif current_emotion != most_frequent_emotion:
+            # 현재 감정이 최다 감정으로 바뀌었을 경우에도 사진을 저장
+            cv2.imwrite(pic_path, frame)
+            print(f"Updated most emotion picture for {person_name}, new most frequent emotion: {current_emotion}")
 
 
 def get_most_emotion_pic_path(person_name):

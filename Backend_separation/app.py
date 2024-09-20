@@ -73,6 +73,7 @@ async def get_video_feed(face: bool):
     return StreamingResponse(video_frame_generator(face),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
+
 # @app.get("/gesture")
 # async def get_gesture():
 #     logger.info(f"get_gesture 엔드포인트 호출됨.")
