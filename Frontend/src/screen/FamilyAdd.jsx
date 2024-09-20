@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { View, Text, SafeAreaView, TouchableOpacity, Alert } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
-import axios from 'axios';
-// import DocumentPicker from 'react-native-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignIn() {
     const { navigate } = useNavigation();
@@ -14,6 +13,9 @@ export default function SignIn() {
     const [username, setUsername] = useState('');
     const [nickname, setNickname] = useState('');
 
+    const [senderUsername, setSenderUsername] = useState('');
+    const [receiverUsername, setReceiverUsername] = useState('');
+
     // TextInput이 포커싱 되었을 때 색상 변경
     const [usernameFocused, setUsernameFocused] = useState(false);
     const [idFocused, setIdFocused] = useState(false);
@@ -22,59 +24,72 @@ export default function SignIn() {
     const [emailFocused, setEmailFocused] = useState(false);
     const [nicknameFocused, setNicknameFocused] = useState(false);
 
-    // 회원가입 버튼 클릭 시
-    const addFamily = async () => {
 
-
+    const inviteFamily = async () => {
         try {
-
-            // 가족 추가하는 로직
-
-        } catch (error) {
-            console.error(error);
-            Alert.alert('오류 발생', '다시 시도해 주세요.');
-        }
-      };
-
-      // 파일 업로드를 위한 코드
-    //   const uploadFile = async () => {
-    //     try {
-    //       const res = await DocumentPicker.pick({
-    //         type: [DocumentPicker.types.allFiles],
-    //       });
+            const accessToken = await AsyncStorage.getItem('token');
     
-    //       // 여기에서 파일을 서버로 업로드하는 로직 추가
-    //       console.log('파일 선택됨: ', res.uri);
-    //     } catch (err) {
-    //       if (DocumentPicker.isCancel(err)) {
-    //         console.log('사용자에 의해 취소됨');
-    //       } else {
-    //         throw err;
-    //       }
-    //     }
-    //   };
+            // senderUsername 받아오기
+            const usernameResponse = await fetch('http://localhost:8080/user/username', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+
+            if (!usernameResponse.ok) {
+                throw new Error('네트워크 응답이 좋지 않습니다.');
+            }
+    
+            const senderUsername = await usernameResponse.text(); // 또는 await usernameResponse.json() - 응답 형식에 따라
+            setSenderUsername(senderUsername);
+            
+            // receiverUsername 설정
+            const receiverUsername = username; // 현재 입력된 username 사용
+    
+            // POST 요청
+            const requestResponse = await fetch('http://localhost:8080/family/request', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    senderUsername,
+                    receiverUsername,
+                }),
+            });
+    
+            if (!requestResponse.ok) {
+                throw new Error('네트워크 응답이 좋지 않습니다.');
+            }
+    
+            const data = await requestResponse.json();
+            console.log(data);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
+    };
 
     return (
         <Container>
-            <Title>가족 추가</Title>
+            <Title>가족 초대</Title>
             <InputContainer>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}></Text>
                 <StyledTextInput
                     onChangeText={text => setUsername(text)}
                     value={username}
                     onFocus={() => setUsernameFocused(true)}
                     onBlur={() => setUsernameFocused(false)}
                     focused={usernameFocused}
-                    //placeholder="이름"
                 />
             </InputContainer>
             <RowContainer>
-                <Button2 onPress={addFamily}>
-                    <ButtonText>가족 추가</ButtonText>
+                <Button2 onPress={inviteFamily}>
+                    <ButtonText>초대하기</ButtonText>
                 </Button2>
-                <Button>
-                    <ButtonText>파일 업로드</ButtonText>
-                </Button>
             </RowContainer>
         </Container>
     );
@@ -110,6 +125,13 @@ const BackButton = styled.TouchableOpacity`
 
 const Button2 = styled.TouchableOpacity`
     background-color: #FFCEFF;
+    padding: 12px 24px;
+    border-radius: 10px;
+    margin: 10px;
+`;
+
+const Button3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
     padding: 12px 24px;
     border-radius: 10px;
     margin: 10px;

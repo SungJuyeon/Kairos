@@ -9,7 +9,7 @@ const initialData = [
     { id: '3', title: '동생', image: require('./../../assets/duck.png') },
 ];
 
-export default function FamilyManage() {
+export default function FamilyReceive() {
     const { navigate } = useNavigation();
     const [data, setData] = useState(initialData);
 
@@ -40,7 +40,7 @@ export default function FamilyManage() {
                 <Button onPress={() => navigate('FamilyAdd')}>
                     <ButtonText>초대하기</ButtonText>
                 </Button>
-                <Button3 onPress={() => navigate('FamilyReceive')}>
+                <Button3 onPress={() => navigate('FamilyAdd')}>
                     <ButtonText>수락하기</ButtonText>
                 </Button3>
             </RowContainer>

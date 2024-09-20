@@ -36,6 +36,8 @@ export default function SignUp() {
                 // Blob 객체를 파일로 변환
                 const file = new File([blob], fileName, { type: fileType });
 
+                console.log(file);
+
                 formData.append('file', file);
             }
 
