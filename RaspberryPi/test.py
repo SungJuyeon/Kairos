@@ -6,7 +6,6 @@ import json
 import random
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
-import sounddevice as sd
 
 # 카메라 설정
 cap = cv2.VideoCapture(0)
@@ -126,8 +125,8 @@ def audio_callback(indata, frames, time, status):
 
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
-#MQTT_BROKER = "localhost"
+#MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"

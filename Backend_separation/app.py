@@ -26,13 +26,13 @@ from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
 
 # 환경 변수에서 테스트 모드 설정 확인
-TEST_MODE = os.getenv('TEST_MODE', 'False').lower() == 'true'
+TEST_MODE = True
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 user_photo_for_comparison = None
 app = FastAPI()
 
@@ -48,19 +48,31 @@ SPRING_BOOT_URL = "http://localhost:8080/user/id"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
+    logger.info(f"get_current_user 함수 호출됨. TEST_MODE: {TEST_MODE}")
     if TEST_MODE:
+        logger.info("테스트 모드 활성화: 테스트 사용자 반환")
         return {"id": "test_user", "username": "tester"}
-    user = await validate_token(token)
-    if not user:
+    
+    try:
+        user = await validate_token(token)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="유효하지 않은 인증 정보",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return user
+    except Exception as e:
+        logger.error(f"토큰 검증 중 오류 발생: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="인증 처리 중 오류 발생",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info(f"애플리케이션 시작. TEST_MODE: {TEST_MODE}")
     await setup_mqtt()
 
 @app.get("/", response_class=HTMLResponse)
@@ -77,6 +89,7 @@ async def post_speed(action: str, current_user: dict = Depends(get_current_user)
 
 @app.get("/distance")
 async def get_distance(current_user: dict = Depends(get_current_user)):
+    logger.info(f"get_distance 엔드포인트 호출됨. 사용자: {current_user}")
     return {"distance": distance_data}
 
 @app.get("/video")
@@ -93,15 +106,29 @@ class TokenRequest(BaseModel):
 
 @app.post("/token")
 async def set_token(token_request: TokenRequest):
-    user = await validate_token(token_request.token)
-    if not user:
+    logger.info(f"set_token 엔드포인트 호출됨. TEST_MODE: {TEST_MODE}")
+    if TEST_MODE:
+        logger.info("테스트 모드 활성화: 테스트 사용자로 초기화")
+        await initialize_recognition("test_user")
+        return {"message": "테스트 모드: 토큰 수신 및 검증 완료"}
+    
+    try:
+        user = await validate_token(token_request.token)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="유효하지 않은 토큰",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        await initialize_recognition(user["id"])
+        return {"message": "토큰 수신 및 검증 완료"}
+    except Exception as e:
+        logger.error(f"토큰 설정 중 오류 발생: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail="토큰 처리 중 오류 발생",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    await initialize_recognition(user["id"])
-    return {"message": "Token received and validated"}
 
 async def initialize_recognition(user_id: str):
     fetch_family_photos(user_id)
@@ -181,9 +208,4 @@ if __name__ == "__main__":
 #         await websocket.send_text(f"Message sent to {message_data['receiver_id']}: {message_data['content']}")
 #
 #
-# ###################################################################
-if __name__ == "__main__":
-    config = uvicorn.Config(app, host='0.0.0.0', port=8000)
-    server = uvicorn.Server(config)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(server.serve())
+# #############################################
