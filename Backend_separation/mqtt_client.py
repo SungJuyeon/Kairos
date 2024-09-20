@@ -93,3 +93,7 @@ async def speed(action: str):
     client.publish(MQTT_TOPIC_COMMAND, command)
     logger.info(f"Speed command sent: {command}")
     return {"message": "Speed command sent successfully", "current_speed": current_speed}
+
+async def disconnect():
+    await client.disconnect()
+    logger.info("MQTT 브로커 연결 해제")

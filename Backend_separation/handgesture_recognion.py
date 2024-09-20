@@ -5,20 +5,39 @@ from tensorflow import keras
 import logging
 import asyncio
 import os
+import json
+import tensorflow as tf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 actions = ['come', 'away', 'spin']
 seq_length = 30
+model_path = os.path.join(os.path.dirname(__file__), 'models/model.keras')
 
-# 현재 스크립트의 디렉토리 경로를 가져옵니다
-current_dir = os.path.dirname(os.path.abspath(__file__))
+def fix_batch_shape(model_path):
+    try:
+        with open(model_path, 'rb') as f:
+            content = f.read()
+        try:
+            content = content.decode('utf-8')
+        except UnicodeDecodeError:
+            content = content.decode('latin-1')
+        
+        if not content.strip():
+            print("파일이 비어 있습니다.")
+            return
+        model_json = json.loads(content)
+        # ... 나머지 코드 ...
+    except FileNotFoundError:
+        print(f"파일을 찾을 수 없습니다: {model_path}")
+    except json.JSONDecodeError as e:
+        print(f"JSON 디코딩 오류: {e}")
+        print("파일 내용:")
+        print(content)
 
-# 모델 파일의 전체 경로를 생성합니다
-model_path = os.path.join(current_dir, 'model.keras')
-
-# 모델을 로드합니다
+# 모델을 로드하기 전에 이 함수를 호출합니다
+fix_batch_shape(model_path)
 model = keras.models.load_model(model_path)
 
 mp_hands = mp.solutions.hands
@@ -113,7 +132,6 @@ async def recognize_gesture_periodically(video_frames):
             if video_frames:
                 frame = video_frames[-1]
                 action, _ = detect_gesture(frame)
-                logger.info(f"현재 감지된 동작: {action}")
             await asyncio.sleep(0.1)
         except IndexError:
             logger.info("비디오 프레임 리스트가 비어 있습니다.")
