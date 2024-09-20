@@ -93,6 +93,7 @@ async def video_stream():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
 
+# 현재 나의 감정(동영상) {face}에 ture 넣으면 됨
 @app.get("/video_feed/{face}")
 async def get_video_feed(face: bool):
     return StreamingResponse(video_frame_generator(face),
