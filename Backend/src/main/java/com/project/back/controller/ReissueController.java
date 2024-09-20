@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 //서버에서 refresh token을 받으면 검증하고, 새 access token을 재발급하는 로직
 //= JWT를 받고, 검증하고, 새로운 JWT를 발급
 //  http://localhost:8080/reissue
-//프론트에서 credential ture 설정하면 자동으로 쿠키가 헤더에 탑재되어 서버측으로 전송된다.
+//프론트에서 credential true 설정하면 자동으로 쿠키가 헤더에 탑재되어 서버측으로 전송된다.
 @RestController
 @RequiredArgsConstructor
 public class ReissueController {

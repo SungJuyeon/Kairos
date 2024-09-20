@@ -93,9 +93,6 @@ export default function Chat() {
           <SendButton onPress={handleSubmit}>
             <SendButtonText>보내기</SendButtonText>
           </SendButton>
-          <VoiceButton onPress={() => navigate("VoiceChat")}>
-            <VoiceButtonText>음성 모드</VoiceButtonText>
-          </VoiceButton>
         </ButtonContainer>
       </InputContainer>
     </Container>
