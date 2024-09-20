@@ -100,7 +100,7 @@ export default function Chat() {
 }
 
 const Container = styled.SafeAreaView`
-  background-color: #1B0C5D;
+  background-color: #222222;
   flex: 1;
 `;
 
@@ -127,8 +127,8 @@ const InputContainer = styled.View`
   flex-direction: row;
   align-items: center;
   padding: 16px;
-  border-top-width: 1px;
-  border-top-color: #333;
+  border-top-width: 3px;
+  border-top-color: #ADCDFF;
 `;
 
 const ButtonContainer = styled.View`

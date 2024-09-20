@@ -74,7 +74,7 @@ export default function Home() {
     }, []);
 
     return (
-        <ImageBackground source={backgroundImage} style={{ flex: 1 }} resizeMode="cover">
+        <Container>
             <Overlay />
             {!isAnimationFinished && (
                 <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center' }}>
@@ -114,7 +114,7 @@ export default function Home() {
                     </CaptureButtonContainer>
                 </AnimatedContainer>
             )}
-        </ImageBackground>
+        </Container>
     );
 }
 
@@ -146,7 +146,7 @@ const CaptureButtonContainer = styled.View`
 `;
 
 const ControlButton = styled.TouchableOpacity`
-    background-color: #FFB0F9;
+    background-color: #FFCEFF;
     width: 300px;
     height: 60px;
     border-radius: 10px;
@@ -175,7 +175,7 @@ const Overlay = styled.View`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0);
 `;
 
 const AnimatedBall = styled(Animated.View)`
@@ -218,4 +218,11 @@ const AnimatedCircle4 = styled(Animated.View)`
     background-color: #000000;
     position: absolute;
     transform: rotate(45deg);
+`;
+
+const Container = styled.SafeAreaView`
+    background-color: #222222;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
 `;

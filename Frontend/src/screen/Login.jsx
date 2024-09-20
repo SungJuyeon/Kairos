@@ -132,7 +132,7 @@ const StyledTextInput = styled.TextInput`
     margin: 10px 0;
     color: white;
     font-size: ${height * 0.022}px;
-    background-color: #1B0C5D;
+    background-color: #222222;
 `;
 
 const Title = styled.Text`
@@ -143,7 +143,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;

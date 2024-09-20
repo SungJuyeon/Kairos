@@ -13,11 +13,12 @@ export default function MyPage() {
 
     return (
         <Container>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
+          style={{ backgroundColor: '#222222' }}>
           <Title>안녕하세요!</Title>
           <Image
             source={{ uri: `https://cdn.vectorstock.com/i/500p/53/42/user-member-avatar-face-profile-icon-vector-22965342.jpg` }}
-            style={{ width: 360, height: 360 }}
+            style={{ width: 360, height: 360, margin: 15 }}
           />
           <Button onPress={() => navigate('FamilyManage')}>
             <ButtonText>가족 관리</ButtonText>
@@ -51,7 +52,7 @@ const Button = styled.TouchableOpacity`
   background-color: #FFFFFF;
   padding: 10px 20px;
   border-radius: 5px;
-  margin: 5px;
+  margin: 15px;
 `;
 
 const ButtonText = styled.Text`
@@ -61,10 +62,10 @@ const ButtonText = styled.Text`
 `;
 
 const LogoutButton = styled.TouchableOpacity`
-  background-color: #FFFFFF;
+  background-color: #FFCEFF;
   padding: 10px 20px;
   border-radius: 5px;
-  margin: 5px;
+  margin: 15px;
 `;
 
 const LogoutButtonText = styled.Text`

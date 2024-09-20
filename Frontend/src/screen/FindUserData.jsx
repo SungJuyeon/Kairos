@@ -20,7 +20,7 @@ export default function FindUserData() {
 }
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     padding: 5%;
     justify-content: center;
