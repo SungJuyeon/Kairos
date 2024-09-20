@@ -2,6 +2,7 @@ import React, { useState }  from "react";
 import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Alert } from "react-native";
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FindId() {
     const { navigate } = useNavigation();
@@ -13,11 +14,13 @@ export default function FindId() {
     const [nameFocused, setNameFocused] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
 
+
+
     // 아이디 찾기 버튼 클릭 시 실행
     const findId = async () => {
-        setUsername(name);
 
         try {
+
             const response = await fetch('http://localhost:8080/find/username', {
                 method: 'POST',
                 headers: {
@@ -30,7 +33,7 @@ export default function FindId() {
             
             const data = await response.text();
             if (response.ok) {
-                Alert.alert(data);
+                Alert.alert('회원님의 아이디', data);
             } else {
                 Alert.alert(data);
             }
