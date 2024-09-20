@@ -2,11 +2,10 @@ import os
 import json
 from datetime import datetime
 import cv2
-from dateutil.utils import today
-
 from emotion_video import delete_old_videos
+
 def get_emotion_file_today(person_name):
-    base_dir = os.path.abspath("../Backend_separation/emotions")
+    base_dir = os.path.join(os.path.dirname(__file__), "emotions")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
     return os.path.join(base_dir, f"emotion_today_{person_name}.json")
@@ -54,7 +53,7 @@ def save_most_emotion_pic(frame, emotion, person_name):
 
 
 def get_most_emotion_pic_path(person_name):
-    base_dir = os.path.abspath("../Backend_separation/emotions")
+    base_dir = os.path.join(os.path.dirname(__file__), "emotions")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
     return os.path.join(base_dir, f"most_emotion_pic_{person_name}.jpg")

@@ -234,7 +234,7 @@ async def create_video_highlight():
     if current_nickname != "unkown" and current_emotions and not is_saving_video:  # 비디오 저장 중이 아닐 때만 실행
         for idx, emotion in enumerate(current_emotions):
             score = current_emotion_scores[idx].get(emotion, 0)
-            if emotion != "neutral" and score >= 0.95:
+            if emotion != "neutral" and score >= 0.4:
                 asyncio.create_task(save_video())
 
 
@@ -247,7 +247,9 @@ async def save_video(fps=20, seconds=10):
         is_saving_video = False
         return
 
-    video_file_name = 'output.avi'
+    detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
+    detected_emotion = last_detected_emotions[0] if last_detected_emotions else "unknown"
+    video_file_name = f'{detected_person_name}_{detected_emotion}_{time.strftime("%Y%m%d_%H%M%S")}.avi'
     first_frame = video_frames[0]
     h, w = first_frame.shape[:2]
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
