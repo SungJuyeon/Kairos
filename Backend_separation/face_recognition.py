@@ -9,6 +9,7 @@ import boto3
 import cv2
 import numpy as np
 from deepface import DeepFace
+from s3_uploader import upload_to_s3
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -179,7 +180,7 @@ def draw_faces(frame):
 
 
 def get_nickname_from_filename(filename):
-    base_name = filename.split('/')[-1]  # 파일 경로에서 파일 이름만 추출
+    base_name = filename.split('/')[-1]  # 파일 경로서 파일 이름만 추출
     name_part = base_name.split('.')[0]  # 확장자 제거
     name_part = name_part.split('(')[0].strip()  # 괄호 앞부분을 가져옴
     return name_part
@@ -246,7 +247,9 @@ async def save_video(fps=10, seconds=20):
             out.write(frame)
         await asyncio.sleep(1 / fps)  # fps에 맞춰 대기
 
-    is_saving_video = False
-
     out.release()  # 비디오 파일 닫기
+    is_saving_video = False
     logging.info("비디오 저장 완료##########################################")
+    
+    # S3에 저장하는 함수 호출
+    await upload_to_s3(video_file_name)
