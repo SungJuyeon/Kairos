@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+        #messageInput { width: 80%; }
+    </style>
+</head>
+<body>
+
+<h1>Real-Time Chat</h1>
+<div id="messages"></div>
+<input type="text" id="messageInput" placeholder="Type your message here...">
+<button id="sendButton">Send</button>
+
+<script>
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    const socket = new WebSocket('ws://3.27.221.93:12345');  // Adjust to your WebSocket URL
+
+    socket.onopen = function() {
+        console.log('Connected to the server');
+    };
+
+    socket.onmessage = function(event) {
+        const message = JSON.parse(event.data);
+        const newMessage = document.createElement('div');
+        newMessage.textContent = message.content;  // Adjust based on your JSON structure
+        messagesDiv.appendChild(newMessage);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;  // Scroll to the bottom
+    };
+
+    sendButton.addEventListener('click', function() {
+        const messageContent = messageInput.value;
+        const message = { type: 'chat', content: messageContent };
+        socket.send(JSON.stringify(message));
+        messageInput.value = '';  // Clear the input field
+    });
+</script>
+
+</body>
+</html>

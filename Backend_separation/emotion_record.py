@@ -37,13 +37,11 @@ def get_most_frequent_emotion(person_name):
         with open(emotion_file_path, 'r') as f:
             emotion_data = json.load(f)
 
-
         #non_neutral_emotions = {k: v for k, v in emotion_data.items() if k != 'Neutral'}
-        non_neutral_emotions = {k: v for k, v in emotion_data.items() }
+        non_neutral_emotions = {k: v for k, v in emotion_data.items()}
         most_frequent_emotion = max(non_neutral_emotions, key=non_neutral_emotions.get)
-
-
         return most_frequent_emotion
+
     except Exception as e:
         print(f"Error while retrieving most frequent emotion: {e}")
         return None

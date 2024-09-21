@@ -77,14 +77,12 @@ public class FamilyService {
     // 사용자 간의 가족 관계 추가 (중복 방지)
     private void addFamilyship(UserEntity user1, UserEntity user2) {
         if (user1 != null && user2 != null && !user1.equals(user2)) {
-            // 사용자 ID 순서에 따라 user1과 user2를 설정 (일관성 유지)
             if (user1.getId() > user2.getId()) {
                 UserEntity temp = user1;
                 user1 = user2;
                 user2 = temp;
             }
 
-            // 중복된 Familyship이 있는지 확인
             boolean exists = familyshipRepository.existsFamilyship(user1, user2);
             if (!exists) {
                 Familyship familyship = new Familyship();
@@ -94,6 +92,7 @@ public class FamilyService {
             }
         }
     }
+
 
     /**
      * 주어진 사용자 ID와 연결된 모든 가족 구성원을 반환하는 메서드
@@ -132,8 +131,19 @@ public class FamilyService {
 
     // 사용자의 가족 목록 가져오기
     public List<UserEntity> getFamily(Long userId) {
-        return familyshipRepository.findFamilyByUserId(userId);
+        List<Familyship> familyshipsAsUser1 = familyshipRepository.findByUser1Id(userId);
+        List<Familyship> familyshipsAsUser2 = familyshipRepository.findByUser2Id(userId);
+
+        Set<UserEntity> familyMembers = new HashSet<>();
+        for (Familyship familyship : familyshipsAsUser1) {
+            familyMembers.add(familyship.getUser2());
+        }
+        for (Familyship familyship : familyshipsAsUser2) {
+            familyMembers.add(familyship.getUser1());
+        }
+        return new ArrayList<>(familyMembers);
     }
+
 
     public List<FamilyRequest> getSentRequests(Long senderId) {
         return familyRequestRepository.findBySender_Id(senderId);
