@@ -41,7 +41,7 @@ export default function Control() {
                         <img src={imageURL} width="100%" alt="Live Stream" />
                     ) : Platform.OS === 'android' ? (
                         <StyledWebView
-                            source={{ uri: 'http://10.0.2.2:8000/video' }}
+                            source={{ uri: 'http://localahost:8000/video' }}
                         />
                     ) : (
                         <StyledWebView

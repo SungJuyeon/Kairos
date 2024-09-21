@@ -50,9 +50,9 @@ export default function FamilyManage() {
             <Item>
                 <ItemImage source={{ uri: imageUri }} />
                 <ItemText>{item.nickname}</ItemText>
-                {/* <RemoveButton onPress={() => removeItem(item.nickname)}>
+                <RemoveButton onPress={() => removeItem(item.nickname)}>
                     <RemoveButtonText>제거</RemoveButtonText>
-                </RemoveButton> */}
+                </RemoveButton>
             </Item>
         );
     };
