@@ -19,4 +19,17 @@ public class Familyship {
     @JoinColumn(name = "user2_id")
     private UserEntity user2;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Familyship)) return false;
+        Familyship that = (Familyship) o;
+        return (user1.equals(that.user1) && user2.equals(that.user2)) ||
+                (user1.equals(that.user2) && user2.equals(that.user1));
+    }
+
+    @Override
+    public int hashCode() {
+        return user1.hashCode() + user2.hashCode();
+    }
 }

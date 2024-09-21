@@ -8,15 +8,17 @@ import cv2
 import httpx
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, Depends, HTTPException, status
+from fastapi import FastAPI, WebSocket, Depends, HTTPException, status, Header
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import HTMLResponse, StreamingResponse
-import jwt
-from face_image_db import fetch_family_photos
+from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
+
+from calendar_app import get_all_schedules
+from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
+from face_image_db import fetch_family_photos, current_userId
 #validate_token
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
@@ -72,6 +74,30 @@ async def video_stream():
 async def get_video_feed(face: bool):
     return StreamingResponse(video_frame_generator(face),
                              media_type='multipart/x-mixed-replace; boundary=frame')
+
+@app.get("/calendar")
+def calendar():
+    schedules = get_all_schedules()
+    return {"schedules": schedules}
+
+# 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
+@app.get("/most_emotion")
+async def most_emotion(token: str = Header(...)):
+    user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
+    most_frequent_emotion = get_most_frequent_emotion(user_id)  # user_id로 감정 데이터 가져오기
+    if most_frequent_emotion is None:
+        raise HTTPException(status_code=404, detail="Emotion data not found.")
+    return {"most_frequent_emotion": most_frequent_emotion}
+
+# 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
+@app.get("/most_emotion_pic")
+async def most_emotion_pic(token: str = Header(...)):
+    user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
+    pic_path = get_most_emotion_pic_path(user_id)  # user_id로 사진 경로 가져오기
+    if not os.path.exists(pic_path):
+        raise HTTPException(status_code=404, detail="Emotion picture not found.")
+
+    return FileResponse(pic_path, media_type="image/jpeg")
 
 # @app.get("/gesture")
 # async def get_gesture():
