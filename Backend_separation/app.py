@@ -110,3 +110,4 @@ if __name__ == "__main__":
     server = uvicorn.Server(config)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(server.serve())
+
