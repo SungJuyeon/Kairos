@@ -82,7 +82,6 @@ def fetch_family_photos(username):
     logging.info(f"가족 nicknames: {', '.join(family_nicknames)}")
 
 
-
 async def current_userId(token: str):
     try:
         from jose import jwt
@@ -94,18 +93,3 @@ async def current_userId(token: str):
         return user_id
     except jwt.JWTError as e:
         raise ValueError(f"Invalid token: {str(e)}")
-
-def find_photoname(photoname):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    query = "SELECT id FROM userentity WHERE photoname = %s"
-    cursor.execute(query, (photoname,))
-    result = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    if result:
-        return result[0]
-    return None

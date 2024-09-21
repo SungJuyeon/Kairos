@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Kairos.iml" filepath="$PROJECT_DIR$/Kairos.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/kairos_module_error.iml" filepath="$PROJECT_DIR$/.idea/modules/kairos_module_error.iml" />
     </modules>
   </component>
 </project>
