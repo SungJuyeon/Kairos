@@ -19,52 +19,63 @@ export default function SignUp() {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
-
+    
         try {
             const formData = new FormData();
             const data = JSON.stringify({ username, password, email, nickname });
             formData.append('data', data);
-
+    
             if (selectedImage) {
-                const fileName = `${username}.png`; // 파일 이름을 username으로 설정
-                const fileType = 'image/png'; // MIME 타입을 image/png으로 설정
-
+                const fileName = `${username}.jpg`; // 파일 이름을 username으로 설정
+                const fileType = 'image/jpg'; // MIME 타입을 image/png으로 설정
+                
                 // Base64 데이터를 Blob 객체로 변환
-                const response = await fetch(selectedImage);
-                const blob = await response.blob();
-
-                // Blob 객체를 파일로 변환
-                const file = new File([blob], fileName, { type: fileType });
-
-                console.log(file);
-
-                formData.append('file', file);
+                try {
+                    const response = await fetch(selectedImage);
+                    console.log('Fetch Response:', response); // Fetch 응답 로그
+                    if (!response.ok) {
+                        throw new Error('이미지를 가져오는 데 실패했습니다.');
+                    }
+                    const blob = await response.blob();
+                    console.log('Blob 생성 성공:', blob); // Blob 생성 로그
+    
+                    // Blob 객체를 파일로 변환
+                    const file = new File([blob], fileName, { type: fileType });
+                    console.log('파일 객체 생성:', file); // 파일 객체 로그
+    
+                    formData.append('file', file);
+                } catch (error) {
+                    console.error('Blob 변환 중 오류 발생:', error); // 오류 로그
+                    Alert.alert('오류 발생', '이미지 변환 중 문제가 발생했습니다.');
+                }
             }
-
+    
+            console.log('서버에 전송할 FormData:', formData); // FormData 로그
             const response = await fetch('http://127.0.0.1:8080/join', {
                 method: 'POST',
                 headers: {
-                    // 'Content-Type': 'multipart/form-data', // FormData는 자동으로 Content-Type을 설정합니다.
+                    'Content-Type': 'multipart/form-data',
                 },
                 body: formData,
             });
-
+    
             const responseText = await response.text();
             console.log('Response Status:', response.status);
             console.log('Response Text:', responseText);
-
+    
             if (response.ok) {
                 Alert.alert('회원가입 성공', responseText);
                 navigate('Login');
             } else {
                 Alert.alert('회원가입 실패', responseText);
             }
-
+    
         } catch (error) {
             console.error('Error:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
+    
 
 
 

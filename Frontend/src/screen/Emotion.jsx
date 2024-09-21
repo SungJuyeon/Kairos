@@ -21,7 +21,6 @@ export default function Control() {
     const fetchMostEmotion = async () => {
         try {
             const accessToken = await AsyncStorage.getItem('token');
-            console.log('Access Token:', accessToken); // Access Token 로그
 
             const response = await fetch('http://localhost:8000/most_emotion', {
                 method: 'GET',
@@ -32,7 +31,6 @@ export default function Control() {
                 },
             });
 
-            console.log('Response Status:', response.status); // 응답 상태 로그
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -41,7 +39,6 @@ export default function Control() {
             }
 
             const data = await response.json(); // JSON으로 파싱
-            console.log('Most Emotion Data:', data); // 받아온 데이터 로그
 
             // "most_frequent_emotion"의 값만 저장
             if (data.most_frequent_emotion) {
@@ -69,7 +66,6 @@ export default function Control() {
                 },
             });
 
-            console.log('Image Response Status:', response.status); // 응답 상태 로그
 
             if (!response.ok) {
                 const errorText = await response.text();
