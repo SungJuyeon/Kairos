@@ -33,3 +33,41 @@ async def upload_to_s3(file_name):
         logging.error(f"S3 업로드 중 오류 발생: {e}")
     except Exception as e:
         logging.error(f"예상치 못한 오류 발생: {e}")
+
+async def list_s3_videos():
+    """
+    S3 버킷��� 저장된 영상 목록을 반환합니다.
+    """
+    try:
+        response = s3_client.list_objects_v2(Bucket=BUCKET_NAME)
+        
+        if 'Contents' not in response:
+            return []
+
+        video_list = []
+        for obj in response['Contents']:
+            file_name = obj['Key']
+            if file_name.endswith('.avi'):
+                # 파일 이름에서 정보 추출
+                parts = file_name.split('_')
+                if len(parts) >= 4:
+                    person_name = parts[0]
+                    emotion = parts[1]
+                    date_time = '_'.join(parts[2:4]).replace('.avi', '')
+                    
+                    video_info = {
+                        'file_name': file_name,
+                        'person_name': person_name,
+                        'emotion': emotion,
+                        'date_time': date_time
+                    }
+                    video_list.append(video_info)
+
+        return video_list
+
+    except ClientError as e:
+        logging.error(f"S3 목록 조회 중 오류 발생: {e}")
+        return []
+    except Exception as e:
+        logging.error(f"예상치 못한 오류 발생: {e}")
+        return []

@@ -15,6 +15,7 @@ from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
 from db_face_loader import load_faces_from_db
+from s3_uploader import list_s3_videos
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -79,6 +80,15 @@ async def load_faces():
     except Exception as e:
         logger.error(f"얼굴 이미지 로드 중 오류 발생: {str(e)}")
         return {"error": "얼굴 이미지 로드 중 오류가 발생했습니다.", "details": str(e)}, 500
+
+
+@app.get("/s3_video_list")
+async def get_video_list():
+    """
+    S3에 저장된 영상 목록을 반환하는 엔드포인트
+    """
+    video_list = await list_s3_videos()
+    return {"videos": video_list}
 
 
 if __name__ == "__main__":
