@@ -1,4 +1,3 @@
-import { FA5Style } from '@expo/vector-icons/build/FontAwesome5';
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import styled from 'styled-components/native';
@@ -11,12 +10,12 @@ export default function Repository() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+        const response = await fetch('http://localhost:8000/s3_video_list'); // S3 비디오 목록 API 호출
         if (!response.ok) {
           throw new Error('네트워크 응답이 좋지 않습니다.');
         }
         const json = await response.json();
-        setData(json);
+        setData(json.videos); // 비디오 목록 데이터를 설정
       } catch (error) {
         setError(error.message);
       } finally {
@@ -28,8 +27,8 @@ export default function Repository() {
   }, []);
 
   const handleButtonPress = (item) => {
-    Alert.alert(`아이템 선택: ${item.title}`);
-    // 여기에 원하는 작업을 추가할 수 있습니다.
+    Alert.alert(`아이템 선택: ${item.file_name}`);
+    // 여기에 다운로드 로직 등을 추가할 수 있습니다.
   };
 
   if (loading) {
@@ -48,9 +47,10 @@ export default function Repository() {
         showsVerticalScrollIndicator={false}
       >
         {data.map(item => (
-          <Item key={item.id}>
-            <ItemTitle>{item.title}</ItemTitle>
-            <ItemText>{item.body}</ItemText>
+          <Item key={item.file_name}>
+            <ItemTitle>{item.person_name}의 {item.emotion}</ItemTitle>
+            <ItemText>{item.date_time}</ItemText>
+            <Thumbnail source={{ uri: item.thumbnail_url }} />
             <Button onPress={() => handleButtonPress(item)}>
               <ButtonText>다운로드</ButtonText>
             </Button>
@@ -90,6 +90,12 @@ const ItemTitle = styled.Text`
 
 const ItemText = styled.Text`
   color: #FFFFFF;
+`;
+
+const Thumbnail = styled.Image`
+  width: 100%;
+  height: 75px;
+  margin-top: 10px;
 `;
 
 const Button = styled(TouchableOpacity)`
