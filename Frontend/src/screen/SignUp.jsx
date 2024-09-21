@@ -98,7 +98,7 @@ export default function SignUp() {
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Title>회원가입</Title>
                 <InputContainer>
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>ID</Text>
                     <StyledTextInput
                         onChangeText={text => setUsername(text)}
                         value={username}

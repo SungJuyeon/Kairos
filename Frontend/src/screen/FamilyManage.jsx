@@ -1,31 +1,61 @@
-import React, { useState } from "react";
-import { FlatList, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, Image } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
-
-const initialData = [
-    { id: '1', title: '엄마', image: require('./../../assets/mom.jpg') },
-    { id: '2', title: '아빠', image: require('./../../assets/dad.jpg') },
-    { id: '3', title: '동생', image: require('./../../assets/duck.png') },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FamilyManage() {
     const { navigate } = useNavigation();
-    const [data, setData] = useState(initialData);
+    const [data, setData] = useState([]);
 
-    const removeItem = (id) => {
-        setData(prevData => prevData.filter(item => item.id !== id));
+    const fetchFamilyList = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+
+            if (!accessToken) {
+                throw new Error('토큰이 없습니다. 로그인 후 다시 시도해주세요.');
+            }
+
+            const response = await fetch('http://localhost:8080/family/list', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`네트워크 응답이 좋지 않습니다: ${errorText}`);
+            }
+
+            const familyData = await response.json();
+
+            setData(familyData);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
     };
 
-    const renderItem = ({ item }) => (
-        <Item>
-            <ItemImage source={item.image} />
-            <ItemText>{item.title}</ItemText>
-            <RemoveButton onPress={() => removeItem(item.id)}>
-                <RemoveButtonText>제거</RemoveButtonText>
-            </RemoveButton>
-        </Item>
-    );
+    useEffect(() => {
+        fetchFamilyList();
+    }, []);
+
+
+    const renderItem = ({ item }) => {
+        const imageUri = item.photoname.startsWith('data:') ? item.photoname : `data:image/png;base64,${item.photoname}`;
+    
+        return (
+            <Item>
+                <ItemImage source={{ uri: imageUri }} />
+                <ItemText>{item.nickname}</ItemText>
+                {/* <RemoveButton onPress={() => removeItem(item.nickname)}>
+                    <RemoveButtonText>제거</RemoveButtonText>
+                </RemoveButton> */}
+            </Item>
+        );
+    };
 
     return (
         <Container>
@@ -33,7 +63,7 @@ export default function FamilyManage() {
             <FlatList
                 data={data}
                 renderItem={renderItem}
-                keyExtractor={item => item.id}
+                keyExtractor={(item, index) => item.nickname} // nickname을 키로 사용
                 contentContainerStyle={{ paddingBottom: 20 }}
             />
             <RowContainer>
@@ -68,9 +98,9 @@ const Item = styled.View`
     padding: 15px;
     border-radius: 5px;
     margin: 5px;
-    width: 200px;
+    width: 300px;
     align-items: center;
-    height: 170px;
+    height: 120px;
     justify-content: center;
 `;
 

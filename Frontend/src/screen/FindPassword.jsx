@@ -48,7 +48,7 @@ export default function FindPassword() {
         <Container>
             <Title>비밀번호 찾기</Title>
             <InputContainer>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>ID</Text>
             <StyledTextInput
                 onChangeText={text => setUsername(text)}
                 value={username}

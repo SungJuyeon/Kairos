@@ -68,6 +68,11 @@ export default function SignIn() {
     
             const data = await requestResponse.json();
             console.log(data);
+
+            // 요청이 성공적으로 완료되면 알림창 띄우기
+            Alert.alert('성공', '가족 요청이 완료되었습니다.');
+
+
         } catch (error) {
             Alert.alert('오류 발생', error.message);
         }
@@ -77,7 +82,7 @@ export default function SignIn() {
         <Container>
             <Title>가족 초대</Title>
             <InputContainer>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}></Text>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>유저 이름</Text>
                 <StyledTextInput
                     onChangeText={text => setUsername(text)}
                     value={username}

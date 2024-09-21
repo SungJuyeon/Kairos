@@ -1,129 +1,171 @@
-import React, { useState } from "react";
-import { FlatList, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList } from "react-native";
 import styled from 'styled-components/native';
-import { useNavigation } from "@react-navigation/native";
-
-const initialData = [
-    { id: '1', title: '엄마', image: require('./../../assets/mom.jpg') },
-    { id: '2', title: '아빠', image: require('./../../assets/dad.jpg') },
-    { id: '3', title: '동생', image: require('./../../assets/duck.png') },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function FamilyReceive() {
-    const { navigate } = useNavigation();
-    const [data, setData] = useState(initialData);
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const removeItem = (id) => {
-        setData(prevData => prevData.filter(item => item.id !== id));
+    const fetchReceivedRequests = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+
+            if (!accessToken) {
+                throw new Error('토큰이 없습니다. 로그인 후 다시 시도해주세요.');
+            }
+
+            const response = await fetch('http://localhost:8080/family/requests/received', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`네트워크 응답이 좋지 않습니다: ${errorText}`);
+            }
+
+            const data = await response.json();
+            setRequests(data);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    const handleAccept = async (requestId) => {
+        // 수락 요청 처리
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+            const response = await fetch(`http://localhost:8080/family/request/accept?requestId=${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`수락 요청 실패: ${errorText}`);
+            }
+
+            Alert.alert('요청 수락', '가족 요청이 수락되었습니다.');
+            fetchReceivedRequests(); // 요청 목록 새로 고침
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
+    };
+
+    const handleReject = async (requestId) => {
+        // 거절 요청 처리
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+            const response = await fetch(`http://localhost:8080/family/request/reject?requestId=${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`거절 요청 실패: ${errorText}`);
+            }
+
+            Alert.alert('요청 거절', '가족 요청이 거절되었습니다.');
+            fetchReceivedRequests(); // 요청 목록 새로 고침
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchReceivedRequests();
+    }, []);
+
     const renderItem = ({ item }) => (
-        <Item>
-            <ItemImage source={item.image} />
-            <ItemText>{item.title}</ItemText>
-            <RemoveButton onPress={() => removeItem(item.id)}>
-                <RemoveButtonText>제거</RemoveButtonText>
-            </RemoveButton>
-        </Item>
+        <RequestItem>
+            <RequestText>보낸 사람: {item.senderUsername}</RequestText>
+            <RequestText>상태: {item.status}</RequestText>
+            <RequestText>RequestId: {item.requestId}</RequestText>
+            <ButtonContainer>
+                <ActionButton onPress={() => handleAccept(item.requestId)}>
+                    <ButtonText>수락</ButtonText>
+                </ActionButton>
+                <ActionButton onPress={() => handleReject(item.requestId)}>
+                    <ButtonText>거절</ButtonText>
+                </ActionButton>
+            </ButtonContainer>
+        </RequestItem>
     );
+
+    if (loading) {
+        return <Container><RequestText>로딩 중...</RequestText></Container>;
+    }
 
     return (
         <Container>
-            <Title>가족 관리</Title>
+            <Title>받은 가족 요청</Title>
             <FlatList
-                data={data}
+                data={requests}
                 renderItem={renderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ paddingBottom: 20 }}
+                keyExtractor={(item, index) => item.requestId ? item.requestId.toString() : index.toString()} // requestId 사용
             />
-            <RowContainer>
-                <Button onPress={() => navigate('FamilyAdd')}>
-                    <ButtonText>초대하기</ButtonText>
-                </Button>
-                <Button3 onPress={() => navigate('FamilyAdd')}>
-                    <ButtonText>수락하기</ButtonText>
-                </Button3>
-            </RowContainer>
+            <RefreshButton title="새로 고침" onPress={fetchReceivedRequests} />
         </Container>
     );
-}
+};
+
+const Container = styled.SafeAreaView`
+    flex: 1;
+    padding: 10px;
+    background-color: #222222;
+`;
 
 const Title = styled.Text`
     color: white;
-    font-size: 30px;
+    font-size: 20px;
+    font-weight: bold;
     margin-bottom: 10px;
-    font-weight: bold;
 `;
 
-const Container = styled.SafeAreaView`
-    background-color: #222222;
-    flex: 1;
-    justify-content: center;
-    align-items: center;
+const RequestItem = styled.View`
     padding: 10px;
-`;
-
-const Item = styled.View`
-    background-color: #FFFFFF;
-    padding: 15px;
-    border-radius: 5px;
-    margin: 5px;
-    width: 200px;
-    align-items: center;
-    height: 170px;
-    justify-content: center;
-`;
-
-const ItemImage = styled.Image`
-    width: 80px;
-    height: 80px;
-    border-radius: 40px;
+    border-bottom-width: 1px;
+    border-bottom-color: #ccc;
+    background-color: white;
     margin-bottom: 5px;
-    margin-top: 5px;
 `;
 
-const ItemText = styled.Text`
-    color: black;
+const RequestText = styled.Text`
     font-size: 16px;
-    font-weight: bold;
 `;
 
-const RemoveButton = styled.TouchableOpacity`
-    background-color: #FF4D4D;
-    padding: 5px 10px;
-    border-radius: 5px;
+const ButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: space-between;
     margin-top: 10px;
 `;
 
-const RemoveButtonText = styled.Text`
-    color: white;
-    font-weight: bold;
-`;
-
-const Button = styled.TouchableOpacity`
-    background-color: #FFCEFF;
-    padding: 12px 24px;
-    border-radius: 10px;
-    margin: 10px;
+const ActionButton = styled.TouchableOpacity`
+    background-color: #4CAF50; /* 수락 버튼 색상 */
+    padding: 10px;
+    border-radius: 5px;
+    flex: 1;
+    margin-right: 5px;
 `;
 
 const ButtonText = styled.Text`
-    color: black;
-    font-size: 18px;
-    font-weight: bold;
+    color: white;
+    text-align: center;
 `;
 
-const RowContainer = styled.View`
-    flex-direction: row;
-    justify-content: left;
-    align-items: left;
-    margin-top: 30px;
-    margin-left: 20px;
-`;
-
-const Button3 = styled.TouchableOpacity`
-    background-color: #ADCDFF;
-    padding: 12px 24px;
-    border-radius: 10px;
-    margin: 10px;
+const RefreshButton = styled.Button`
+    margin-top: 10px;
 `;

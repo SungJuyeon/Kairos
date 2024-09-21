@@ -55,6 +55,7 @@ public class FamilyService {
                 addFamilyship(receiver, user);
             }
         });
+        familyRequestRepository.delete(request);
     }
 
     //가족 요청 거절
@@ -62,8 +63,7 @@ public class FamilyService {
         FamilyRequest request = familyRequestRepository.findById(requestId)
                .orElseThrow(() -> new RuntimeException("FamilyRequest not found"));
 
-        request.setStatus(FamilyRequest.FamilyRequestStatus.REJECTED);
-        familyRequestRepository.save(request);
+        familyRequestRepository.delete(request);
     }
 
     private void addFamilyship(UserEntity user1, UserEntity user2) {

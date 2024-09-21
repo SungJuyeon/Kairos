@@ -52,6 +52,7 @@ export default function MyPage() {
         }
 
         const blob = await response.blob(); // Base64 문자열을 가져옵니다.
+        console.log();
         const reader = new FileReader();
 
         reader.onloadend = () => {
