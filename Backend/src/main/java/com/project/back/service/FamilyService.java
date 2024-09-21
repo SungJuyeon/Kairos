@@ -57,6 +57,8 @@ public class FamilyService {
         });
     }
 
+
+
     //가족 요청 거절
     public void rejectFamilyRequest(Long requestId) {
         FamilyRequest request = familyRequestRepository.findById(requestId)
