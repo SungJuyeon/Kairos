@@ -165,7 +165,7 @@ export default function ScheduleManage() {
 
     return (
         <Container>
-            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ScrollContainer>
                 <Title>일정 관리</Title>
                 <Calendar
                     onDayPress={(day) => {
@@ -201,18 +201,17 @@ export default function ScheduleManage() {
                     keyExtractor={item => item.id.toString()} // ID를 문자열로 변환
                     renderItem={({ item }) => (
                         <ScheduleItem>
-                            <ScheduleText>{`날짜: ${item.date.toLocaleString()}\n할 일: ${item.task}\n사용자: ${item.user_name}\n시간: ${item.time}`}</ScheduleText>
+                            <ScheduleText>{`날짜: ${item.date.toLocaleString()}\n할 일: ${item.task}\n사용자: ${item.user_name}`}</ScheduleText>
                             <Button2 onPress={() => removeSchedule(item.id)} activeOpacity={0.7}>
                                 <ButtonText>제거</ButtonText>
                             </Button2>
                         </ScheduleItem>
                     )}
                 />
-            </ScrollView>
+            </ScrollContainer>
         </Container>
     );
 };
-
 
 const Title = styled.Text`
     color: white;
@@ -227,6 +226,11 @@ const Container = styled.SafeAreaView`
   align-items: center;
   justify-content: center;
   background-color: #222222;
+`;
+
+const ScrollContainer = styled.ScrollView`
+  width: 100%; /* 스크롤 뷰의 넓이를 100%로 설정 */
+  padding: 10px; /* 여백 추가 */
 `;
 
 const Input = styled.TextInput`
