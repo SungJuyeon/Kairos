@@ -84,6 +84,7 @@ def calendar():
 @app.get("/most_emotion")
 async def most_emotion(token: str = Header(...)):
     user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
+    logging.info(user_id)
     most_frequent_emotion = get_most_frequent_emotion(user_id)  # user_id로 감정 데이터 가져오기
     if most_frequent_emotion is None:
         raise HTTPException(status_code=404, detail="Emotion data not found.")
@@ -110,3 +111,4 @@ if __name__ == "__main__":
     server = uvicorn.Server(config)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(server.serve())
+
