@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Control() {
     const { navigate } = useNavigation();
 
-    const [mostEmotion, setMostEmotion] = useState("Happy");
+    const [mostEmotion, setMostEmotion] = useState("-");
     
 
     // const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
@@ -31,7 +31,8 @@ export default function Control() {
             const response = await fetch('http://localhost:8000/most_emotion', {
                 method: 'GET',
                 headers: {
-                    'token': accessToken, // 'Authorization' 대신 'token' 헤더 사용
+                    'Authorization': `Bearer ${accessToken}`,
+                    'token': accessToken,
                     'Content-Type': 'application/json',
                 },
             });
