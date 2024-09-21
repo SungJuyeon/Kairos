@@ -9,6 +9,7 @@ import numpy as np
 
 from face_recognition import detect_faces, draw_faces
 from mqtt_client import video_frames
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ async def video_frame_generator(face=True):
                 continue
 
             if face:
-                detect_faces(frame)  # 동기 호출
                 frame = draw_faces(frame)  # 동기 호출
 
             success, buffer = cv2.imencode('.jpg', frame)
@@ -51,6 +51,7 @@ async def video_frame_generator(face=True):
         else:
             logging.warning("No frames available, sleeping...")
             await asyncio.sleep(0.01)
+
 
 # async def video_frame_updater():
 #     logger.info("비디오 프레임 업데이터 시작")
