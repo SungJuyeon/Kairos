@@ -19,30 +19,36 @@ export default function Control() {
     const [mostEmotion, setMostEmotion] = useState("Happy");
     
 
-    const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
-
-    const imageURL = `${BASE_URL}/video`;
+    // const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
+    // const imageURL = `${BASE_URL}/video`;
 
     // 모스트 감정 가져오기
     const fetchMostEmotion = async () => {
         try {
             const accessToken = await AsyncStorage.getItem('token');
-  
+            console.log('Access Token:', accessToken); // Access Token 로그
+    
             const response = await fetch('http://localhost:8000/most_emotion', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
+                    'token': accessToken, // 'Authorization' 대신 'token' 헤더 사용
                     'Content-Type': 'application/json',
                 },
             });
-  
+    
+            console.log('Response Status:', response.status); // 응답 상태 로그
+    
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response Error:', errorText); // 오류 로그
                 throw new Error('네트워크 응답이 좋지 않습니다.');
             }
-  
+    
             const data = await response.text();
+            console.log('Most Emotion Data:', data); // 받아온 데이터 로그
             setMostEmotion(data);
         } catch (error) {
+            console.error('Fetch Most Emotion Error:', error); // 전체 오류 로그
             Alert.alert('오류 발생', error.message);
         }
     };
@@ -71,11 +77,11 @@ export default function Control() {
                         <img src={imageURL} width="100%" alt="Live Stream" />
                     ) : Platform.OS === 'android' ? (
                         <StyledWebView
-                            source={{ uri: 'http://localhost:8000/video_feed/false' }}
+                            source={{ uri: 'http://localhost:8000/video_feed/true' }}
                         />
                     ) : (
                         <StyledWebView
-                            source={{ uri: 'http://localhost:8000/video_feed/false' }}
+                            source={{ uri: 'http://localhost:8000/video_feed/true' }}
                         />
                 )}
                 </ImageContainer>
