@@ -24,14 +24,12 @@ export default function FamilyManage() {
                 },
             });
 
-
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`네트워크 응답이 좋지 않습니다: ${errorText}`);
             }
 
             const familyData = await response.json();
-
             setData(familyData);
         } catch (error) {
             Alert.alert('오류 발생', error.message);
@@ -42,6 +40,36 @@ export default function FamilyManage() {
         fetchFamilyList();
     }, []);
 
+    const removeItem = async (nickname) => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+
+            if (!accessToken) {
+                throw new Error('토큰이 없습니다. 로그인 후 다시 시도해주세요.');
+            }
+
+            const response = await fetch(`http://localhost:8080/family/delete?memberUsername=${nickname}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`가족 구성원 삭제 실패: ${errorText}`);
+            }
+
+            const message = await response.text();
+            Alert.alert('성공', message); // 삭제 성공 메시지
+
+            // 가족 목록에서 해당 구성원 제거
+            setData(prevData => prevData.filter(item => item.nickname !== nickname));
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
+    };
 
     const renderItem = ({ item }) => {
         const imageUri = item.photoname.startsWith('data:') ? item.photoname : `data:image/png;base64,${item.photoname}`;
@@ -78,6 +106,7 @@ export default function FamilyManage() {
     );
 }
 
+// Styled components remain the same
 const Title = styled.Text`
     color: white;
     font-size: 30px;
@@ -101,7 +130,8 @@ const Item = styled.View`
     width: 300px;
     align-items: center;
     height: 120px;
-    justify-content: center;
+    justify-content: space-between;
+    flex-direction: row;
 `;
 
 const ItemImage = styled.Image`
@@ -116,13 +146,14 @@ const ItemText = styled.Text`
     color: black;
     font-size: 16px;
     font-weight: bold;
+    flex: 1;
 `;
 
 const RemoveButton = styled.TouchableOpacity`
     background-color: #FF4D4D;
     padding: 5px 10px;
     border-radius: 5px;
-    margin-top: 10px;
+    margin-left: 10px;
 `;
 
 const RemoveButtonText = styled.Text`

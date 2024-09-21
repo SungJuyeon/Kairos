@@ -132,7 +132,17 @@ public class FamilyService {
 
     // 사용자의 가족 목록 가져오기
     public List<UserEntity> getFamily(Long userId) {
-        return familyshipRepository.findFamilyByUserId(userId);
+        List<Familyship> familyshipsAsUser1 = familyshipRepository.findByUser1Id(userId);
+        List<Familyship> familyshipsAsUser2 = familyshipRepository.findByUser2Id(userId);
+
+        Set<UserEntity> familyMembers = new HashSet<>();
+        for (Familyship familyship : familyshipsAsUser1) {
+            familyMembers.add(familyship.getUser2());
+        }
+        for (Familyship familyship : familyshipsAsUser2) {
+            familyMembers.add(familyship.getUser1());
+        }
+        return new ArrayList<>(familyMembers);
     }
 
     public List<FamilyRequest> getSentRequests(Long senderId) {

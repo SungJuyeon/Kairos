@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
     // 스타일 컴포넌트를 위함
@@ -21,6 +22,35 @@ export default function Control() {
     const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
 
     const imageURL = `${BASE_URL}/video`;
+
+    // 모스트 감정 가져오기
+    const fetchMostEmotion = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+  
+            const response = await fetch('http://localhost:8000/most_emotion', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+  
+            if (!response.ok) {
+                throw new Error('네트워크 응답이 좋지 않습니다.');
+            }
+  
+            const data = await response.text();
+            setMostEmotion(data);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchMostEmotion();
+      }, []);
+      
 
     return (
         <Container>
@@ -41,11 +71,11 @@ export default function Control() {
                         <img src={imageURL} width="100%" alt="Live Stream" />
                     ) : Platform.OS === 'android' ? (
                         <StyledWebView
-                            source={{ uri: 'http://localahost:8000/video' }}
+                            source={{ uri: 'http://localhost:8000/video_feed/false' }}
                         />
                     ) : (
                         <StyledWebView
-                            source={{ uri: imageURL }}
+                            source={{ uri: 'http://localhost:8000/video_feed/false' }}
                         />
                 )}
                 </ImageContainer>

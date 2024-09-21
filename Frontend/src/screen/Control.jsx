@@ -210,13 +210,13 @@ const onMessage = async (event) => {
                     <img src={imageURL} width="100%" alt="Live Stream" />
                 ) : Platform.OS === 'android' ? (
                     <StyledWebView
-                        source={{ uri: 'http://localhost:8000/video_feed/true' }}
+                        source={{ uri: 'http://localhost:8000/video_feed/false' }}
                         ref={webViewRef}
                         onMessage={onMessage}
                     />
                 ) : (
                     <StyledWebView
-                        source={{ uri: imageURL }}
+                        source={{ uri: 'http://localhost:8000/video_feed/false' }}
                         ref={webViewRef}
                         onMessage={onMessage}
                     />
