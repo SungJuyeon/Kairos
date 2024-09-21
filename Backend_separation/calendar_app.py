@@ -37,14 +37,15 @@ def get_all_schedules():
 
             schedules_by_date = {}
             for row in result:
-                date = row[0].strftime('%Y-%m-%d')
+                date = row[1].strftime('%Y-%m-%d')
                 if date not in schedules_by_date:
                     schedules_by_date[date] = []
                 schedules_by_date[date].append({
                     "id": row[0],  # ID 로 delete
-                    "user_name": row[1],
-                    "task": row[2],
-                    "time": str(row[3])
+                    "date": row[1],
+                    "user_name": row[2],
+                    "task": row[3],
+                    "time": str(row[4])
                 })
             return schedules_by_date
     finally:
