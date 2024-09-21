@@ -13,6 +13,31 @@ export default function ScheduleManage() {
     const [showPicker, setShowPicker] = useState(false);
     const [task, setTask] = useState('');
     const [schedules, setSchedules] = useState([]);
+    const [userName, setUserName] = useState(''); // 사용자 이름 상태 추가
+
+    // 사용자 이름 가져오기
+    const fetchUserName = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+            const response = await fetch('http://localhost:8080/user/nickname', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('사용자 이름을 가져오는 데 실패했습니다.');
+            }
+
+            const nickname = await response.text(); // 문자열로 받기
+            setUserName(nickname);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+            console.error('Fetch User Name Error:', error);
+        }
+    };
 
     // 서버에서 일정 가져오기
     const fetchSchedules = async () => {
@@ -22,7 +47,6 @@ export default function ScheduleManage() {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
-                    'token': accessToken,
                     'Content-Type': 'application/json',
                 },
             });
@@ -34,8 +58,8 @@ export default function ScheduleManage() {
             const data = await response.json();
             const formattedSchedules = Object.entries(data.schedules).flatMap(([date, tasks]) =>
                 tasks.map(task => ({
-                    id: Math.random().toString(),
-                    date: new Date(`${date}T${task.time}`), // 날짜와 시간을 결합하여 Date 객체 생성
+                    id: task.id, // 서버에서 제공하는 id 사용
+                    date: new Date(`${date}T${task.time}`),
                     task: task.task,
                     user_name: task.user_name
                 }))
@@ -48,18 +72,93 @@ export default function ScheduleManage() {
         }
     };
 
-    const addSchedule = () => {
-        if (task) {
-            setSchedules([...schedules, { id: Math.random().toString(), date: selectedDate.toISOString(), task }]);
+    const addSchedule = async () => {
+        if (!task) {
+            Alert.alert('오류', '할 일을 입력해주세요.');
+            return;
+        }
+
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+            const response = await fetch('http://localhost:8000/schedules/add', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_name: userName, // 사용자 이름을 실제 사용자로 대체
+                    task: task,
+                    date: selectedDate.toISOString().split('T')[0], // 날짜 형식
+                    time: selectedDate.toTimeString().split(' ')[0].substring(0, 5), // 시간 형식
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('일정을 추가하는 데 실패했습니다.');
+            }
+
+            const newSchedule = {
+                id: Math.random().toString(),
+                date: selectedDate.toISOString(),
+                task,
+                user_name: userName, // 사용자 이름을 실제 사용자로 대체
+            };
+            setSchedules([...schedules, newSchedule]);
             setSelectedDate(new Date());
             setTask('');
             setShowPicker(false); // 일정 추가 후 picker 닫기
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
         }
     };
 
-    const removeSchedule = (id) => {
-        setSchedules(schedules.filter(schedule => schedule.id !== id));
+
+    const removeSchedule = async (id) => {
+        const scheduleToRemove = schedules.find(schedule => schedule.id === id);
+    
+        if (!scheduleToRemove) {
+            console.log(`일정을 찾을 수 없습니다: id=${id}`);
+            return; // 일정을 찾지 못하면 함수 종료
+        }
+    
+        console.log(`삭제할 일정: ${JSON.stringify(scheduleToRemove)}`);
+    
+        try {
+            
+            // ID를 정수로 변환
+            const scheduleId = parseInt(scheduleToRemove.id, 10); // 10진수로 변환
+
+
+            console.log(scheduleId);
+            console.log(scheduleId);
+            console.log(scheduleId);
+            console.log(scheduleId);
+    
+            const response = await fetch(`http://localhost:8000/schedules/${scheduleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            console.log(`삭제 요청 응답 상태: ${response.status}`);
+    
+            if (!response.ok) {
+                const errorText = await response.text(); // 오류 메시지 가져오기
+                console.error('삭제 요청 오류:', errorText);
+                throw new Error('일정을 삭제하는 데 실패했습니다.');
+            }
+    
+            setSchedules(schedules.filter(schedule => schedule.id !== id));
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+            console.error('Remove Schedule Error:', error);
+        }
     };
+    
+
+
 
     const onChange = (event, selectedDate) => {
         if (event.type === 'set') {
@@ -72,6 +171,7 @@ export default function ScheduleManage() {
     };
 
     useEffect(() => {
+        fetchUserName(); // 컴포넌트가 마운트될 때 사용자 이름 가져오기
         fetchSchedules(); // 컴포넌트가 마운트될 때 일정 가져오기
     }, []);
 

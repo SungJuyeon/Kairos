@@ -28,7 +28,7 @@ def get_all_schedules():
     try:
         with connection.cursor() as cursor:
             query = """
-            SELECT date, user_name, task, time
+            SELECT id, date, user_name, task, time
             FROM schedules
             ORDER BY date, time
             """
