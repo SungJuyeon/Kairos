@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 import pymysql
 import os
@@ -17,34 +16,31 @@ def get_db_connection():
         database=os.getenv('DB_NAME')
     )
 
-def schedule_date(date):
+def get_all_schedules():
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             query = """
-            SELECT user_name, task, time
+            SELECT date, user_name, task, time
             FROM schedules
-            WHERE date = %s
-            ORDER BY time
+            ORDER BY date, time
             """
-            cursor.execute(query, (date,))
+            cursor.execute(query)
             result = cursor.fetchall()
-            return [{"user_name": row[0], "task": row[1], "time": str(row[2])} for row in result]
+
+            schedules_by_date = {}
+            for row in result:
+                date = row[0].strftime('%Y-%m-%d')
+                if date not in schedules_by_date:
+                    schedules_by_date[date] = []
+                schedules_by_date[date].append({
+                    "user_name": row[1],
+                    "task": row[2],
+                    "time": str(row[3])
+                })
+            return schedules_by_date
     finally:
         connection.close()
-# url에 날짜를 줘서 날짜별로 일정 확인 http://localhost:8000/calendar?date=2024-07-30
-# 반환 형식:
-# {
-#     "date": "2024-07-30",
-#     "schedules": [
-#         {
-#             "user_name": "맹구",
-#             "task": "돌 줍기",
-#             "time": "10:00:00"
-#         }
-#     ]
-# }
-
 
 #
 # if __name__ == "__main__":
