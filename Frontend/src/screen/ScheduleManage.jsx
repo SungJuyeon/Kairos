@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { FlatList, Text, View, ScrollView } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { FlatList, Text, View, ScrollView, Alert } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { Calendar } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ScheduleManage() {
     const { navigate } = useNavigation();
@@ -12,6 +13,40 @@ export default function ScheduleManage() {
     const [showPicker, setShowPicker] = useState(false);
     const [task, setTask] = useState('');
     const [schedules, setSchedules] = useState([]);
+
+    // 서버에서 일정 가져오기
+    const fetchSchedules = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+            const response = await fetch('http://localhost:8000/calendar', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'token': accessToken,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('일정을 가져오는 데 실패했습니다.');
+            }
+
+            const data = await response.json();
+            const formattedSchedules = Object.entries(data.schedules).flatMap(([date, tasks]) =>
+                tasks.map(task => ({
+                    id: Math.random().toString(),
+                    date: new Date(`${date}T${task.time}`), // 날짜와 시간을 결합하여 Date 객체 생성
+                    task: task.task,
+                    user_name: task.user_name
+                }))
+            );
+
+            setSchedules(formattedSchedules);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+            console.error('Fetch Schedules Error:', error);
+        }
+    };
 
     const addSchedule = () => {
         if (task) {
@@ -36,51 +71,55 @@ export default function ScheduleManage() {
         }
     };
 
+    useEffect(() => {
+        fetchSchedules(); // 컴포넌트가 마운트될 때 일정 가져오기
+    }, []);
+
     return (
         <Container>
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Title>일정 관리</Title>
-            <Calendar
-                onDayPress={(day) => {
-                    setSelectedDate(new Date(day.dateString));
-                    setShowPicker(true); // 날짜 선택 시 picker 열기
-                }}
-                markedDates={{
-                    [selectedDate.toISOString().split('T')[0]]: { selected: true, marked: true, selectedColor: 'black' },
-                }}
-                style={{ marginBottom: 20 }}
-            />
-            <Input
-                placeholder="할 일"
-                placeholderTextColor={'#FFFFFF'}
-                value={task}
-                onChangeText={setTask}
-            />
-            <Button onPress={addSchedule} activeOpacity={0.7}>
-                <ButtonText>일정 추가</ButtonText>
-            </Button>
-
-            {showPicker && (
-                <DateTimePicker
-                    value={selectedDate}
-                    mode="datetime"
-                    display="default"
-                    onChange={onChange}
+                <Title>일정 관리</Title>
+                <Calendar
+                    onDayPress={(day) => {
+                        setSelectedDate(new Date(day.dateString));
+                        setShowPicker(true); // 날짜 선택 시 picker 열기
+                    }}
+                    markedDates={{
+                        [selectedDate.toISOString().split('T')[0]]: { selected: true, marked: true, selectedColor: 'black' },
+                    }}
+                    style={{ marginBottom: 20 }}
                 />
-            )}
+                <Input
+                    placeholder="할 일"
+                    placeholderTextColor={'#FFFFFF'}
+                    value={task}
+                    onChangeText={setTask}
+                />
+                <Button onPress={addSchedule} activeOpacity={0.7}>
+                    <ButtonText>일정 추가</ButtonText>
+                </Button>
 
-            <FlatList
-                data={schedules.sort((a, b) => new Date(a.date) - new Date(b.date))}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <ScheduleItem>
-                        <ScheduleText>{`${new Date(item.date).toLocaleString()}: ${item.task}`}</ScheduleText>
-                        <Button2 onPress={() => removeSchedule(item.id)} activeOpacity={0.7}>
-                            <ButtonText>제거</ButtonText>
-                        </Button2>
-                    </ScheduleItem>
+                {showPicker && (
+                    <DateTimePicker
+                        value={selectedDate}
+                        mode="datetime"
+                        display="default"
+                        onChange={onChange}
+                    />
                 )}
-            />
+
+                <FlatList
+                    data={schedules.sort((a, b) => new Date(a.date) - new Date(b.date))}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <ScheduleItem>
+                            <ScheduleText>{`${new Date(item.date).toLocaleString()}: ${item.task} (by ${item.user_name})`}</ScheduleText>
+                            <Button2 onPress={() => removeSchedule(item.id)} activeOpacity={0.7}>
+                                <ButtonText>제거</ButtonText>
+                            </Button2>
+                        </ScheduleItem>
+                    )}
+                />
             </ScrollView>
         </Container>
     );

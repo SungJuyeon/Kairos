@@ -41,7 +41,7 @@ export default function SignUp() {
                 formData.append('file', file);
             }
 
-            const response = await fetch('http://localhost:8080/join', {
+            const response = await fetch('http://127.0.0.1:8080/join', {
                 method: 'POST',
                 headers: {
                     // 'Content-Type': 'multipart/form-data', // FormData는 자동으로 Content-Type을 설정합니다.

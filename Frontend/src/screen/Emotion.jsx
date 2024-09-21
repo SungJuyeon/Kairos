@@ -5,29 +5,24 @@ import { useNavigation } from "@react-navigation/native";
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// 스타일 컴포넌트를 위함
+const { width, height } = Dimensions.get('window');
 
-    // 스타일 컴포넌트를 위함
-    const { width, height } = Dimensions.get('window');
-
-    // 비율에 따른 스타일 조정
-    const scale = width / 640; // 기준 너비에 대한 비율
-
+// 비율에 따른 스타일 조정
+const scale = width / 640; // 기준 너비에 대한 비율
 
 export default function Control() {
     const { navigate } = useNavigation();
 
     const [mostEmotion, setMostEmotion] = useState("-");
-    
-
-    // const BASE_URL = 'http://localhost:8000'; // 라즈베리파이 서버 URL
-    // const imageURL = `${BASE_URL}/video`;
+    const [emotionImage, setEmotionImage] = useState(null); // 감정 이미지를 저장할 상태 변수
 
     // 모스트 감정 가져오기
     const fetchMostEmotion = async () => {
         try {
             const accessToken = await AsyncStorage.getItem('token');
             console.log('Access Token:', accessToken); // Access Token 로그
-    
+
             const response = await fetch('http://localhost:8000/most_emotion', {
                 method: 'GET',
                 headers: {
@@ -36,69 +31,95 @@ export default function Control() {
                     'Content-Type': 'application/json',
                 },
             });
-    
+
             console.log('Response Status:', response.status); // 응답 상태 로그
-    
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Response Error:', errorText); // 오류 로그
                 throw new Error('네트워크 응답이 좋지 않습니다.');
             }
-    
-            const data = await response.text();
+
+            const data = await response.json(); // JSON으로 파싱
             console.log('Most Emotion Data:', data); // 받아온 데이터 로그
-            setMostEmotion(data);
+
+            // "most_frequent_emotion"의 값만 저장
+            if (data.most_frequent_emotion) {
+                setMostEmotion(data.most_frequent_emotion);
+                // 감정 이미지를 가져오는 함수 호출
+                fetchEmotionImage(data.most_frequent_emotion, accessToken);
+            } else {
+                console.warn('most_frequent_emotion이 없습니다.');
+            }
         } catch (error) {
             console.error('Fetch Most Emotion Error:', error); // 전체 오류 로그
             Alert.alert('오류 발생', error.message);
         }
     };
 
+    // 감정 이미지를 가져오는 함수
+    const fetchEmotionImage = async (emotion, accessToken) => {
+        try {
+            const response = await fetch(`http://localhost:8000/most_emotion_pic`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'token': accessToken,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log('Image Response Status:', response.status); // 응답 상태 로그
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Image Response Error:', errorText); // 오류 로그
+                throw new Error('이미지를 가져오는 데 실패했습니다.');
+            }
+
+            // 이미지 URL을 설정
+            const imageUrl = URL.createObjectURL(await response.blob());
+            setEmotionImage(imageUrl); // 감정 이미지를 상태에 저장
+        } catch (error) {
+            console.error('Fetch Emotion Image Error:', error); // 전체 오류 로그
+            Alert.alert('오류 발생', error.message);
+        }
+    };
+
     useEffect(() => {
         fetchMostEmotion();
-      }, []);
-      
+    }, []);
 
     return (
         <Container>
-            
             <RowContainer>
-            <Title>현재 나의 감정</Title>
-
-            <RepositoryButton onPress={() => navigate("Repository")}>
-                <RepositoryButtonText>
-                    저장소
-                </RepositoryButtonText>
-            </RepositoryButton>
-
+                <Title>현재 나의 감정</Title>
+                <RepositoryButton onPress={() => navigate("Repository")}>
+                    <RepositoryButtonText>
+                        저장소
+                    </RepositoryButtonText>
+                </RepositoryButton>
             </RowContainer>
 
-                <ImageContainer>
-                    {Platform.OS === 'web' ? (
-                        <img src={imageURL} width="100%" alt="Live Stream" />
-                    ) : Platform.OS === 'android' ? (
-                        <StyledWebView
-                            source={{ uri: 'http://localhost:8000/video_feed/true' }}
-                        />
-                    ) : (
-                        <StyledWebView
-                            source={{ uri: 'http://localhost:8000/video_feed/true' }}
-                        />
+            <ImageContainer>
+                {Platform.OS === 'web' ? (
+                    <img src={imageURL} width="100%" alt="Live Stream" />
+                ) : (
+                    <StyledWebView
+                        source={{ uri: 'http://localhost:8000/video_feed/true' }}
+                    />
                 )}
-                </ImageContainer>
+            </ImageContainer>
             <BorderContainer />
 
-
-
             <Title>오늘의 최다 감정: {mostEmotion}</Title>
-                <ImageContainer>
-                    <StyledImage
-                        //source={{ uri: `` }} 최다 감정 사진 받아오기
-                    />
-                </ImageContainer>
-
-
-
+            <ImageContainer>
+                {emotionImage ? (
+                    <StyledImage source={{ uri: emotionImage }} />
+                ) : (
+                    <StyledImage source={{ uri: 'placeholder_image_url' }} /> // 기본 이미지 URL
+                )}
+            </ImageContainer>
         </Container>
     );
 }
@@ -162,7 +183,6 @@ const RepositoryButtonText = styled.Text`
     font-weight: bold;
 `;
 
-
 const StyledWebView = styled(WebView)`
-  flex: 1;
+    flex: 1;
 `;
