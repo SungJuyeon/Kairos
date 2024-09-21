@@ -190,6 +190,7 @@ async def recognize_periodically():
     while True:
         try:
             frame = video_frames[-1]
+            detect_faces(frame)
             await recognize_faces(frame)
             await recognize_emotion(frame)
             ########################################################

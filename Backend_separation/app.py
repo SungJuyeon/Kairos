@@ -14,6 +14,7 @@ from starlette.responses import HTMLResponse, StreamingResponse
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
+from db_face_loader import load_faces_from_db
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +37,7 @@ app.add_middleware(
 async def startup_event():
     await setup_mqtt()
     asyncio.create_task(recognize_periodically())
+    load_faces_from_db()  # 얼굴 이미지 로드
 
 
 @app.get("/", response_class=HTMLResponse)

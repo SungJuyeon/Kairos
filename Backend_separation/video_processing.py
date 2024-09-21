@@ -41,7 +41,6 @@ async def video_frame_generator(face=True):
                 continue
 
             if face:
-                detect_faces(frame)  # 동기 호출
                 frame = draw_faces(frame)  # 동기 호출
 
             success, buffer = cv2.imencode('.jpg', frame)
