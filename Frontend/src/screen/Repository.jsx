@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 
 export default function Repository() {
   const [data, setData] = useState([]);
@@ -35,7 +35,7 @@ export default function Repository() {
   const handleButtonPress = async (item) => {
     console.log(`다운로드 버튼 클릭: ${item.file_name}`);
 
-    if (!item.file_name) {
+    if (!item.video_url) {
       Alert.alert('다운로드 실패', '유효한 비디오 URL이 없습니다.');
       return;
     }
@@ -46,14 +46,23 @@ export default function Repository() {
       console.log(`다운로드 시작: ${item.video_url}`);
       const { uri } = await FileSystem.downloadAsync(item.video_url, downloadPath);
       console.log(`다운로드 완료: ${uri}`);
-
-      // 갤러리에 저장
-      const asset = await MediaLibrary.createAssetAsync(uri);
-      await MediaLibrary.createAlbumAsync('My Videos', asset, false);
-      Alert.alert('다운로드 완료', `${item.file_name}이 갤러리에 저장되었습니다.`);
+      
+      // 파일 공유 기능 호출
+      await handleShare(uri);
+      
+      Alert.alert('다운로드 완료', `${item.file_name}이 파일 시스템에 저장되었습니다.`);
     } catch (error) {
       console.error('다운로드 중 오류 발생:', error.message);
       Alert.alert('다운로드 실패', error.message);
+    }
+  };
+
+  const handleShare = async (uri) => {
+    try {
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.error('파일 공유 중 오류 발생:', error.message);
+      Alert.alert('공유 실패', error.message);
     }
   };
 
