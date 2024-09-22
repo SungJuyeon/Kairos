@@ -50,7 +50,7 @@ export default function Repository() {
       // 파일 공유 기능 호출
       await handleShare(uri);
       
-      Alert.alert('다운로드 완료', `${item.file_name}이 파일 시스템에 저장되었습니다.`);
+      Alert.alert('다운로드 완료', `${item.file_name}이 저장되었습니다.`);
     } catch (error) {
       console.error('다운로드 중 오류 발생:', error.message);
       Alert.alert('다운로드 실패', error.message);

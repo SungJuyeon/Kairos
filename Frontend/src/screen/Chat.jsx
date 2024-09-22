@@ -86,6 +86,7 @@ export default function Chat() {
           value={message}
           onChangeText={setMessage}
           placeholder="메시지를 입력하세요"
+          placeholderTextColor={'#FFFFFF'}
           onSubmitEditing={handleSubmit} // 엔터키를 누르면 보내기 버튼 클릭 처리
           returnKeyType="send"
         />
