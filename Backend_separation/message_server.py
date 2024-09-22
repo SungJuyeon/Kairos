@@ -194,6 +194,23 @@ async def websocket_endpoint(websocket: WebSocket):
 async def read_chat():
     return templates.TemplateResponse("chat.html", {"request": {}})
 
+# 사용자 메시지를 가져오는 API
+@app.get("/messages/{username}")
+async def get_messages(username: str):
+    print(f"{username}의 메시지를 가져오는 중...")
+    message_log = f"{username}_messages.json"
+
+    if not os.path.exists(message_log):
+        return {"messages": []}
+
+    with open(message_log, 'r') as file:
+        messages = json.load(file)
+
+    return {"messages": messages}
+
+
+
+
 # 서버 실행
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)

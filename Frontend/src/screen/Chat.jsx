@@ -1,38 +1,64 @@
 import React, { useState, useEffect, useRef } from "react";
-import { SafeAreaView, View, TouchableOpacity, TextInput, FlatList, Text, Alert } from "react-native";
+import { SafeAreaView, FlatList, Alert } from "react-native";
 import styled from 'styled-components/native';
-import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import jwt_decode from 'jwt-decode'; // jwt-decode 라이브러리 추가
 
 const WEBSOCKET_URL = "ws://localhost:8000/ws/chat"; // WebSocket 주소
+const MESSAGE_API_URL = "http://localhost:8000/messages"; // 메시지를 가져오는 API URL
 
 export default function Chat() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const websocketRef = useRef(null);
-  const { navigate } = useNavigation();
+  const flatListRef = useRef(null); // FlatList reference 추가
 
   useEffect(() => {
+    const fetchMessages = async () => {
+      const accessToken = await AsyncStorage.getItem('token');
+      const username = getUsernameFromToken(accessToken); // JWT에서 username 가져오기
+
+      try {
+        const response = await fetch(`${MESSAGE_API_URL}/${username}`);
+        const data = await response.json();
+        if (data.messages) {
+          const formattedMessages = data.messages.map(msg => ({
+            text: msg.message,
+            isUser: false // 서버에서 온 메시지로 표시
+          }));
+          setMessages(formattedMessages); // 초기 메시지를 설정
+
+          // 메시지를 불러온 후 스크롤을 가장 아래로 내리기
+          setTimeout(() => {
+            flatListRef.current.scrollToEnd({ animated: true });
+          }, 100); // 약간의 지연을 두고 스크롤
+        }
+      } catch (error) {
+        console.error("메시지 로드 오류:", error);
+      }
+    };
+
     const connectWebSocket = async () => {
-      const accessToken = await AsyncStorage.getItem('token'); // AsyncStorage에서 JWT 토큰 가져오기
-      console.log("토큰:", accessToken); // 토큰 확인 로그
+      const accessToken = await AsyncStorage.getItem('token');
 
       // WebSocket 연결 설정
       websocketRef.current = new WebSocket(WEBSOCKET_URL);
-      console.log("웹소켓 연결 시도:", WEBSOCKET_URL); // 웹소켓 URL 로그
 
       websocketRef.current.onopen = () => {
         console.log("WebSocket 연결 성공");
         websocketRef.current.send(JSON.stringify({ token: accessToken }));
-        console.log("토큰 전송:", accessToken); // 토큰 전송 로그
       };
 
       websocketRef.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("서버로부터 메시지 수신:", data); // 수신한 메시지 로그
-        if (data.message) {
+        if (data.sender_id) {
           const serverMessage = { text: data.message, isUser: false };
-          setMessages((prevMessages) => [serverMessage, ...prevMessages]);
+          // 메시지를 즉시 화면에 추가
+          setMessages((prevMessages) => [...prevMessages, serverMessage]); // 아래로 추가
+          // 새로운 메시지가 추가되면 스크롤을 가장 아래로 내리기
+          setTimeout(() => {
+            flatListRef.current.scrollToEnd({ animated: true });
+          }, 100); // 약간의 지연을 두고 스크롤
         }
       };
 
@@ -46,6 +72,7 @@ export default function Chat() {
       };
     };
 
+    fetchMessages(); // 기존 메시지 로드
     connectWebSocket();
 
     return () => {
@@ -55,17 +82,41 @@ export default function Chat() {
     };
   }, []);
 
+  useEffect(() => {
+    // messages가 변경될 때마다 스크롤을 가장 아래로 내리기
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]); // messages가 변경될 때마다 실행
+
+  const getUsernameFromToken = (token) => {
+    try {
+      console.log("Received token:", token); // 토큰 로그
+      const payload = jwt_decode(token); // jwt-decode 라이브러리 사용
+      console.log("Decoded payload:", payload); // 디코딩된 페이로드 로그
+      return payload.username; // username 반환
+    } catch (error) {
+      console.error("토큰에서 사용자 이름 추출 오류:", error);
+      return null;
+    }
+  };
+
   const sendMessage = () => {
     if (message.trim() === '') return;
 
     const newMessage = { text: message, isUser: true };
-    setMessages((prevMessages) => [newMessage, ...prevMessages]);
+    setMessages((prevMessages) => [...prevMessages, newMessage]); // 아래로 추가
+    setMessage('');
+
     const messageData = { message };
-    console.log("전송할 메시지 데이터:", messageData); // 전송할 메시지 로그
     if (websocketRef.current) {
       websocketRef.current.send(JSON.stringify(messageData));
     }
-    setMessage('');
+
+    // 메시지를 보낸 후 스크롤을 가장 아래로 내리기
+    setTimeout(() => {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }, ); // 약간의 지연을 두고 스크롤
   };
 
   const handleSubmit = () => {
@@ -76,6 +127,7 @@ export default function Chat() {
     <Container>
       <ChatContainer>
         <FlatList
+          ref={flatListRef} // FlatList에 ref 추가
           data={messages}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
@@ -83,7 +135,7 @@ export default function Chat() {
               <MessageText isUser={item.isUser}>{item.text}</MessageText>
             </MessageContainer>
           )}
-          inverted
+          inverted={false} // inverted를 false로 설정
           contentContainerStyle={{ paddingVertical: 16 }}
           bounces={true}
           showsVerticalScrollIndicator={false}
