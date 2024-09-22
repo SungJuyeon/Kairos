@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime
 import cv2
-from dateutil.utils import today
+#from dateutil.utils import today
 from emotion_video import delete_old_videos
 
 def get_emotion_file_today(person_name):
