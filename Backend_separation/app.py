@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, Depends, HTTPException, status, Header
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
-from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
