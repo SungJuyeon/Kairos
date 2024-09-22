@@ -18,8 +18,8 @@ MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"
-#MQTT_BROKER = "localhost"
+#MQTT_BROKER = "3.27.221.93"
+MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
@@ -93,3 +93,7 @@ async def speed(action: str):
     client.publish(MQTT_TOPIC_COMMAND, command)
     logger.info(f"Speed command sent: {command}")
     return {"message": "Speed command sent successfully", "current_speed": current_speed}
+
+async def disconnect():
+    await client.disconnect()
+    logger.info("MQTT 브로커 연결 해제")

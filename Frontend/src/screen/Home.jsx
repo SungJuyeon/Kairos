@@ -102,10 +102,10 @@ export default function Home() {
                 <AnimatedContainer style={{ opacity: fadeInOpacity }}>
                     <Title>Herobot!</Title>
                     <CaptureButtonContainer>
-                        <ControlButton onPress={() => navigate('Control')}>
-                            <CaptureButtonText>Herobot 제어하기</CaptureButtonText>
-                        </ControlButton>
-                        <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
+                    <ControlButton onPress={() => navigate('Control')}>
+                        <CaptureButtonText>Herobot 제어하기</CaptureButtonText>
+                    </ControlButton>
+                    <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                         </CaptureButtonStyle>
                         <CaptureButtonStyle onPress={() => navigate('MyPage')}>

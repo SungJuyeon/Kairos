@@ -1,7 +1,10 @@
 import pymysql
 import os
-import logging
 from dotenv import load_dotenv
+import logging
+from fastapi import Request, HTTPException, Depends
+import jwt  # PyJWT 라이브러리 필요
+from jwt import PyJWKClient
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -11,37 +14,18 @@ db_host = os.getenv('DB_HOST')
 db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
+
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 def get_db_connection():
     return pymysql.connect(
-        host=db_host,
-        user=db_user,
-        password=db_password,
-        database=db_name
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
     )
 
-def fetch_user_id_by_username(username):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    query = "SELECT id FROM userentity WHERE username = %s"
-    cursor.execute(query, (username,))
-    result = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    if result:
-        return result[0]
-    return None
-
-def fetch_family_photos(username):
-    user_id = fetch_user_id_by_username(username)
-    if user_id is None:
-        logging.error(f"User with username {username} not found.")
-        return
-
+def fetch_family_photos(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -64,32 +48,31 @@ def fetch_family_photos(username):
 
     family_nicknames = set()
 
-    for photo1, nickname1, photo2, nickname2 in results:
-        if nickname1:
-            family_nicknames.add(nickname1)
-            if photo1:
-                photo1_path = os.path.join(faces_dir, f"{nickname1}.jpg")
-                with open(photo1_path, 'wb') as f:
-                    f.write(photo1)
+    for idx, (photo1, nickname1, photo2, nickname2) in enumerate(results):
+        family_nicknames.update([nickname1, nickname2])
 
-        if nickname2:
-            family_nicknames.add(nickname2)
-            if photo2:
-                photo2_path = os.path.join(faces_dir, f"{nickname2}.jpg")
-                with open(photo2_path, 'wb') as f:
-                    f.write(photo2)
+        if photo1:
+            photo1_path = os.path.join(faces_dir, f"{nickname1}.jpg")
+            with open(photo1_path, 'wb') as f:
+                f.write(photo1)
+
+        if photo2:
+            photo2_path = os.path.join(faces_dir, f"{nickname2}.jpg")
+            with open(photo2_path, 'wb') as f:
+                f.write(photo2)
 
     logging.info(f"가족 nicknames: {', '.join(family_nicknames)}")
 
 
 async def current_userId(token: str):
     try:
-        from jose import jwt
-        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        user_id = payload.get('username')
-
-        if not user_id:
-            raise ValueError("User ID not found in token")
+        # JWT 토큰 디코딩
+        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = decoded_token.get("user_id")  # 토큰에서 user_id 가져오기
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
         return user_id
-    except jwt.JWTError as e:
-        raise ValueError(f"Invalid token: {str(e)}")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
