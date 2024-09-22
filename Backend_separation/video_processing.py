@@ -47,22 +47,8 @@ async def video_frame_generator(face=True):
             if success:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
         else:
             logging.warning("No frames available, sleeping...")
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
 
-
-# async def video_frame_updater():
-#     logger.info("비디오 프레임 업데이터 시작")
-#     while True:
-#         try:
-#             if len(video_frames) > 0:
-#                 current_frame = video_frames[0]
-#                 await asyncio.to_thread(detect_faces, current_frame)
-#                 await asyncio.to_thread(recognize_emotion, current_frame)
-#                 await asyncio.to_thread(recognize_faces, current_frame)
-#             await asyncio.sleep(1)
-#         except Exception as e:
-#             logger.error(f"Error processing video frame: {e}")
-#             await asyncio.sleep(0.05)

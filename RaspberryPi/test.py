@@ -7,6 +7,7 @@ import random
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
 import sounddevice as sd
+import numpy as np
 
 # 카메라 설정
 cap = cv2.VideoCapture(0)
@@ -125,6 +126,23 @@ def audio_callback(indata, frames, time, status):
 #############################################################################
 
 
+# 오디오 설정################################################################
+RATE = 44100
+CHANNELS = 1
+CHUNK = 1024
+
+async def send_audio(client):
+    def audio_callback(indata, frames, time, status):
+        if status:
+            logging.error(f"오디오 콜백 오류: {status}")
+        audio_data = indata.tobytes()
+        client.publish(MQTT_TOPIC_AUDIO, audio_data)
+
+    with sd.InputStream(callback=audio_callback, channels=CHANNELS, samplerate=RATE, blocksize=CHUNK):
+        while True:
+            await asyncio.sleep(0.1)
+
+##############################################################################
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
 #MQTT_BROKER = "localhost"
@@ -182,6 +200,7 @@ async def lifespan():
     # 비동기 작업 시작
     asyncio.create_task(send_distance(client))
     asyncio.create_task(generate_frames(client))
+    asyncio.create_task(send_audio(client))####################################################
 
     yield
 
