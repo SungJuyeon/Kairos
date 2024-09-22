@@ -1,6 +1,3 @@
-# app.py
-# FastAPI 서버 및 엔드포인트를 설정하는 파일
-
 import asyncio
 import logging
 import os
@@ -53,7 +50,7 @@ async def post_speed(action: str):
 
 @app.get("/distance")
 async def get_distance():
-    logger.info(f"get_distance 엔드포인트 호출됨.")
+    logger.info("get_distance 엔드포인트 호출됨.")
     return {"distance": distance_data}
 
 @app.get("/video")
@@ -80,17 +77,17 @@ async def get_video_list():
     return {"videos": video_list}
 
 @app.get("/calendar")
-def calendar():
-    schedules = get_all_schedules()
+async def calendar(token: str = Header(...)):
+    schedules = get_all_schedules(token)
     return {"schedules": schedules}
 
-@app.delete("/schedules/{schedule_id}")
-def delete_schedule_endpoint(schedule_id: int):
-    return delete_schedule(schedule_id)
-
 @app.post("/schedules/add")
-def add_schedule_endpoint(schedule: Schedule):
-    return add_schedule(schedule)
+async def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
+    return add_schedule(schedule, token)
+
+@app.delete("/schedules/{schedule_id}")
+async def delete_schedule_endpoint(schedule_id: int, token: str = Header(...)):
+    return delete_schedule(schedule_id, token)
 
 @app.get("/most_emotion")
 async def most_emotion(token: str = Header(...)):

@@ -46,8 +46,7 @@ export default function ScheduleManage() {
             const response = await fetch('http://localhost:8000/calendar', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
+                    token : accessToken,
                 },
             });
 
@@ -88,7 +87,7 @@ export default function ScheduleManage() {
             const response = await fetch('http://localhost:8000/schedules/add', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
+                    'token': `${accessToken}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -128,10 +127,12 @@ export default function ScheduleManage() {
         }
     
         try {
+            const accessToken = await AsyncStorage.getItem('token');
             const response = await fetch(`http://localhost:8000/schedules/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
+                    'token' : `${accessToken}`,
                 },
             });
     
