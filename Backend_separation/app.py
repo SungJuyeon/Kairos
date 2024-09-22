@@ -11,12 +11,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, Depends, HTTPException, status, Header
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
-from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
 
-from calendar_app import get_all_schedules
+from calendar_app import get_all_schedules, add_schedule, delete_schedule, Schedule
+
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
 from face_image_db import fetch_family_photos, current_userId
 #validate_token
@@ -75,10 +75,19 @@ async def get_video_feed(face: bool):
     return StreamingResponse(video_frame_generator(face),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
+
 @app.get("/calendar")
 def calendar():
     schedules = get_all_schedules()
     return {"schedules": schedules}
+
+@app.delete("/schedules/{schedule_id}")
+def delete_schedule_endpoint(schedule_id: int):
+    return delete_schedule(schedule_id)
+
+@app.post("/schedules/add")
+def add_schedule_endpoint(schedule: Schedule):
+    return add_schedule(schedule)
 
 # 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
 @app.get("/most_emotion")
