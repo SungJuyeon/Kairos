@@ -27,6 +27,7 @@ MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_AUDIO = "robot/audio"
 MQTT_TOPIC_SPEECH = "robot/speech"
+MQTT_TOPIC_TEXT = "robot/text"
 
 client = MQTTClient(client_id="fastapi_client")
 
@@ -85,13 +86,15 @@ async def move(direction: str):
     logger.info(f"Command sent: {command}")
 
 
-async def speed(action: str):
+async def speed(action):
     global current_speed
     logger.info(f"Attempting to set speed: {action}")
     if action == "up":
         current_speed = min(100, current_speed + 10)  # 속도를 10 증가, 최대 100으로 제한
     elif action == "down":
         current_speed = max(0, current_speed - 10)  # 속도를 10 감소, 최소 0으로 제한
+    elif action >=0 and action <=100:
+        current_speed = action
     else:
         logger.warning(f"Invalid action for speed: {action}")
         return {"error": "Invalid action"}, 400
@@ -100,3 +103,9 @@ async def speed(action: str):
     client.publish(MQTT_TOPIC_COMMAND, command)
     logger.info(f"Speed command sent: {command}")
     return {"message": "Speed command sent successfully", "current_speed": current_speed}
+
+async def text_to_speech(text):
+    command = json.dumps({"command": "text_to_speech", "text": text})
+    client.publish(MQTT_TOPIC_COMMAND, command)
+    logger.info(f"Text to speech command sent: {command}")
+    return {"message": "Text to speech command sent successfully"}

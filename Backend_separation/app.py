@@ -13,7 +13,7 @@ from starlette.responses import HTMLResponse, StreamingResponse
 
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames, speech_text
+from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames, speech_text
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
 
@@ -55,6 +55,11 @@ async def post_move(direction: str):
 async def post_speed(action: str):
     await speed(action)
 
+
+@app.post("/text_to_speech/{text}")
+async def post_text_to_speech(text: str):
+    await text_to_speech(text)
+    
 
 @app.get("/distance")
 async def get_distance():

@@ -10,6 +10,8 @@ from contextlib import asynccontextmanager
 import sounddevice as sd
 import speech_recognition as sr
 import concurrent.futures
+from gtts import gTTS
+import os
 
 # 핀 번호 설정
 WHEEL_PINS = {
@@ -240,11 +242,11 @@ recognizer = sr.Recognizer()
 async def recognize_speech():
     loop = asyncio.get_event_loop()
     with sr.Microphone() as source:
-        print("음성을 듣고 있습니다... (5초 동안)")
+        print("음성을 듣고 있습니다... (10초 동안)")
         recognizer.adjust_for_ambient_noise(source, duration=1)
         try:
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                audio = await loop.run_in_executor(pool, lambda: recognizer.listen(source, timeout=5))
+                audio = await loop.run_in_executor(pool, lambda: recognizer.listen(source, timeout=10))
             print("음성 인식 중...")
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 text = await loop.run_in_executor(pool, lambda: recognizer.recognize_google(audio, language="ko-KR"))
@@ -275,7 +277,12 @@ async def send_speech_text(client):
 
 
 #############################################################################
-
+def text_to_speech(text, lang='ko'):
+    tts = gTTS(text=text, lang=lang, slow=False)
+    tts.save("output.mp3")
+    os.system("afplay output.mp3")
+    os.remove("output.mp3")
+    
 
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
@@ -284,6 +291,7 @@ MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_SPEECH = "robot/speech"
+MQTT_TOPIC_TEXT = "robot/text"
 
 client = MQTTClient(client_id="robot_controller")
 
@@ -309,6 +317,8 @@ async def on_message(client, topic, payload, qos, properties):
         await actuator_control(command["command"])
     elif command["command"] == "set_speed":
         await set_speed(command["speed"])  # 속도 조절 명령 처리
+    elif command["command"] == "text_to_speech":
+        text_to_speech(command["text"])
     else:
         logging.warning(f"Invalid command: {command}")
 
