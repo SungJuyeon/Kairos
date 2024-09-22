@@ -29,7 +29,7 @@ async def upload_to_s3(file_name):
         logging.info(f"파일 {file_name}이 S3 버킷 {BUCKET_NAME}에 성공적으로 업로드되었습니다.")
         
         # 썸네일 생성 및 업로드
-        thumbnail_name = f"thumbnail_{file_name.replace('.avi', '.jpg')}"
+        thumbnail_name = f"thumbnail_{file_name.replace('.mp4', '.jpg')}"
         create_thumbnail(file_name, thumbnail_name)
         s3_client.upload_file(thumbnail_name, BUCKET_NAME, thumbnail_name)
         logging.info(f"썸네일 {thumbnail_name}이 S3 버킷 {BUCKET_NAME}에 업로드되었습니다.")
@@ -64,16 +64,16 @@ async def list_s3_videos():
         video_list = []
         for obj in response['Contents']:
             file_name = obj['Key']
-            if file_name.endswith('.avi'):
-                # 파일 이름에서 정보 추출
+            if file_name.endswith('.mp4'):
+                # 파일 이름���서 정보 추출
                 parts = file_name.split('_')
                 if len(parts) >= 4:
                     person_name = parts[0]
                     emotion = parts[1]
-                    date_time = '_'.join(parts[2:4]).replace('.avi', '')
+                    date_time = '_'.join(parts[2:4]).replace('.mp4', '')
                     
                     # 썸네일 URL 생성
-                    thumbnail_name = f"thumbnail_{file_name.replace('.avi', '.jpg')}"
+                    thumbnail_name = f"thumbnail_{file_name.replace('.mp4', '.jpg')}"
                     thumbnail_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{thumbnail_name}"
                     
                     # 영상 다운로드 URL 생성
