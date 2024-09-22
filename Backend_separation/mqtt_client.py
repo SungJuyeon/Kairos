@@ -14,17 +14,19 @@ logger = logging.getLogger(__name__)
 distance_data = None
 video_frames = []
 audio_data = []
+speech_text = None
 MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-# MQTT_BROKER = "3.27.221.93"
-MQTT_BROKER = "localhost"
+MQTT_BROKER = "3.27.221.93"
+# MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_AUDIO = "robot/audio"
+MQTT_TOPIC_SPEECH = "robot/speech"
 
 client = MQTTClient(client_id="fastapi_client")
 
@@ -35,11 +37,12 @@ async def on_connect():
     client.subscribe(MQTT_TOPIC_DISTANCE)
     client.subscribe(MQTT_TOPIC_VIDEO)
     client.subscribe(MQTT_TOPIC_AUDIO)
+    client.subscribe(MQTT_TOPIC_SPEECH)  # 음성 텍스트 토픽 구독
     logger.info("구독 완료")
 
 
 async def on_message(client, topic, payload, qos, properties):
-    global audio_data, distance_data, video_frames
+    global audio_data, distance_data, video_frames, speech_text
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
@@ -49,10 +52,6 @@ async def on_message(client, topic, payload, qos, properties):
         video_frames.append(img_encode)
         return
 
-        # 오디오 데이터 처리
-    elif topic == MQTT_TOPIC_AUDIO:
-        audio_data.append(payload)  # 오디오 데이터는 바이너리로 처리
-        return
 
     # 다른 데이터 처리
     try:
@@ -61,9 +60,17 @@ async def on_message(client, topic, payload, qos, properties):
         if topic == MQTT_TOPIC_DISTANCE:
             distance_data = message.get("distance")
             # logger.info(f"Distance data received: {distance_data}")
-
+        # 음성 텍스트 처리
+        elif topic == MQTT_TOPIC_SPEECH:
+            speech_text = message.get("speech_text")
+            logger.info(f"Received speech text: {speech_text}")
+            # 텍스트를 GPT에 전달하는 함수 실행##################################
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
+
+    
+
+    return
 
 
 async def setup_mqtt():
