@@ -1,73 +1,133 @@
-import React, { useState } from "react";
-import { SafeAreaView, Image, View, TouchableOpacity, TextInput, FlatList, Text, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { SafeAreaView, FlatList, Alert } from "react-native";
 import styled from 'styled-components/native';
-import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import jwt_decode from 'jwt-decode'; // jwt-decode 라이브러리 추가
+
+const WEBSOCKET_URL = "ws://localhost:8000/ws/chat"; // WebSocket 주소
+const MESSAGE_API_URL = "http://localhost:8000/messages"; // 메시지를 가져오는 API URL
 
 export default function Chat() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const { navigate } = useNavigation();
+  const websocketRef = useRef(null);
+  const flatListRef = useRef(null); // FlatList reference 추가
 
-  // 다시 inputText를 포커싱하기 위해
-  //const inputText = document.getElementById('inputText');
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const accessToken = await AsyncStorage.getItem('token');
+      const username = getUsernameFromToken(accessToken); // JWT에서 username 가져오기
 
-  // 서버에 메세지를 보내는 함수
-  const sendMessage = async () => {
+      try {
+        const response = await fetch(`${MESSAGE_API_URL}/${username}`);
+        const data = await response.json();
+        if (data.messages) {
+          const formattedMessages = data.messages.map(msg => ({
+            text: msg.message,
+            isUser: false // 서버에서 온 메시지로 표시
+          }));
+          setMessages(formattedMessages); // 초기 메시지를 설정
+
+          // 메시지를 불러온 후 스크롤을 가장 아래로 내리기
+          setTimeout(() => {
+            flatListRef.current.scrollToEnd({ animated: true });
+          }, 100); // 약간의 지연을 두고 스크롤
+        }
+      } catch (error) {
+        console.error("메시지 로드 오류:", error);
+      }
+    };
+
+    const connectWebSocket = async () => {
+      const accessToken = await AsyncStorage.getItem('token');
+
+      // WebSocket 연결 설정
+      websocketRef.current = new WebSocket(WEBSOCKET_URL);
+
+      websocketRef.current.onopen = () => {
+        console.log("WebSocket 연결 성공");
+        websocketRef.current.send(JSON.stringify({ token: accessToken }));
+      };
+
+      websocketRef.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.sender_id) {
+          const serverMessage = { text: data.message, isUser: false };
+          // 메시지를 즉시 화면에 추가
+          setMessages((prevMessages) => [...prevMessages, serverMessage]); // 아래로 추가
+          // 새로운 메시지가 추가되면 스크롤을 가장 아래로 내리기
+          setTimeout(() => {
+            flatListRef.current.scrollToEnd({ animated: true });
+          }, 100); // 약간의 지연을 두고 스크롤
+        }
+      };
+
+      websocketRef.current.onerror = (error) => {
+        console.error("WebSocket 오류:", error);
+        Alert.alert('오류 발생', 'WebSocket 연결에 문제가 발생했습니다.');
+      };
+
+      websocketRef.current.onclose = () => {
+        console.log("WebSocket 연결 종료");
+      };
+    };
+
+    fetchMessages(); // 기존 메시지 로드
+    connectWebSocket();
+
+    return () => {
+      if (websocketRef.current) {
+        websocketRef.current.close(); // 컴포넌트 언마운트 시 WebSocket 연결 종료
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    // messages가 변경될 때마다 스크롤을 가장 아래로 내리기
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]); // messages가 변경될 때마다 실행
+
+  const getUsernameFromToken = (token) => {
+    try {
+      console.log("Received token:", token); // 토큰 로그
+      const payload = jwt_decode(token); // jwt-decode 라이브러리 사용
+      console.log("Decoded payload:", payload); // 디코딩된 페이로드 로그
+      return payload.username; // username 반환
+    } catch (error) {
+      console.error("토큰에서 사용자 이름 추출 오류:", error);
+      return null;
+    }
+  };
+
+  const sendMessage = () => {
     if (message.trim() === '') return;
 
     const newMessage = { text: message, isUser: true };
-    setMessages([newMessage, ...messages]);
+    setMessages((prevMessages) => [...prevMessages, newMessage]); // 아래로 추가
     setMessage('');
 
-    try {
-      const response = await fetch('라즈베리파이 주소', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-        }),
-      });
-
-      const data = await response.text();
-
-      // 답장이 왔을 때
-      if (response.ok) {
-        handleSuccessMessage(data);
-      } else {
-        handleFailureMessage(data);
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('오류 발생', '다시 시도해 주세요.');
+    const messageData = { message };
+    if (websocketRef.current) {
+      websocketRef.current.send(JSON.stringify(messageData));
     }
+
+    // 메시지를 보낸 후 스크롤을 가장 아래로 내리기
+    setTimeout(() => {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }, ); // 약간의 지연을 두고 스크롤
   };
 
-  // 메세지가 수신 되었을 때
-  const handleSuccessMessage = (data) => {
-    const serverMessage = { text: '메세지 수신 성공', isUser: false };
-    setMessages((prevMessages) => [serverMessage, ...prevMessages]);
-  };
-
-  // 메세지 수신이 실패했을 때
-  const handleFailureMessage = (data) => {
-    const serverMessage = { text: '메세지 수신 실패', isUser: false };
-    setMessages((prevMessages) => [serverMessage, ...prevMessages]);
-  };
-
-  // 보내기 버튼 혹은 엔터키를 눌렀을 때
   const handleSubmit = () => {
-    if (message.trim() !== '') {
-      sendMessage();
-      //inputText.focus();
-    }
+    sendMessage();
   };
 
   return (
     <Container>
       <ChatContainer>
         <FlatList
+          ref={flatListRef} // FlatList에 ref 추가
           data={messages}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
@@ -75,7 +135,7 @@ export default function Chat() {
               <MessageText isUser={item.isUser}>{item.text}</MessageText>
             </MessageContainer>
           )}
-          inverted
+          inverted={false} // inverted를 false로 설정
           contentContainerStyle={{ paddingVertical: 16 }}
           bounces={true}
           showsVerticalScrollIndicator={false}
@@ -86,7 +146,8 @@ export default function Chat() {
           value={message}
           onChangeText={setMessage}
           placeholder="메시지를 입력하세요"
-          onSubmitEditing={handleSubmit} // 엔터키를 누르면 보내기 버튼 클릭 처리
+          placeholderTextColor={'#FFFFFF'}
+          onSubmitEditing={handleSubmit}
           returnKeyType="send"
         />
         <ButtonContainer>
@@ -146,17 +207,6 @@ const SendButton = styled.TouchableOpacity`
 
 const SendButtonText = styled.Text`
   color: #000;
-  font-size: 16px;
-`;
-
-const VoiceButton = styled.TouchableOpacity`
-  background-color: #999;
-  padding: 12px 16px;
-  border-radius: 16px;
-`;
-
-const VoiceButtonText = styled.Text`
-  color: #fff;
   font-size: 16px;
 `;
 

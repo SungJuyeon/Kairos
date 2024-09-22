@@ -38,6 +38,7 @@ if SECRET_KEY is None:
 
 # 데이터베이스 연결 함수
 def get_db_connection():
+    print("데이터베이스에 연결 중...")
     return pymysql.connect(
         host=db_host,
         user=db_user,
@@ -47,6 +48,7 @@ def get_db_connection():
 
 # 사용자 ID를 username으로부터 가져오기
 def fetch_user_id_by_username(username):
+    print(f"username '{username}'으로 사용자 ID 검색 중...")
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -58,11 +60,14 @@ def fetch_user_id_by_username(username):
     conn.close()
 
     if result:
+        print(f"사용자 ID: {result[0]}")
         return result[0]
+    print("사용자 ID를 찾을 수 없습니다.")
     return None
 
 # 가족 목록 가져오기
 def get_family(username):
+    print(f"{username}의 가족 목록 가져오는 중...")
     user_id = fetch_user_id_by_username(username)
     if user_id is None:
         return []
@@ -81,10 +86,12 @@ def get_family(username):
     cursor.close()
     conn.close()
 
+    print(f"{username}의 가족 목록: {family_members}")
     return family_members
 
 # 메시지 저장 함수
 def log_message(user_id, message):
+    print(f"{user_id}의 메시지 기록 중: {message}")
     message_log = f"{user_id}_messages.json"
 
     # 메시지를 저장할 리스트 초기화
@@ -108,6 +115,7 @@ def log_message(user_id, message):
 def get_user_id_from_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        print(f"토큰에서 사용자 추출 성공: {payload.get('username')}")
         return payload.get("username")
     except jwt.JWTError as e:
         print(f"JWT Error: {str(e)}")
@@ -115,6 +123,7 @@ def get_user_id_from_token(token: str):
 
 # 사용자 ID를 username으로부터 가져오기
 def fetch_username_by_user_id(user_id):
+    print(f"사용자 ID '{user_id}'으로 username 검색 중...")
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -126,7 +135,9 @@ def fetch_username_by_user_id(user_id):
     conn.close()
 
     if result:
+        print(f"username: {result[0]}")
         return result[0]
+    print("username을 찾을 수 없습니다.")
     return None
 
 # WebSocket 핸들러
@@ -139,6 +150,7 @@ async def handle_connection(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            print(f'>> Received data: {data}')  # 수신한 데이터 로그
             message_data = json.loads(data)
 
             if "token" in message_data:
@@ -166,7 +178,7 @@ async def handle_connection(websocket: WebSocket):
                 for client, client_user_id in client_sockets:
                     client_family = get_family(fetch_username_by_user_id(client_user_id))
                     print(f'>> user_id: {user_id} current_user_family: {current_user_family}')
-                    print(f'>> client_user_id{client_user_id} client_family: {client_family}')
+                    print(f'>> client_user_id: {client_user_id} client_family: {client_family}')
                     # 서로가 가족인지 확인하여 메시지를 전달
                     if user_id in client_family or client_user_id in current_user_family:
                         print(f'>> Sending to {client_user_id}: {user_id}: {message}')
@@ -177,6 +189,7 @@ async def handle_connection(websocket: WebSocket):
     finally:
         if user_id is not None:
             client_sockets.remove((websocket, user_id))
+            print(f'>> Connection removed for user ID: {user_id}')
 
 # WebSocket 라우트
 @app.websocket("/ws/chat")
@@ -187,6 +200,23 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/chat", response_class=HTMLResponse)
 async def read_chat():
     return templates.TemplateResponse("chat.html", {"request": {}})
+
+# 사용자 메시지를 가져오는 API
+@app.get("/messages/{username}")
+async def get_messages(username: str):
+    print(f"{username}의 메시지를 가져오는 중...")
+    message_log = f"{username}_messages.json"
+
+    if not os.path.exists(message_log):
+        return {"messages": []}
+
+    with open(message_log, 'r') as file:
+        messages = json.load(file)
+
+    return {"messages": messages}
+
+
+
 
 # 서버 실행
 if __name__ == "__main__":

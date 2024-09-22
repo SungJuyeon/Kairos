@@ -19,50 +19,51 @@ export default function SignUp() {
             Alert.alert('비밀번호가 일치하지 않습니다.');
             return;
         }
-
+    
         try {
             const formData = new FormData();
             const data = JSON.stringify({ username, password, email, nickname });
             formData.append('data', data);
-
+    
             if (selectedImage) {
-                const fileName = `${username}.png`; // 파일 이름을 username으로 설정
-                const fileType = 'image/png'; // MIME 타입을 image/png으로 설정
-
-                // Base64 데이터를 Blob 객체로 변환
-                const response = await fetch(selectedImage);
-                const blob = await response.blob();
-
-                // Blob 객체를 파일로 변환
-                const file = new File([blob], fileName, { type: fileType });
-
-                formData.append('file', file);
+                const fileName = `${username}.jpg`; // 파일 이름을 username으로 설정
+                const fileType = 'image/jpg'; // MIME 타입을 image/jpg으로 설정
+    
+                // FormData에 직접 이미지 URI 추가
+                formData.append('file', {
+                    uri: selectedImage,
+                    name: fileName,
+                    type: fileType,
+                });
             }
-
-            const response = await fetch('http://localhost:8080/join', {
+    
+            console.log('서버에 전송할 FormData:', formData); // FormData 로그
+            const response = await fetch('http://127.0.0.1:8080/join', {
                 method: 'POST',
                 headers: {
-                    // 'Content-Type': 'multipart/form-data', // FormData는 자동으로 Content-Type을 설정합니다.
+                    'Content-Type': 'multipart/form-data',
                 },
                 body: formData,
             });
-
+    
             const responseText = await response.text();
             console.log('Response Status:', response.status);
             console.log('Response Text:', responseText);
-
+    
             if (response.ok) {
                 Alert.alert('회원가입 성공', responseText);
                 navigate('Login');
             } else {
                 Alert.alert('회원가입 실패', responseText);
             }
-
+    
         } catch (error) {
             console.error('Error:', error);
             Alert.alert('오류 발생', '다시 시도해 주세요.');
         }
     };
+    
+    
 
 
 
@@ -96,7 +97,7 @@ export default function SignUp() {
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Title>회원가입</Title>
                 <InputContainer>
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>ID</Text>
                     <StyledTextInput
                         onChangeText={text => setUsername(text)}
                         value={username}

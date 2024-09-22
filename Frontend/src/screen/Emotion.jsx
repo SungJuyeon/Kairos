@@ -1,47 +1,99 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, Image, View, TouchableOpacity, Alert, Platform, Dimensions } from "react-native";
+import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { WebView } from 'react-native-webview';
-import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// 스타일 컴포넌트를 위함
 const { width, height } = Dimensions.get('window');
-const scale = width / 640;
 
-export default function Emotion() {
+// 비율에 따른 스타일 조정
+const scale = width / 640; // 기준 너비에 대한 비율
+
+export default function Control() {
     const { navigate } = useNavigation();
-    const [currentEmotion, setCurrentEmotion] = useState("Unknown");
-    const [mostEmotion, setMostEmotion] = useState("Happy");
-    const [mostEmotionImage, setMostEmotionImage] = useState(null);
 
-    const BASE_URL = 'http://223.194.136.129:8000';
-    const imageURL = `${BASE_URL}/video`;
+    const [mostEmotion, setMostEmotion] = useState("-");
+    const [emotionImage, setEmotionImage] = useState(null); // 감정 이미지를 저장할 상태 변수
+
+    // 모스트 감정 가져오기
+    const fetchMostEmotion = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
+
+            const response = await fetch('http://localhost:8000/most_emotion', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'token': accessToken,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response Error:', errorText); // 오류 로그
+                throw new Error('네트워크 응답이 좋지 않습니다.');
+            }
+
+            const data = await response.json(); // JSON으로 파싱
+
+            // "most_frequent_emotion"의 값만 저장
+            if (data.most_frequent_emotion) {
+                setMostEmotion(data.most_frequent_emotion);
+                // 감정 이미지를 가져오는 함수 호출
+                fetchEmotionImage(data.most_frequent_emotion, accessToken);
+            } else {
+                console.warn('most_frequent_emotion이 없습니다.');
+            }
+        } catch (error) {
+            console.error('Fetch Most Emotion Error:', error); // 전체 오류 로그
+            Alert.alert('오류 발생', error.message);
+        }
+    };
+
+    // 감정 이미지를 가져오는 함수
+    const fetchEmotionImage = async (emotion, accessToken) => {
+        try {
+            const response = await fetch(`http://localhost:8000/most_emotion_pic`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'token': accessToken,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Image Response Error:', errorText); // 오류 로그
+                throw new Error('이미지를 가져오는 데 실패했습니다.');
+            }
+
+            // 이미지 URL을 설정
+            const imageUrl = URL.createObjectURL(await response.blob());
+            setEmotionImage(imageUrl); // 감정 이미지를 상태에 저장
+        } catch (error) {
+            console.error('Fetch Emotion Image Error:', error); // 전체 오류 로그
+            Alert.alert('오류 발생', error.message);
+        }
+    };
 
     useEffect(() => {
-        const fetchEmotionData = async () => {
-            try {
-                const response = await axios.get(`${BASE_URL}/emotion`);
-                setCurrentEmotion(response.data.current_emotion);
-                setMostEmotion(response.data.most_frequent_emotion);
-                setMostEmotionImage(response.data.most_frequent_emotion_image);
-            } catch (error) {
-                console.error('Error fetching emotion data:', error);
-                Alert.alert('오류', '감정 데이터를 가져오는데 실패했습니다.');
-            }
-        };
-
-        fetchEmotionData();
-        const interval = setInterval(fetchEmotionData, 5000); // 5초마다 업데이트
-
-        return () => clearInterval(interval);
+        fetchMostEmotion();
     }, []);
 
     return (
         <Container>
             <RowContainer>
                 <Title>현재 나의 감정</Title>
-                <RepositoryButton onPress={() => navigate("Highlight")}>
-                    <RepositoryButtonText>하이라이트</RepositoryButtonText>
+                <RepositoryButton onPress={() => navigate("Repository")}>
+                    <RepositoryButtonText>
+                        저장소
+                    </RepositoryButtonText>
                 </RepositoryButton>
             </RowContainer>
 
@@ -49,82 +101,84 @@ export default function Emotion() {
                 {Platform.OS === 'web' ? (
                     <img src={imageURL} width="100%" alt="Live Stream" />
                 ) : (
-                    <StyledWebView source={{ uri: imageURL }} />
+                    <StyledWebView
+                        source={{ uri: 'http://localhost:8000/video_feed/true' }}
+                    />
                 )}
             </ImageContainer>
-            <EmotionText>현재 감정: {currentEmotion}</EmotionText>
             <BorderContainer />
 
             <Title>오늘의 최다 감정: {mostEmotion}</Title>
             <ImageContainer>
-                {mostEmotionImage && (
-                    <StyledImage source={{ uri: mostEmotionImage }} />
+                {emotionImage ? (
+                    <StyledImage source={{ uri: emotionImage }} />
+                ) : (
+                    <StyledImage source={{ uri: 'placeholder_image_url' }} /> // 기본 이미지 URL
                 )}
             </ImageContainer>
         </Container>
     );
 }
 
+const Title = styled.Text`
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 20px;
+`;
+
 const Container = styled.SafeAreaView`
     background-color: #222222;
     flex: 1;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
-    padding-top: 50px;
 `;
 
-const RowContainer = styled.View`
+const RowContainer = styled.SafeAreaView`
+    background-color: #222222;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    width: 100%;
-    padding: 0 20px;
 `;
 
-const Title = styled.Text`
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-`;
-
-const RepositoryButton = styled.TouchableOpacity`
-    background-color: #FFB0F9;
-    padding: 10px 20px;
-    border-radius: 5px;
-`;
-
-const RepositoryButtonText = styled.Text`
-    color: black;
-    font-size: 16px;
-    font-weight: bold;
+const BorderContainer = styled.View`
+    border: 3px solid #ADCDFF;
+    width: ${width * 0.90}px;
+    margin-top: 20px;
+    margin-bottom: 10px;
 `;
 
 const ImageContainer = styled.View`
     width: 90%;
-    height: ${height * 0.3}px;
-    margin: 20px 0;
-`;
-
-const StyledWebView = styled(WebView)`
-    width: 100%;
-    height: 100%;
+    height: 34%;
+    border-width: 2px; 
+    border-color: #FFCEFF;
+    background-color: #222222; 
 `;
 
 const StyledImage = styled.Image`
     width: 100%;
     height: 100%;
-    resize-mode: contain;
 `;
 
-const EmotionText = styled.Text`
-    color: white;
-    font-size: 18px;
-    margin-top: 10px;
+const RepositoryButton = styled.TouchableOpacity`
+    width: ${scale * 100}px; 
+    height: ${scale * 50}px;
+    justify-content: center;
+    align-items: center;
+    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#FFCEFF')};
+    border-radius: 10px;
+    padding: 10px 10px;
+    margin-left: 15px;
+    margin-bottom: 15px;
 `;
 
-const BorderContainer = styled.View`
-    width: 90%;
-    height: 1px;
-    background-color: white;
-    margin: 20px 0;
+const RepositoryButtonText = styled.Text`
+    color: black;
+    font-size: ${scale * 18}px;
+    font-weight: bold;
+`;
+
+const StyledWebView = styled(WebView)`
+    flex: 1;
 `;

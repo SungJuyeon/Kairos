@@ -94,7 +94,7 @@ export default function Login() {
                         onChangeText={setId}
                         value={id}
                         placeholderTextColor="gray"
-                        placeholder="이름"
+                        placeholder="ID"
                         onFocus={() => setIdFocused(true)}
                         onBlur={() => setIdFocused(false)}
                         focused={idFocused}
@@ -103,7 +103,7 @@ export default function Login() {
                         onChangeText={setPassword}
                         value={password}
                         placeholderTextColor="gray"
-                        placeholder="비밀번호"
+                        placeholder="PASSWORD"
                         secureTextEntry={true}
                         onFocus={() => setPasswordFocused(true)}
                         onBlur={() => setPasswordFocused(false)}
