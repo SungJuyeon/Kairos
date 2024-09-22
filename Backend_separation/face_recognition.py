@@ -232,10 +232,10 @@ async def save_video(fps=10, seconds=20):
 
     detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
     detected_emotion = last_detected_emotions[0] if last_detected_emotions else "unknown"
-    video_file_name = f'{detected_person_name}_{detected_emotion}_{time.strftime("%Y%m%d_%H%M%S")}.avi'
+    video_file_name = f'{detected_person_name}_{detected_emotion}_{time.strftime("%Y%m%d_%H%M%S")}.mp4'
     first_frame = video_frames[0]
     h, w = first_frame.shape[:2]
-    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(video_file_name, fourcc, fps, (w, h))
 
     start_time = time.time()
