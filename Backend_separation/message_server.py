@@ -1,56 +1,75 @@
-import socket
-from _thread import *
+import os
+import json
+from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+import uvicorn
+import asyncio
 
-client_sockets = []  # List of connected clients
+app = FastAPI()
 
-# Server IP and port
-HOST = '127.0.0.1'
-PORT = 9999
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def threaded(client_socket, addr):
-    print('>> Connected by :', addr[0], ':', addr[1])
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+message_log = "message.json"
+client_sockets = []  # 연결된 클라이언트 목록
 
-    while True:
-        try:
-            data = client_socket.recv(1024)
+# 메시지 저장 함수
+def log_message(addr, message):
+    if not os.path.exists(message_log):
+        with open(message_log, 'w') as file:
+            json.dump([], file)
 
-            if not data:
-                print('>> Disconnected by ' + addr[0], ':', addr[1])
-                break
+    with open(message_log, 'r') as file:
+        messages = json.load(file)
 
-            print('>> Received from ' + addr[0], ':', addr[1], data.decode())
+    messages.append({"address": addr, "message": message})
 
+    with open(message_log, 'w') as file:
+        json.dump(messages, file, indent=4)
+
+# WebSocket 핸들러
+async def handle_connection(websocket: WebSocket):
+    await websocket.accept()
+    client_sockets.append(websocket)
+    print(f'>> New connection from {websocket.client.host}:{websocket.client.port}')
+
+    try:
+        while True:
+            message = await websocket.receive_text()  # 메시지 수신
+            addr = f"{websocket.client.host}:{websocket.client.port}"
+            print(f'>> Received from {addr}: {message}')
+            log_message(addr, message)
+
+            # 모든 클라이언트에게 메시지 브로드캐스트
             for client in client_sockets:
-                if client != client_socket:
-                    client.send(data)
+                if client != websocket:
+                    await client.send_text(f"Broadcast: {message}")
+    except Exception as e:
+        print(f'>> Connection closed: {e}')
+    finally:
+        client_sockets.remove(websocket)
 
-        except ConnectionResetError as e:
-            print('>> Disconnected by ' + addr[0], ':', addr[1])
-            break
+# WebSocket 라우트
+@app.websocket("/ws/chat")
+async def websocket_endpoint(websocket: WebSocket):
+    await handle_connection(websocket)
 
-    if client_socket in client_sockets:
-        client_sockets.remove(client_socket)
-        print('remove client list : ', len(client_sockets))
+# HTTP 라우트
+@app.get("/chat", response_class=HTMLResponse)
+async def read_chat():
+    return templates.TemplateResponse("chat.html", {"request": {}})
 
-    client_socket.close()
-
-# Server socket creation
-print('>> Server Start')
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.bind((HOST, PORT))
-server_socket.listen()
-
-try:
-    while True:
-        print('>> Wait')
-        client_socket, addr = server_socket.accept()
-        client_sockets.append(client_socket)
-        start_new_thread(threaded, (client_socket, addr))
-        print("참가자 수 : ", len(client_sockets))
-
-except Exception as e:
-    print('에러는? : ', e)
-
-finally:
-    server_socket.close()
+# 서버 실행
+if __name__ == "__main__":
+    config = uvicorn.Config(app, host='0.0.0.0', port=8000)
+    server = uvicorn.Server(config)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(server.serve())

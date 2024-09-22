@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 from typing import List
-import json
+import jsonc
 
 import cv2
 import httpx
