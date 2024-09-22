@@ -76,12 +76,19 @@ async def list_s3_videos():
                     thumbnail_name = f"thumbnail_{file_name.replace('.avi', '.jpg')}"
                     thumbnail_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{thumbnail_name}"
                     
+                    # 영상 다운로드 URL 생성
+                    video_url = s3_client.generate_presigned_url('get_object',
+                                                                 Params={'Bucket': BUCKET_NAME,
+                                                                         'Key': file_name},
+                                                                 ExpiresIn=3600)  # URL 유효 시간 1시간
+                    
                     video_info = {
                         'file_name': file_name,
                         'person_name': person_name,
                         'emotion': emotion,
                         'date_time': date_time,
-                        'thumbnail_url': thumbnail_url
+                        'thumbnail_url': thumbnail_url,
+                        'video_url': video_url  # 영상 다운로드 URL 추가
                     }
                     video_list.append(video_info)
 
