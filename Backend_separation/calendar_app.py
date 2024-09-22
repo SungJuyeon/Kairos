@@ -53,7 +53,6 @@ def fetch_user_id_by_username(username: str):
         return result[0]
     return None
 
-# 가족 관계에 있는 사용자 ID 목록 가져오기
 # 가족 관계에 있는 사용자 이름 목록 가져오기
 def get_family_members(user_id: int) -> List[str]:
     conn = get_db_connection()
@@ -72,7 +71,6 @@ def get_family_members(user_id: int) -> List[str]:
 
     return family_members
 
-
 def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
     username = get_username_from_token(token)
     user_id = fetch_user_id_by_username(username)
@@ -82,7 +80,6 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
 
     family_members = get_family_members(user_id)
     family_members.append(username)  # 자신의 username도 포함
-    print(f"Username: {username}, User ID: {user_id}, Family Members: {family_members}")
 
     # family_members의 각 ID에 대해 username을 가져옴
     family_members_usernames = []
@@ -90,10 +87,6 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
         # member_id는 int여야 함
         fetched_username = fetch_username_by_id(int(member_id))  # int로 변환
         family_members_usernames.append(fetched_username)
-        print(f"Fetched username for ID {member_id}: {fetched_username}")
-
-    # family_members를 username으로 변환
-    print(f"Family Members Usernames: {family_members_usernames}")
 
     connection = get_db_connection()
     try:
@@ -106,10 +99,8 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
             WHERE user_name IN ({placeholders})
             ORDER BY date, time
             """
-            print(f"Executing query with family member usernames: {family_members_usernames}")
             cursor.execute(query, family_members_usernames)  # 리스트로 전달
             result = cursor.fetchall()
-            print(f"Query result: {result}")
 
             schedules_by_date = {}
             for row in result:
@@ -123,7 +114,6 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
                     "task": row[3],
                     "time": str(row[4])
                 })
-            print(f"Schedules by date: {schedules_by_date}")
             return schedules_by_date
     finally:
         connection.close()
@@ -135,7 +125,6 @@ def fetch_username_by_id(username):
     query = "SELECT username FROM userentity WHERE username = %s"
     cursor.execute(query, (username,))
     result = cursor.fetchone()
-    print(f"Query Result for Username {username}: {result}")  # 결과 확인
     return result[0] if result else None
 
 
