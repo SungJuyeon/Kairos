@@ -34,9 +34,16 @@ export default function Repository() {
 
   const handleButtonPress = async (item) => {
     console.log(`다운로드 버튼 클릭: ${item.file_name}`);
+
+    if (!item.file_name) {
+      Alert.alert('다운로드 실패', '유효한 비디오 URL이 없습니다.');
+      return;
+    }
+
     const downloadPath = FileSystem.documentDirectory + item.file_name;
 
     try {
+      console.log(`다운로드 시작: ${item.video_url}`);
       const { uri } = await FileSystem.downloadAsync(item.video_url, downloadPath);
       console.log(`다운로드 완료: ${uri}`);
 
