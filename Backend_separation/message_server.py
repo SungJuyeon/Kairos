@@ -1,5 +1,7 @@
 import os
 import json
+
+import messages
 import pymysql
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -85,17 +87,22 @@ def get_family(username):
 def log_message(user_id, message):
     message_log = f"{user_id}_messages.json"
 
-    if not os.path.exists(message_log):
-        with open(message_log, 'w') as file:
-            json.dump([], file)
+    # 메시지를 저장할 리스트 초기화
+    messages = []
 
-    with open(message_log, 'r') as file:
+    # 파일이 존재하지 않으면 새로 생성
+    if not os.path.exists(message_log):
+        with open(message_log, 'w', encoding='utf-8') as file:
+            json.dump(messages, file, indent=4, ensure_ascii=False)
+
+    # 파일이 존재하면 내용을 읽어옴
+    with open(message_log, 'r', encoding='utf-8') as file:
         messages = json.load(file)
 
     messages.append({"message": message})
 
-    with open(message_log, 'w') as file:
-        json.dump(messages, file, indent=4)
+    with open(message_log, 'w', encoding='utf-8') as file:
+        json.dump(messages, file, indent=4, ensure_ascii=False)
 
 # JWT에서 사용자 ID 추출 함수
 def get_user_id_from_token(token: str):
