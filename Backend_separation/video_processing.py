@@ -12,7 +12,6 @@ from mqtt_client import video_frames
 
 logger = logging.getLogger(__name__)
 
-
 async def generate_frames():
     while True:
         if len(video_frames) > 0:
