@@ -56,7 +56,7 @@ export default function VoiceChat() {
       {/* 채팅 모드 버튼 */}
       <ChatButtonContainer>
         <ChatButton onPress={() => navigate("Chat")}>
-          <ChatButtonText>채팅 모드</ChatButtonText>
+          <ChatButtonText>가족과 채팅 하러 가기</ChatButtonText>
         </ChatButton>
       </ChatButtonContainer>
     </Container>

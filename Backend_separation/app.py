@@ -16,7 +16,7 @@ from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
 from calendar_app import get_all_schedules, add_schedule, delete_schedule, Schedule
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
-from face_image_db import fetch_family_photos, current_userId
+from face_image_db import current_userId
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)

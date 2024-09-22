@@ -168,7 +168,8 @@ const onMessage = async (event) => {
 
 
         // 서버에 fetch 요청
-        await fetch(`http://localhost:8000/speed/${newValue > value ? 'up' : 'down'}`, { method: 'POST' });
+        await fetch(`http://localhost:8000/speed/${newValue*10}`, { method: 'POST' });
+        console.log(`http://localhost:8000/speed/${newValue*10}`);
         
     };
 
