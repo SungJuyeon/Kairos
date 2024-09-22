@@ -203,15 +203,17 @@ async def websocket_endpoint(websocket: WebSocket):
 async def read_chat():
     return templates.TemplateResponse("chat.html", {"request": {}})
 
-# 메시지 가져오기 API
+# 메시지 가져오기 API - 사용자 자신의 메시지 파일만 로드하도록 수정
 @app.get("/messages/{username}")
 async def get_messages(username: str):
+    # 입력된 username에 해당하는 사용자 ID를 가져옴
     user_id = fetch_user_id_by_username(username)
     print(f">> User ID for {username}: {user_id}")  # 사용자 ID 확인
 
     if user_id is None:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
+    # 사용자 자신의 메시지 파일만 로드
     message_log = f"{user_id}_messages.json"
     print(f">> Checking for messages in: {message_log}")  # 파일 경로 확인
 
@@ -219,6 +221,7 @@ async def get_messages(username: str):
         print(f">> File does not exist: {message_log}")  # 파일 존재 확인
         return {"messages": []}
 
+    # 메시지 파일을 읽어옴
     with open(message_log, "r", encoding="utf-8") as file:
         try:
             messages = json.load(file)
@@ -227,28 +230,9 @@ async def get_messages(username: str):
             messages = []
             print(f">> JSONDecodeError while loading messages for {username}.")
 
-    # 가족의 메시지를 추가
-    family_members = get_family(user_id)
-    family_messages = []
+    # 사용자 본인의 메시지만 반환
+    return {"messages": messages}  # 사용자 메시지 반환
 
-    for family_member_id in family_members:
-        family_log = f"{family_member_id}_messages.json"
-        print(f">> Checking family messages in: {family_log}")  # 가족 메시지 로그
-        if os.path.exists(family_log):
-            with open(family_log, "r", encoding="utf-8") as file:
-                try:
-                    family_msgs = json.load(file)
-                    family_messages += family_msgs
-                    print(f">> Loaded {len(family_msgs)} messages from {family_log}")
-                except json.JSONDecodeError:
-                    print(f">> JSONDecodeError while loading family messages from {family_log}.")
-
-    # Combine and sort messages by order of sending (assuming order in JSON array is time order)
-    combined_messages = messages + family_messages
-    # Optionally, sort combined messages if timestamps are available
-
-    print(f">> Combined messages: {combined_messages}")  # 결합된 메시지 확인
-    return {"messages": combined_messages}  # 메시지 반환
 
 # 서버 실행
 if __name__ == "__main__":
