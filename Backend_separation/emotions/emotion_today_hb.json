@@ -1,9 +1,9 @@
 {
-    "Angry": 3,
+    "Angry": 5,
     "Disgust": 0,
     "Fear": 0,
     "Happy": 1,
-    "Sad": 3,
+    "Sad": 28,
     "Surprise": 0,
-    "Neutral": 28
+    "Neutral": 160
 }

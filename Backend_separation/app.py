@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import os
 
 import uvicorn
 from fastapi import FastAPI
@@ -16,6 +17,7 @@ from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames, speech_text
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
+from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +41,10 @@ async def startup_event():
     await setup_mqtt()
     asyncio.create_task(recognize_periodically())
     load_faces_from_db()  # 얼굴 이미지 로드
-
+    if init_hand_gesture():
+        asyncio.create_task(recognize_hand_gesture_periodically())
+    else:
+        logger.error("손동작 인식 초기화 실패")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
@@ -71,9 +76,9 @@ async def video_stream():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
 
-@app.get("/video_feed/{face}")
-async def get_video_feed(face: bool):
-    return StreamingResponse(video_frame_generator(face),
+@app.get("/video_feed/{face}/{hand}")
+async def get_video_feed(face: bool, hand: bool):
+    return StreamingResponse(video_frame_generator(face, hand),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 

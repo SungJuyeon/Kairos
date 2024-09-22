@@ -19,13 +19,12 @@ MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"
-# MQTT_BROKER = "localhost"
+# MQTT_BROKER = "3.27.221.93"
+MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
-MQTT_TOPIC_AUDIO = "robot/audio"
 MQTT_TOPIC_SPEECH = "robot/speech"
 MQTT_TOPIC_TEXT = "robot/text"
 
@@ -37,7 +36,6 @@ async def on_connect():
     logger.info("연결: MQTT Broker")
     client.subscribe(MQTT_TOPIC_DISTANCE)
     client.subscribe(MQTT_TOPIC_VIDEO)
-    client.subscribe(MQTT_TOPIC_AUDIO)
     client.subscribe(MQTT_TOPIC_SPEECH)  # 음성 텍스트 토픽 구독
     logger.info("구독 완료")
 
