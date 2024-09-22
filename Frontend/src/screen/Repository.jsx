@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import styled from 'styled-components/native';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 export default function Repository() {
   const [data, setData] = useState([]);
@@ -10,32 +12,51 @@ export default function Repository() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:8000/s3_video_list'); // S3 비디오 목록 API 호출
+        console.log('데이터 로딩 시작...');
+        const response = await fetch('http://localhost:8000/s3_video_list');
         if (!response.ok) {
           throw new Error('네트워크 응답이 좋지 않습니다.');
         }
         const json = await response.json();
-        setData(json.videos); // 비디오 목록 데이터를 설정
+        console.log('데이터 로딩 완료:', json.videos);
+        setData(json.videos);
       } catch (error) {
+        console.error('데이터 로딩 중 오류 발생:', error.message);
         setError(error.message);
       } finally {
         setLoading(false);
+        console.log('로딩 상태 업데이트:', loading);
       }
     };
 
     fetchData();
   }, []);
 
-  const handleButtonPress = (item) => {
-    Alert.alert(`아이템 선택: ${item.file_name}`);
-    // 여기에 다운로드 로직 등을 추가할 수 있습니다.
+  const handleButtonPress = async (item) => {
+    console.log(`다운로드 버튼 클릭: ${item.file_name}`);
+    const downloadPath = FileSystem.documentDirectory + item.file_name;
+
+    try {
+      const { uri } = await FileSystem.downloadAsync(item.video_url, downloadPath);
+      console.log(`다운로드 완료: ${uri}`);
+
+      // 갤러리에 저장
+      const asset = await MediaLibrary.createAssetAsync(uri);
+      await MediaLibrary.createAlbumAsync('My Videos', asset, false);
+      Alert.alert('다운로드 완료', `${item.file_name}이 갤러리에 저장되었습니다.`);
+    } catch (error) {
+      console.error('다운로드 중 오류 발생:', error.message);
+      Alert.alert('다운로드 실패', error.message);
+    }
   };
 
   if (loading) {
+    console.log('로딩 중...');
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   if (error) {
+    console.error('에러 상태:', error);
     return <Text>{error}</Text>;
   }
 
