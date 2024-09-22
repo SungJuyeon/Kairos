@@ -15,7 +15,8 @@ from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
 
-from calendar_app import get_all_schedules, add_schedule, delete_schedule, Schedule
+from GPT.add_schedule import add_schedule
+from calendar_app import get_all_schedules, Schedule, delete_schedule, add_schedules
 
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
 from face_image_db import fetch_family_photos, current_userId
@@ -75,19 +76,26 @@ async def get_video_feed(face: bool):
     return StreamingResponse(video_frame_generator(face),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
-
 @app.get("/calendar")
-def calendar():
-    schedules = get_all_schedules()
+def calendar(token: str = Header(...)):
+    schedules = get_all_schedules(token)
     return {"schedules": schedules}
 
-@app.delete("/schedules/{schedule_id}")
-def delete_schedule_endpoint(schedule_id: int):
-    return delete_schedule(schedule_id)
-
 @app.post("/schedules/add")
-def add_schedule_endpoint(schedule: Schedule):
-    return add_schedule(schedule)
+def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
+    return add_schedules(schedule, token)
+
+@app.delete("/schedules/{schedule_id}")
+def delete_schedule_endpoint(
+        schedule_id: int,
+        token: str = Header(...)
+):
+    try:
+        return delete_schedule(schedule_id, token)
+    except HTTPException as e:
+        raise e  # 발생한 HTTPException을 그대로 재발생
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
 @app.get("/most_emotion")

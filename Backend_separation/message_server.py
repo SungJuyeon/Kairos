@@ -184,7 +184,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await handle_connection(websocket)
 
 # HTTP 라우트
-@app.get("/chat")
+@app.get("/chat", response_class=HTMLResponse)
 async def read_chat():
     return templates.TemplateResponse("chat.html", {"request": {}})
 
