@@ -1,10 +1,12 @@
-import pymysql
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
-from typing import Dict, List
-from fastapi import HTTPException, Header
+import pymysql
 import os
 import jwt
 from dotenv import load_dotenv
+from typing import Dict, List
+
+app = FastAPI()
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -37,27 +39,22 @@ def get_username_from_token(token: str) -> str:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 # 사용자 ID를 username으로부터 가져오기
 def fetch_user_id_by_username(username: str):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     query = "SELECT id FROM userentity WHERE username = %s"
     cursor.execute(query, (username,))
     result = cursor.fetchone()
-
     cursor.close()
     conn.close()
-
-    if result:
-        return result[0]
-    return None
+    return result[0] if result else None
 
 # 가족 관계에 있는 사용자 이름 목록 가져오기
 def get_family_members(user_id: int) -> List[str]:
     conn = get_db_connection()
     cursor = conn.cursor()
-
     query = """
     SELECT u.username FROM familyship f
     JOIN userentity u ON (u.id = f.user2_id OR u.id = f.user1_id)
@@ -65,11 +62,19 @@ def get_family_members(user_id: int) -> List[str]:
     """
     cursor.execute(query, (user_id, user_id, user_id))
     family_members = [row[0] for row in cursor.fetchall()]
-
     cursor.close()
     conn.close()
-
     return family_members
+
+def fetch_username_by_id(user_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = "SELECT username FROM userentity WHERE id = %s"
+    cursor.execute(query, (user_id,))
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return result[0] if result else None
 
 def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
     username = get_username_from_token(token)
@@ -81,25 +86,17 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
     family_members = get_family_members(user_id)
     family_members.append(username)  # 자신의 username도 포함
 
-    # family_members의 각 ID에 대해 username을 가져옴
-    family_members_usernames = []
-    for member_id in family_members:
-        # member_id는 int여야 함
-        fetched_username = fetch_username_by_id(int(member_id))  # int로 변환
-        family_members_usernames.append(fetched_username)
-
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            # family_members와 일치하는 user_name만 선택
-            placeholders = ', '.join(['%s'] * len(family_members_usernames))  # %s 플레이스홀더 생성
+            placeholders = ', '.join(['%s'] * len(family_members))  # %s 플레이스홀더 생성
             query = f"""
             SELECT id, date, user_name, task, time
             FROM schedules
             WHERE user_name IN ({placeholders})
             ORDER BY date, time
             """
-            cursor.execute(query, family_members_usernames)  # 리스트로 전달
+            cursor.execute(query, family_members)  # 리스트로 전달
             result = cursor.fetchall()
 
             schedules_by_date = {}
@@ -108,7 +105,7 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
                 if date not in schedules_by_date:
                     schedules_by_date[date] = []
                 schedules_by_date[date].append({
-                    "id": row[0],  # 일정 ID
+                    "id": row[0],
                     "date": date,
                     "user_name": row[2],
                     "task": row[3],
@@ -118,18 +115,7 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
     finally:
         connection.close()
 
-
-def fetch_username_by_id(username):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    query = "SELECT username FROM userentity WHERE username = %s"
-    cursor.execute(query, (username,))
-    result = cursor.fetchone()
-    return result[0] if result else None
-
-
-
-def add_schedules(schedule: Schedule, token: str) -> Dict[str, str]:
+def add_schedule(schedule: Schedule, token: str) -> Dict[str, str]:
     username = get_username_from_token(token)
     user_id = fetch_user_id_by_username(username)
 
@@ -149,8 +135,6 @@ def add_schedules(schedule: Schedule, token: str) -> Dict[str, str]:
     finally:
         connection.close()
 
-
-
 def delete_schedule(schedule_id: int, token: str) -> Dict[str, str]:
     username = get_username_from_token(token)
     user_id = fetch_user_id_by_username(username)
@@ -159,22 +143,18 @@ def delete_schedule(schedule_id: int, token: str) -> Dict[str, str]:
         raise HTTPException(status_code=404, detail="User not found")
 
     family_members = get_family_members(user_id)
-    family_members.append(username)  # 자신의 username 포함
+    family_members.append(username)
 
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            # 해당 일정이 가족 관계 사용자의 일정인지 확인
-            query = """
-            SELECT user_name FROM schedules WHERE id = %s
-            """
+            query = "SELECT user_name FROM schedules WHERE id = %s"
             cursor.execute(query, (schedule_id,))
             result = cursor.fetchone()
 
             if result is None or result[0] not in family_members:
                 raise HTTPException(status_code=403, detail="Not authorized to delete this schedule")
 
-            # 일정 삭제
             query = "DELETE FROM schedules WHERE id = %s"
             cursor.execute(query, (schedule_id,))
             connection.commit()
@@ -184,3 +164,20 @@ def delete_schedule(schedule_id: int, token: str) -> Dict[str, str]:
             return {"message": f"일정(ID: {schedule_id})이 성공적으로 삭제되었습니다."}
     finally:
         connection.close()
+
+# API 엔드포인트 정의
+# @app.post("/schedules/", response_model=Dict[str, str])
+# def create_schedule(schedule: Schedule, token: str):
+#     return add_schedule(schedule, token)
+#
+# @app.get("/schedules/", response_model=Dict[str, List[Dict]])
+# def read_schedules(token: str):
+#     return get_all_schedules(token)
+#
+# @app.delete("/schedules/{schedule_id}", response_model=Dict[str, str])
+# def remove_schedule(schedule_id: int, token: str):
+#     return delete_schedule(schedule_id, token)
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)

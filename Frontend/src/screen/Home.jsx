@@ -50,6 +50,9 @@ export default function Home() {
                         <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                         </CaptureButtonStyle>
+                        <CaptureButtonStyle onPress={() => navigate('Tutorial')}>
+                            <CaptureButtonText>튜토리얼 하러가기</CaptureButtonText>
+                        </CaptureButtonStyle>
                         <CaptureButtonStyle2 onPress={() => navigate('MyPage')}>
                             <CaptureButtonText2>로그인 / 회원가입</CaptureButtonText2>
                         </CaptureButtonStyle2>
