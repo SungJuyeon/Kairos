@@ -8,6 +8,7 @@ import json
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
 import sounddevice as sd
+import ultrasonic
 import motor_control as mc
 import speech_recognition as sr
 import concurrent.futures
@@ -16,18 +17,12 @@ import os
 
 # 핀 번호 설정
 
-ULTRASONIC_PINS = {
-    'TRIG': 20,
-    'ECHO': 16
-}
+
 
 # GPIO 초기화
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-
-GPIO.setup(ULTRASONIC_PINS['TRIG'], GPIO.OUT)
-GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
 
 
 
@@ -40,56 +35,6 @@ audio_queue = queue.Queue()
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
-
-
-
-
-# 거리 전송 ###################################################################
-async def send_distance(client):
-    while True:
-        try:
-            distance = measure_distance()
-            if distance is not None:
-                distance_message = json.dumps({"distance": distance})
-                client.publish(MQTT_TOPIC_DISTANCE, distance_message)
-                #logging.info(f"거리 발행: {distance}")
-            else:
-                logging.warning("거리 측정 실패")
-            await asyncio.sleep(0.5)
-        except Exception as e:
-            logging.error(f"send_distance 오류: {e}")
-            await asyncio.sleep(1)
-
-
-def measure_distance():
-    try:
-        GPIO.output(ULTRASONIC_PINS['TRIG'], True)
-        time.sleep(0.00001)
-        GPIO.output(ULTRASONIC_PINS['TRIG'], False)
-
-        pulse_start = time.time()
-        pulse_end = pulse_start
-        timeout = time.time() + 0.1
-
-        while GPIO.input(ULTRASONIC_PINS['ECHO']) == 0:
-            pulse_start = time.time()
-            if pulse_start > timeout:
-                raise Exception("Echo 시작 타임아웃")
-
-        while GPIO.input(ULTRASONIC_PINS['ECHO']) == 1:
-            pulse_end = time.time()
-            if pulse_end > timeout:
-                raise Exception("Echo 종료 타임아웃")
-
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 17150
-        return round(distance, 2)
-    except Exception as e:
-        logging.error(f"거리 측정 오류: {e}")
-        return None
-
-
-#############################################################################
 
 
 # 영상 전송 ####################################################################
@@ -195,6 +140,11 @@ async def on_message(client, topic, payload, qos, properties):
         mc.set_speed(command["speed"])  # 속도 조절 명령 처리
     elif command["command"] == "text_to_speech":
         text_to_speech(command["text"])
+        
+    elif command["command"] == "start_send_distance":
+        await ultrasonic.start_send_distance(client)
+    elif command["command"] == "stop_send_distance":
+        await ultrasonic.stop_send_distance()
     else:
         logging.warning(f"Invalid command: {command}")
 
@@ -208,7 +158,7 @@ async def on_disconnect():
             break
         except Exception as e:
             logging.error(f"Reconnect failed: {e}")
-            await asyncio.sleep(5)  # 재시도 대기
+            await asyncio.sleep(2)  # 재시도 대기
 
 
 @asynccontextmanager
@@ -216,8 +166,6 @@ async def lifespan():
     client.on_message = on_message
     await on_connect()
 
-    # 비동기 작업 시작
-    #asyncio.create_task(send_distance(client))
     #asyncio.create_task(generate_frames(client))
     #asyncio.create_task(send_speech_text(client))  # 음성 인식 태스크 추가
 
