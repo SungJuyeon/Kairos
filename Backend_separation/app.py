@@ -15,7 +15,8 @@ from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
 
-from GPT.add_schedule import add_schedule
+from message_server import handle_connection, fetch_user_id_by_username
+
 from calendar_app import get_all_schedules, Schedule, delete_schedule, add_schedules
 
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
@@ -117,11 +118,34 @@ async def most_emotion_pic(token: str = Header(...)):
 
     return FileResponse(pic_path, media_type="image/jpeg")
 
+@app.get("/messages/{username}")
+async def get_messages(username: str):
+    user_id = fetch_user_id_by_username(username)
+    if user_id is None:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    message_log = f"{user_id}_messages.json"
+
+    if not os.path.exists(message_log):
+        return {"messages": []}
+
+    with open(message_log, "r", encoding="utf-8") as file:
+        try:
+            messages = json.load(file)
+        except json.JSONDecodeError:
+            messages = []
+    return {"messages": messages}
+
+@app.websocket("/ws/chat")
+async def websocket_endpoint(websocket: WebSocket):
+    await handle_connection(websocket)
+
 # @app.get("/gesture")
 # async def get_gesture():
 #     logger.info(f"get_gesture 엔드포인트 호출됨.")
 #     from handgesture_recognition import this_action
 #     return {"gesture": this_action}
+
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)

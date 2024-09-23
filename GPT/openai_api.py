@@ -5,7 +5,7 @@ import re
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-from GPT.youtube import play_music_on_youtube, close_browser
+from youtube import play_music_on_youtube, close_browser
 from add_schedule import add_schedule
 from delete_schedule import delete_schedule
 from select_schedule import select_schedule
@@ -35,7 +35,7 @@ messages = [
 # GPT 모델에 prompt를 전달해 response 생성
 def generate_gpt_response(prompt):
     completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
         max_tokens=100

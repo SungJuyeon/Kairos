@@ -10,10 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 from emotion_record import get_most_frequent_emotion, save_emotion_result, get_emotion_file_today, save_most_emotion_pic
 from emotion_video import generate_video_filename, save_frames_to_video
 
-# 로깅 설정
 logging.basicConfig(level=logging.INFO)
 
-# 전역 변수 초기화
 model = cv2.dnn.readNetFromCaffe('models/deploy.prototxt', 'models/res10_300x300_ssd_iter_140000.caffemodel')
 last_detected_nicknames = []
 last_detected_distances = []
@@ -31,7 +29,7 @@ def detect_faces(frame):
     model.setInput(blob)
     detections = model.forward()
 
-    faces.clear()  # 이전 얼굴 정보를 초기화
+    faces.clear()
 
     for i in range(detections.shape[2]):
         confidence = detections[0, 0, i, 2]
