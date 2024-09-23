@@ -4,18 +4,15 @@ import os
 import json
 from fastapi.responses import FileResponse
 import uvicorn  # uvicorn 모듈 임포트 추가
-
 from fastapi import FastAPI, Request, HTTPException, Header, WebSocket
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse
-
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames
 from db_face_loader import load_faces_from_db
 from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
-
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames

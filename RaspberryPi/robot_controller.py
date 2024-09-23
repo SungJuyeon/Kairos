@@ -16,8 +16,8 @@ MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
-MQTT_TOPIC_SPEECH = "robot/speech"
-MQTT_TOPIC_TEXT = "robot/text"
+MQTT_TOPIC_AUDIOTOTEXT = "robot/audio_to_text"
+MQTT_TOPIC_TEXTTOAUDIO = "robot/text_to_audio"
 
 client = MQTTClient(client_id="robot_controller")
 
@@ -54,6 +54,8 @@ async def on_message(client, topic, payload, qos, properties):
         await audio_text.start_send_audio(client)
     elif command["command"] == "stop_send_audio":
         await audio_text.stop_send_audio()
+    elif command["command"] == "text_to_audio":
+        await audio_text.text_to_audio(command["text"])
         
     else:
         logging.warning(f"Invalid command: {command}")
