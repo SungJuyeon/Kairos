@@ -1,18 +1,28 @@
+import asyncio
 import logging
 import os
-import datetime
+import time
+from concurrent.futures import ThreadPoolExecutor
+from emotion_record import get_most_frequent_emotion, save_emotion_result, save_most_emotion_pic
+from mqtt_client import video_frames
+import boto3
 import cv2
 import numpy as np
 from deepface import DeepFace
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from s3_uploader import upload_to_s3
 
 from emotion_record import get_most_frequent_emotion, save_emotion_result, get_emotion_file_today, save_most_emotion_pic
 from emotion_video import generate_video_filename, save_frames_to_video
 
 logging.basicConfig(level=logging.INFO)
 
-model = cv2.dnn.readNetFromCaffe('models/deploy.prototxt', 'models/res10_300x300_ssd_iter_140000.caffemodel')
+# 전역 변수 초기화
+current_dir = os.path.dirname(os.path.abspath(__file__))
+prototxt_path = os.path.join(current_dir, 'models', 'deploy.prototxt')
+model_path = os.path.join(current_dir, 'models', 'res10_300x300_ssd_iter_140000.caffemodel')
+faces_dir = os.path.join(current_dir, 'faces')  # faces 폴더의 절대 경로
+
+model = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 last_detected_nicknames = []
 last_detected_distances = []
 last_detected_rectangles = []
@@ -57,7 +67,7 @@ async def recognize_faces(frame):
         face_image = frame[y:y + h, x:x + w]
 
         try:
-            result = DeepFace.find(face_image, db_path='faces', model_name='VGG-Face', enforce_detection=False)
+            result = DeepFace.find(face_image, db_path=faces_dir, model_name='VGG-Face', enforce_detection=False)
 
             if result and len(result) > 0:
                 threshold = 0.4
@@ -113,16 +123,19 @@ async def recognize_emotion(frame):
                 last_detected_emotions.append(current_emotion)
                 last_detected_emotion_scores.append(emotion_result[0]['emotion'])
 
-                if current_emotion != 'fear' and detected_person_name != "unknown":
-                    # emotion_today_{detected_person_name}.json 으로 감정 수치 저장
+
+                if current_emotion != 'neutral' and detected_person_name != "unknown":
+                    #emotion_today_{detected_person_name}.json 으로 감정 수치 저장
                     save_emotion_result(detected_person_name, current_emotion)
+                    #최다 감정 사진 저장
+                    new_most_frequent_emotion = get_most_frequent_emotion(detected_person_name)
+                    if new_most_frequent_emotion != most_frequent_emotion:
+                        save_most_emotion_pic(frame, new_most_frequent_emotion, detected_person_name)
+                        logging.info(f"Updated most emotion photo for {detected_person_name} with emotion: {new_most_frequent_emotion}")
 
-                    # 최다 감정 사진 저장
-                    # new_frequent_emotion = get_most_frequent_emotion(detected_person_name)
-                    # logging.info(new_frequent_emotion)
-
-                    save_most_emotion_pic(frame, current_emotion, detected_person_name)
-                    #logging.info(f"{detected_person_name} | {current_emotion}")
+            else:
+                last_detected_emotions.append("unknown")
+                last_detected_emotion_scores.append({})
 
         except Exception as e:
             print("Error in emotion recognition:", e)
@@ -166,20 +179,76 @@ def draw_faces(frame):
     return frame
 
 def get_nickname_from_filename(filename):
-    base_name = os.path.basename(filename)  # 파일 경로에서 파일 이름만 추출
+    base_name = filename.split('/')[-1]  # 파일 경로서 파일 이름만 추출
     name_part = base_name.split('.')[0]  # 확장자 제거
     name_part = name_part.split('(')[0].strip()  # 괄호 앞부분을 가져옴
     return name_part
 
-async def recognize_periodically(video_frames):
+
+async def recognize_periodically():
     logging.info("얼굴 인식 업데이트 시작")
     while True:
         try:
             frame = video_frames[-1]
+            detect_faces(frame)
             await recognize_faces(frame)
             await recognize_emotion(frame)
+            await create_video_highlight()
             logging.info("인식 완료")
         except IndexError:
             logging.info("리스트가 비어 있습니다.")
         finally:
             await asyncio.sleep(2)
+
+
+
+is_saving_video = False  # 비디오 저장 중인지 여부를 나타내는 플래그
+
+
+async def create_video_highlight():
+    global is_saving_video  # 플래그를 전역으로 사용
+
+
+    current_emotions = last_detected_emotions
+    current_emotion_scores = last_detected_emotion_scores
+    current_nickname = last_detected_nicknames
+
+    if current_nickname != "unkown" and current_emotions and not is_saving_video:  # 비디오 저장 중이 아닐 때만 실행
+        for idx, emotion in enumerate(current_emotions):
+            score = current_emotion_scores[idx].get(emotion, 0)
+            if emotion != "neutral" and score >= 0.4:
+                asyncio.create_task(save_video())
+
+
+async def save_video(fps=10, seconds=20):
+    logging.info("비디오 저장 시작##########################################")
+    global is_saving_video
+    is_saving_video = True  # 비디오 저장 시작
+    if not video_frames :
+        logging.info("비디오 프레임이 없습니다.")
+        is_saving_video = False
+        return
+
+    detected_person_name = last_detected_nicknames[0] if last_detected_nicknames else "unknown"
+    detected_emotion = last_detected_emotions[0] if last_detected_emotions else "unknown"
+    video_file_name = f'{detected_person_name}_{detected_emotion}_{time.strftime("%Y%m%d_%H%M%S")}.mp4'
+    first_frame = video_frames[0]
+    h, w = first_frame.shape[:2]
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(video_file_name, fourcc, fps, (w, h))
+
+    start_time = time.time()
+    end_time = start_time + seconds
+
+    while time.time() < end_time:
+        if video_frames:
+            frame = video_frames[-1]  # 가장 최근 프레임 사용
+            out.write(frame)
+        await asyncio.sleep(1 / fps)  # fps에 맞춰 대기
+
+    out.release()  # 비디오 파일 닫기
+    is_saving_video = False
+    logging.info("비디오 저장 완료##########################################")
+    
+    # S3에 저장하는 함수 호출
+    await upload_to_s3(video_file_name)
