@@ -24,15 +24,14 @@ async def generate_frames():
         if len(video_frames) > 0:
             frame = video_frames[-1]
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
+            
             # 변환된 프레임을 JPEG 형식으로 인코딩
             success, buffer = cv2.imencode('.jpg', frame)
             if success:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-        await asyncio.sleep(0.1)  # 프레임을 가져오는 간격 조절
+        await asyncio.sleep(0.05)  # 프레임을 가져오는 간격 조절
 
 
 async def video_frame_generator(face=True, hand=True):
