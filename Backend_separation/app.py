@@ -8,9 +8,8 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
 from face_recognition import recognize_periodically
-import follow
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_audio, video_frames
+from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
 from calendar_app import get_all_schedules, add_schedule, delete_schedule, Schedule
@@ -22,6 +21,7 @@ from message_server import handle_connection, fetch_user_id_by_username
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
 app.add_middleware(
@@ -35,13 +35,16 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     await setup_mqtt()
-    #asyncio.create_task(recognize_periodically())
+    asyncio.create_task(recognize_periodically())
     load_faces_from_db()  # 얼굴 이미지 로드
-    # #if init_hand_gesture():
-    #     asyncio.create_task(recognize_hand_gesture_periodically())
-    # else:
-    #     logger.error("손동작 인식 초기화 실패")
+    if init_hand_gesture():
+        asyncio.create_task(recognize_hand_gesture_periodically())
+    else:
+        logger.error("손동작 인식 초기화 실패")
 
+@app.get("/", response_class=HTMLResponse)
+async def read_index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/move/{direction}")
 async def post_move(direction: str):
@@ -51,12 +54,15 @@ async def post_move(direction: str):
 async def post_speed(action: str):
     await speed(action)
 
-@app.post("/text_to_audio/{text}")
-async def post_text_to_audio(text: str):
-    await text_to_audio(text)
+
+@app.post("/text_to_speech/{text}")
+async def post_text_to_speech(text: str):
+    await text_to_speech(text)
     
+
 @app.get("/distance")
 async def get_distance():
+    logger.info("get_distance 엔드포인트 호출됨.")
     return {"distance": distance_data}
 
 @app.get("/video")
@@ -164,11 +170,6 @@ async def get_video_list():
 @app.get("/speech_text")
 async def get_speech_text():
     return {"speech_text": speech_text}
-
-@app.get("/follow")
-async def get_follow():
-    asyncio.create_task(follow.follow())
-    return StreamingResponse(follow.generate_video_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 if __name__ == "__main__":

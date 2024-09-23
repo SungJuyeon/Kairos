@@ -38,7 +38,7 @@ GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
 cap = cv2.VideoCapture(0)
 
 # MQTT 설정
-MQTT_BROKER = "localhost"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "172.30.1.68"  # MQTT 브로커 주소 입력
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
