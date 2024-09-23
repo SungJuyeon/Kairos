@@ -9,9 +9,8 @@ export default function VoiceChat() {
   
   return (
     <Container>
-
         <ChatButton onPress={() => navigate("Chat")}>
-          <ChatButtonText>가족과 채팅 하러 가기</ChatButtonText>
+          <ChatButtonText>가족 채팅방</ChatButtonText>
         </ChatButton>
     </Container>
   );
@@ -46,12 +45,13 @@ const ChatButtonContainer = styled.View`
 `;
 
 const ChatButton = styled.TouchableOpacity`
-  background-color: #999;
+  background-color: #FFCEFF;
   padding: 12px 16px;
   border-radius: 16px;
 `;
 
 const ChatButtonText = styled.Text`
-  color: #fff;
-  font-size: 16px;
+  color: #000;
+  font-size: 26px;
+  font-weight: bold;
 `;

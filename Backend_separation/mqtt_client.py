@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 distance_data = None
 video_frames = []
 audio_data = []
-speech_text = None
 MAX_FRAMES = 3
 current_speed = 50
 
@@ -41,7 +40,7 @@ async def on_connect():
 
 
 async def on_message(client, topic, payload, qos, properties):
-    global audio_data, distance_data, video_frames, speech_text
+    global audio_data, distance_data, video_frames
 
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
@@ -51,8 +50,6 @@ async def on_message(client, topic, payload, qos, properties):
         video_frames.append(img_encode)
         return
 
-
-    # 다른 데이터 처리
     try:
         message = json.loads(payload.decode('utf-8'))  # JSON 디코딩
 
@@ -67,10 +64,6 @@ async def on_message(client, topic, payload, qos, properties):
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
 
-    
-
-    return
-
 
 async def setup_mqtt():
     client.on_message = on_message
@@ -84,15 +77,13 @@ async def move(direction: str):
     logger.info(f"Command sent: {command}")
 
 
-async def speed(action):
+async def speed(action: str):
     global current_speed
     logger.info(f"Attempting to set speed: {action}")
     if action == "up":
         current_speed = min(100, current_speed + 10)  # 속도를 10 증가, 최대 100으로 제한
     elif action == "down":
         current_speed = max(0, current_speed - 10)  # 속도를 10 감소, 최소 0으로 제한
-    elif action >=0 and action <=100:
-        current_speed = action
     else:
         logger.warning(f"Invalid action for speed: {action}")
         return {"error": "Invalid action"}, 400

@@ -14,11 +14,13 @@ const { width, height } = Dimensions.get('window');
 const scale = width / 640; // 기준 너비에 대한 비율
 
 export default function Control() {
-    const [isUpPressed, setIsUpPressed] = useState(false);
+    const [isForwardPressed, setIsForwardPressed] = useState(false);
     const [isLeftPressed, setIsLeftPressed] = useState(false);
     const [isRightPressed, setIsRightPressed] = useState(false);
+    const [isBackPressed, setIsBackPressed] = useState(false);
+    const [isStopPressed, setIsStopPressed] = useState(false);
+    const [isUpPressed, setIsUpPressed] = useState(false);
     const [isDownPressed, setIsDownPressed] = useState(false);
-    const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
     const [isOn, setIsOn] = useState(false);
     const [isFace, setIsFace] = useState(false);
     const [isGesture, setIsGesture] = useState(false);
@@ -31,9 +33,9 @@ export default function Control() {
     // 방향키 버튼을 누르고 있을 때
     const handleButtonPressIn = async (direction) => {
         switch (direction) {
-            case 'up':
-                setIsUpPressed(true);
-                await fetch(`${BASE_URL}/move/up`, { method: 'POST' });
+            case 'forward':
+                setIsForwardPressed(true);
+                await fetch(`${BASE_URL}/move/forward`, { method: 'POST' });
                 break;
             case 'left':
                 setIsLeftPressed(true);
@@ -43,8 +45,20 @@ export default function Control() {
                 setIsRightPressed(true);
                 await fetch(`${BASE_URL}/move/right`, { method: 'POST' });
                 break;
+            case 'back':
+                setIsBackPressed(true);
+                await fetch(`${BASE_URL}/move/back`, { method: 'POST' });
+                break;
+            case 'stop':
+                setIsStopPressed(true);
+                await fetch(`${BASE_URL}/stop`, { method: 'POST' });
+                break;
+            case 'up':
+                setIsUpPressed(true);
+                await fetch(`${BASE_URL}/move/up`, { method: 'POST' });
+                break;
             case 'down':
-                setIsDownPressed(true);
+                setIsUpPressed(true);
                 await fetch(`${BASE_URL}/move/down`, { method: 'POST' });
                 break;
         }
@@ -53,8 +67,8 @@ export default function Control() {
     // 방향키 버튼을 누르다가 땔 때
     const handleButtonPressOut = async (direction) => {
         switch (direction) {
-            case 'up':
-                setIsUpPressed(false);
+            case 'forward':
+                setIsForwardPressed(false);
                 break;
             case 'left':
                 setIsLeftPressed(false);
@@ -62,12 +76,19 @@ export default function Control() {
             case 'right':
                 setIsRightPressed(false);
                 break;
+            case 'back':
+                setIsBackPressed(false);
+                break;
+            case 'up':
+                setIsUpPressed(true);
+                break;
             case 'down':
-                setIsDownPressed(false);
+                setIsDownPressed(true);
                 break;
         }
         // 모터 정지 요청
         await fetch(`${BASE_URL}/stop`, { method: 'POST' });
+        setIsStopPressed(true);
     };
 
     // 웹뷰 캡쳐 함수
@@ -188,7 +209,9 @@ export default function Control() {
 
                 <ControlPadContainer>
                     <SpeedSliderContainer>
-                        <SliderText>속도: {value}</SliderText>
+                        <SliderTextContainer>
+                            <SliderText>속도: {value}</SliderText>
+                        </SliderTextContainer>
                         <StyledSlider
                             minimumValue={0}
                             maximumValue={10}
@@ -202,43 +225,56 @@ export default function Control() {
                     </SpeedSliderContainer>
 
                     <ButtonContainer>
-                        <UpButtonContainer>
-                            <ButtonStyle
+                        <DirectionButtonContainer>
+                            <CamButton
                                 onPressIn={() => handleButtonPressIn('up')}
                                 onPressOut={() => handleButtonPressOut('up')}
                             >
-                                <ButtonText>{isUpPressed ? '↑' : '↑'}</ButtonText>
-                            </ButtonStyle>
-                        </UpButtonContainer>
-                        <DirectionButtonContainer>
-                            <ButtonStyle
-                                onPressIn={() => handleButtonPressIn('left')}
-                                onPressOut={() => handleButtonPressOut('left')}
+                                <CamButtonText>{isUpPressed ? 'Up' : 'Up'}</CamButtonText>
+                            </CamButton>
+                            <ButtonStyle3
+                                onPressIn={() => handleButtonPressIn('forward')}
+                                onPressOut={() => handleButtonPressOut('forward')}
                             >
-                                <ButtonText>{isLeftPressed ? '←' : '←'}</ButtonText>
-                            </ButtonStyle>
-                            <ButtonStyle
-                                onPressIn={() => handleButtonPressIn('right')}
-                                onPressOut={() => handleButtonPressOut('right')}
-                            >
-                                <ButtonText>{isRightPressed ? '→' : '→'}</ButtonText>
-                            </ButtonStyle>
-                        </DirectionButtonContainer>
-                        <DownButtonContainer>
-                            <ButtonStyle
+                                <ButtonText>{isForwardPressed ? '▲' : '▲'}</ButtonText>
+                            </ButtonStyle3>
+                            <CamButton2
                                 onPressIn={() => handleButtonPressIn('down')}
                                 onPressOut={() => handleButtonPressOut('down')}
                             >
-                                <ButtonText>{isDownPressed ? '↓' : '↓'}</ButtonText>
+                                <CamButtonText>{isDownPressed ? 'Down' : 'Down'}</CamButtonText>
+                            </CamButton2>
+                        </DirectionButtonContainer>
+                        <DirectionButtonContainer2>
+                            <ButtonStyle2
+                                onPressIn={() => handleButtonPressIn('left')}
+                                onPressOut={() => handleButtonPressOut('left')}
+                            >
+                                <ButtonText>{isLeftPressed ? '◀' : '◀'}</ButtonText>
+                            </ButtonStyle2>
+                            <ButtonStyle3
+                                onPressIn={() => handleButtonPressIn('stop')}
+                                onPressOut={() => handleButtonPressOut('stop')}
+                            >
+                                <ButtonText>{isStopPressed ? '●' : '●'}</ButtonText>
+                            </ButtonStyle3>
+                            <ButtonStyle3
+                                onPressIn={() => handleButtonPressIn('right')}
+                                onPressOut={() => handleButtonPressOut('right')}
+                            >
+                                <ButtonText>{isRightPressed ? '▶' : '▶'}</ButtonText>
+                            </ButtonStyle3>
+                        </DirectionButtonContainer2>
+                        <DownButtonContainer>
+                            <ButtonStyle
+                                onPressIn={() => handleButtonPressIn('back')}
+                                onPressOut={() => handleButtonPressOut('back')}
+                            >
+                                <ButtonText>{isBackPressed ? '▼' : '▼'}</ButtonText>
                             </ButtonStyle>
                         </DownButtonContainer>
                     </ButtonContainer>
                 </ControlPadContainer>
-
-       
-
-
-
         </Container>
     );
 }
@@ -283,15 +319,6 @@ const BorderContainer = styled.View`
     margin: 2%;
 `;
 
-const Border2Container = styled.View`
-    background-color: #222222;
-    border: 2px solid #FFCEFF;
-    border-radius: 10px;
-    padding: 10px;
-    width: ${width * 0.95}px;
-    margin-top: 10px;
-`;
-
 const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
@@ -306,9 +333,17 @@ const UpButtonContainer = styled.View`
 
 const DirectionButtonContainer = styled.View`
     flex-direction: row;
-    justify-content: space-between;
+    margin-top: 20px;
     margin-bottom: 20px;
     width: 200px;
+
+`;
+
+const DirectionButtonContainer2 = styled.View`
+    flex-direction: row;
+    margin-bottom: 20px;
+    width: 200px;
+
 `;
 
 const DownButtonContainer = styled.View`
@@ -316,16 +351,15 @@ const DownButtonContainer = styled.View`
     margin-left: 100px;
 `;
 
-
 const ButtonText = styled.Text`
     color: black;
-    font-size: ${scale * 25}px; 
+    font-size: 20px; 
     font-weight: bold;
 `;
 
-const SpeedButtonText = styled.Text`
-    color: white;
-    font-size: ${scale * 25}px; 
+const CamButtonText = styled.Text`
+    color: black;
+    font-size: 15px; 
     font-weight: bold;
 `;
 
@@ -350,7 +384,7 @@ const SpeedSliderContainer = styled.View`
     justify-content: center;
     align-items: center;
     position: absolute;
-    right: 160px;
+    right: 180px;
     bottom: 50px;
     padding: 5px;
     border-radius: 10px;
@@ -360,13 +394,13 @@ const SpeedSliderContainer = styled.View`
 
 const CaptureButtonText = styled.Text`
     color: black;
-    font-size: ${scale * 18}px; 
+    font-size: 12px; 
     font-weight: bold;
 `;
 
 const OnOffButton = styled.TouchableOpacity`
-    width: ${scale * 110}px; 
-    height: ${scale * 70}px;
+    width: 70px; 
+    height: 45px;
     justify-content: center;
     align-items: center;
     background-color: ${({ isOn }) => (isOn ? '#ADCDFF' : '#AAAAAA')};
@@ -377,44 +411,83 @@ const OnOffButton = styled.TouchableOpacity`
 
 const OnOffButtonText = styled.Text`
     color: black;
-    font-size: ${scale * 18}px;
+    font-size: 12px;
     font-weight: bold;
 `;
 
-const ValueText = styled.Text`
-    color: white;
-    font-size: ${scale * 24}px; 
-    margin-top: 10px;
-    margin-bottom: 10px;
+const CamButton = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    border-radius: 10px;
+    padding: 10px 10px;
+    width: 65px;
+    height: ${scale * 90}px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 30px;
+`;
+
+const CamButton2 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    border-radius: 10px;
+    padding: 10px 10px;
+    width: 65px;
+    height: 55px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 20px;
 `;
 
 const ButtonStyle = styled.TouchableOpacity`
     background-color: white;
     border-radius: 10px;
-    padding: 10px 30px;
+    padding: 10px 10px;
     margin: 0 40px;
-    width: ${scale * 120}px;
-    height: ${scale * 90}px;
+    width: 65px;
+    height: 55px;
     justify-content: center;
     align-items: center;
 `;
 
-const SpeedButton = styled.TouchableOpacity`
-    background-color: #F8098B;
+const ButtonStyle2 = styled.TouchableOpacity`
+    background-color: white;
     border-radius: 10px;
-    padding: 10px 20px;
-    margin: 10px;
-    width: ${scale * 100}px; 
+    padding: 10px 10px;
+    width: 65px;
+    height: 55px;
     justify-content: center;
     align-items: center;
+    margin-left: 30px;
 `;
+
+const ButtonStyle3 = styled.TouchableOpacity`
+    background-color: white;
+    border-radius: 10px;
+    padding: 10px 10px;
+    width: 65px;
+    height: 55px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 20px;
+`;
+
+const StopButton = styled.TouchableOpacity`
+    background-color: white;
+    border-radius: 10px;
+    padding: 10px 10px;
+    width: 100px;
+    height: 80px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 20px;
+`;
+
 
 const CaptureButtonStyle = styled.TouchableOpacity`
-    width: ${scale * 120}px; 
-    height: ${scale * 70}px;
+    width: 70px; 
+    height: 45px;
     justify-content: center;
     align-items: center;
-    background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : 'white')};
+    background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : '#FFCEFF')};
     border-radius: 10px;
     padding: 10px 10px;
     margin: 0 10px;
@@ -433,15 +506,21 @@ const StyledImage = styled.Image`
     height: 100%;
 `;
 
-const SliderText = styled(Text)`
-    font-size: 25px;
-    margin-bottom: 80px;
-    color: white;
+const SliderTextContainer = styled.View`
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    margin-bottom: 70px;
+    padding: 7px;
+`;
+
+const SliderText = styled.Text`
+    font-size: 22px;
+    color: black;
     font-weight: bold;
 `;
 
 const StyledSlider = styled(Slider)`
-    width: 160px;
+    width: 150px;
     transform: rotate(-90deg);
 `;
 
