@@ -49,8 +49,8 @@ def load_faces_from_db():
                 if photoname:
                     try:
                         # 이미지 데이터 형식 확인
-                        logger.info(f"사용자 {nickname}의 이미지 데이터 형식: {type(photoname)}")
-                        logger.info(f"이미지 데이터 시작 부분: {photoname[:50]}")  # 처음 50자만 출력
+                        #logger.info(f"사용자 {nickname}의 이미지 데이터 형식: {type(photoname)}")
+                        #logger.info(f"이미지 데이터 시작 부분: {photoname[:50]}")  # 처음 50자만 출력
                         
                         # Base64 문자열에서 'data:image/jpeg;base64,' 부분 제거
                         if isinstance(photoname, str) and photoname.startswith('data:image/jpeg;base64,'):

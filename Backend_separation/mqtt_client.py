@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 # 상태 변수
 distance_data = None
 video_frames = []
-audio_data = []
 speech_text = None
 MAX_FRAMES = 3
 current_speed = 50
@@ -49,6 +48,7 @@ async def on_message(client, topic, payload, qos, properties):
             video_frames.pop(0)  # 가장 오래된 프레임 삭제
         img_encode = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
         video_frames.append(img_encode)
+        #logger.info(f"Received video frame: {len(video_frames)}")
         return
 
 

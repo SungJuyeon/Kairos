@@ -51,7 +51,8 @@ async def follow():
                 if position == "center":
                     await move("forward")
                     if current_distance and current_distance <= 30:
-                        await move("stop")
+                        await move("stop_wheel")
+                        await move("stop_actuator")
                         break
                 elif position == "left":
                     await move("left")
@@ -109,7 +110,7 @@ def detect_person(frame):
         return False, None, None
 
 # 비디오 프레임 생성기
-def generate_video_frames():
+async def generate_video_frames():
     while True:
         if video_frames:
             frame = video_frames[-1].copy()  # 프레임 복사
@@ -124,6 +125,7 @@ def generate_video_frames():
             # 멀티파트 응답 생성
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            await asyncio.sleep(0.1)
         else:
             # 프레임이 없으면 잠시 대기
             time.sleep(0.1)

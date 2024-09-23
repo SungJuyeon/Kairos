@@ -28,7 +28,7 @@ async def generate_frames(client):
                 ret, frame = cap.read()
                 if not ret:
                     logging.warning("Failed to capture frame")
-                    await asyncio.sleep(0.01)  # 프레임 캡처 실패 시 대기
+                    await asyncio.sleep(1)  # 프레임 캡처 실패 시 대기
                     continue
 
                 _, buffer = cv2.imencode('.jpg', frame)
