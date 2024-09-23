@@ -1,32 +1,17 @@
+# messages_server.py
+
 import os
 import json
-
-import messages
 import pymysql
-from fastapi import FastAPI, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-import uvicorn
-import asyncio
+from fastapi import WebSocket
 from jose import jwt
 from dotenv import load_dotenv
 
 load_dotenv()
-app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+# 전역 변수 선언
 client_sockets = []
 
-# 환경 변수에서 데이터베이스 연결 정보 가져오기
 db_host = os.getenv('DB_HOST')
 db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
@@ -36,19 +21,17 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if SECRET_KEY is None:
     raise ValueError("No SECRET_KEY set for application")
 
-# 데이터베이스 연결 함수
 def get_db_connection():
-    print("데이터베이스에 연결 중...")
     return pymysql.connect(
         host=db_host,
         user=db_user,
         password=db_password,
-        database=db_name
+        database=db_name,
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
     )
 
-# 사용자 ID를 username으로부터 가져오기
 def fetch_user_id_by_username(username):
-    print(f"username '{username}'으로 사용자 ID 검색 중...")
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -60,15 +43,10 @@ def fetch_user_id_by_username(username):
     conn.close()
 
     if result:
-        print(f"사용자 ID: {result[0]}")
-        return result[0]
-    print("사용자 ID를 찾을 수 없습니다.")
+        return result['id']
     return None
 
-# 가족 목록 가져오기
-def get_family(username):
-    print(f"{username}의 가족 목록 가져오는 중...")
-    user_id = fetch_user_id_by_username(username)
+def get_family(user_id):
     if user_id is None:
         return []
 
@@ -81,146 +59,96 @@ def get_family(username):
     WHERE (f.user1_id = %s OR f.user2_id = %s) AND u.id != %s
     """
     cursor.execute(query, (user_id, user_id, user_id))
-    family_members = [row[0] for row in cursor.fetchall()]
+    family_members = [row['id'] for row in cursor.fetchall()]
 
     cursor.close()
     conn.close()
 
-    print(f"{username}의 가족 목록: {family_members}")
     return family_members
 
-# 메시지 저장 함수
-def log_message(user_id, message):
-    print(f"{user_id}의 메시지 기록 중: {message}")
-    message_log = f"{user_id}_messages.json"
+def log_message(sender_id, message):
+    family_members = get_family(sender_id)
+    all_recipients = family_members + [sender_id]
 
-    # 메시지를 저장할 리스트 초기화
-    messages = []
+    for recipient_id in all_recipients:
+        message_log = f"{recipient_id}_messages.json"
 
-    # 파일이 존재하지 않으면 새로 생성
-    if not os.path.exists(message_log):
+        if os.path.exists(message_log):
+            with open(message_log, 'r', encoding='utf-8') as file:
+                try:
+                    messages = json.load(file)
+                except json.JSONDecodeError:
+                    messages = []
+        else:
+            messages = []
+
+        messages.append({"sender_id": sender_id, "message": message})
+
         with open(message_log, 'w', encoding='utf-8') as file:
             json.dump(messages, file, indent=4, ensure_ascii=False)
 
-    # 파일이 존재하면 내용을 읽어옴
-    with open(message_log, 'r', encoding='utf-8') as file:
-        messages = json.load(file)
-
-    messages.append({"message": message})
-
-    with open(message_log, 'w', encoding='utf-8') as file:
-        json.dump(messages, file, indent=4, ensure_ascii=False)
-
-# JWT에서 사용자 ID 추출 함수
-def get_user_id_from_token(token: str):
+def get_username_from_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        print(f"토큰에서 사용자 추출 성공: {payload.get('username')}")
-        return payload.get("username")
+        username = payload.get("username")
+        if not username:
+            print("Username not found in token.")
+            return None
+        return username
     except jwt.JWTError as e:
         print(f"JWT Error: {str(e)}")
         return None
 
-# 사용자 ID를 username으로부터 가져오기
-def fetch_username_by_user_id(user_id):
-    print(f"사용자 ID '{user_id}'으로 username 검색 중...")
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    query = "SELECT username FROM userentity WHERE id = %s"
-    cursor.execute(query, (user_id,))
-    result = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    if result:
-        print(f"username: {result[0]}")
-        return result[0]
-    print("username을 찾을 수 없습니다.")
-    return None
-
-# WebSocket 핸들러
 async def handle_connection(websocket: WebSocket):
+    global client_sockets
     await websocket.accept()
-    print(f'>> New connection from {websocket.client.host}:{websocket.client.port}')
-
     user_id = None
-
+    print(">> WebSocket 연결 수락됨.")
     try:
         while True:
             data = await websocket.receive_text()
-            print(f'>> Received data: {data}')  # 수신한 데이터 로그
-            message_data = json.loads(data)
+            print(f">> 수신 데이터: {data}")
+            try:
+                message_data = json.loads(data)
+                print(">> JSON 파싱 성공.")
+            except json.JSONDecodeError:
+                print(">> Invalid JSON data.")
+                continue
 
             if "token" in message_data:
                 token = message_data["token"]
-                username = get_user_id_from_token(token)
+                print(">> 토큰 수신:", token)
+                username = get_username_from_token(token)
+                if username is None:
+                    print(">> 토큰에서 username 추출 실패.")
+                    continue
                 user_id = fetch_user_id_by_username(username)
                 if user_id is not None:
-                    client_sockets.append((websocket, user_id))
-                    print(f'>> User ID: {user_id}')
+                    print(f">> 사용자 ID 추출: {user_id}")
+                    if not any(client[0] == websocket for client in client_sockets):
+                        client_sockets.append((websocket, user_id))
+                        print(f">> 클라이언트 소켓 목록에 추가: {user_id}")
                 else:
                     print(">> Invalid token or user ID could not be retrieved.")
 
             if "message" in message_data and user_id is not None:
                 message = message_data["message"]
-                print(f'>> Received from {username}: {message}')
-                log_message(username, message)
+                print(f">> 메시지 수신 from {user_id}: {message}")
+                log_message(user_id, message)
 
-                # 현재 사용자 가족 목록 가져오기
-                current_user_family = get_family(username)
+                current_user_family = get_family(user_id)
+                print(f">> 가족 목록: {current_user_family}")
 
-                # 현재 사용자 가족 목록을 한 번만 출력
-                print(f'>> {username} family: {current_user_family}')
-
-                # 모든 클라이언트에게 메시지 브로드캐스트 (가족에게만)
                 for client, client_user_id in client_sockets:
-                    client_family = get_family(fetch_username_by_user_id(client_user_id))
-                    print(f'>> user_id: {user_id} current_user_family: {current_user_family}')
-                    print(f'>> client_user_id: {client_user_id} client_family: {client_family}')
-                    # 서로가 가족인지 확인하여 메시지를 전달
-                    if user_id in client_family or client_user_id in current_user_family:
-                        print(f'>> Sending to {client_user_id}: {user_id}: {message}')
-                        await client.send_text(f"{user_id}: {message}")
-
+                    if client_user_id == user_id or client_user_id in current_user_family:
+                        try:
+                            await client.send_text(f"{user_id}: {message}")
+                            print(f">> 메시지 전송 to {client_user_id}: {message}")
+                        except Exception as e:
+                            print(f">> 메시지 전송 실패 to {client_user_id}: {e}")
     except Exception as e:
         print(f'>> Connection closed: {e}')
     finally:
         if user_id is not None:
-            client_sockets.remove((websocket, user_id))
-            print(f'>> Connection removed for user ID: {user_id}')
-
-# WebSocket 라우트
-@app.websocket("/ws/chat")
-async def websocket_endpoint(websocket: WebSocket):
-    await handle_connection(websocket)
-
-# HTTP 라우트
-@app.get("/chat", response_class=HTMLResponse)
-async def read_chat():
-    return templates.TemplateResponse("chat.html", {"request": {}})
-
-# 사용자 메시지를 가져오는 API
-@app.get("/messages/{username}")
-async def get_messages(username: str):
-    print(f"{username}의 메시지를 가져오는 중...")
-    message_log = f"{username}_messages.json"
-
-    if not os.path.exists(message_log):
-        return {"messages": []}
-
-    with open(message_log, 'r') as file:
-        messages = json.load(file)
-
-    return {"messages": messages}
-
-
-
-
-# 서버 실행
-if __name__ == "__main__":
-    config = uvicorn.Config(app, host='0.0.0.0', port=8000)
-    server = uvicorn.Server(config)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(server.serve())
+            client_sockets = [c for c in client_sockets if c[1] != user_id]
+            print(f">> 클라이언트 소켓 목록에서 제거: {user_id}")

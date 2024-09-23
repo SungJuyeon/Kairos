@@ -11,7 +11,9 @@ import numpy as np
 from deepface import DeepFace
 from s3_uploader import upload_to_s3
 
-# 로깅 설정
+from emotion_record import get_most_frequent_emotion, save_emotion_result, get_emotion_file_today, save_most_emotion_pic
+from emotion_video import generate_video_filename, save_frames_to_video
+
 logging.basicConfig(level=logging.INFO)
 
 # 전역 변수 초기화
@@ -30,7 +32,6 @@ last_detected_emotion_scores = []
 faces = []
 executor = ThreadPoolExecutor(max_workers=4)
 
-
 def detect_faces(frame):
     global faces, last_face_positions
     h, w = frame.shape[:2]
@@ -38,7 +39,7 @@ def detect_faces(frame):
     model.setInput(blob)
     detections = model.forward()
 
-    faces.clear()  # 이전 얼굴 정보를 초기화
+    faces.clear()
 
     for i in range(detections.shape[2]):
         confidence = detections[0, 0, i, 2]
@@ -49,9 +50,9 @@ def detect_faces(frame):
 
     last_face_positions = faces if faces else None  # 얼굴이 감지되지 않은 경우 None으로 설정
 
-
 async def recognize_faces(frame):
     global last_detected_nicknames, last_detected_distances, last_detected_rectangles, last_face_positions
+
     if last_face_positions is None:
         last_detected_nicknames = ["unknown"]
         last_detected_distances = [None]
@@ -123,7 +124,7 @@ async def recognize_emotion(frame):
                 last_detected_emotion_scores.append(emotion_result[0]['emotion'])
 
 
-                if current_emotion != 'fear' and detected_person_name != "unknown":
+                if current_emotion != 'neutral' and detected_person_name != "unknown":
                     #emotion_today_{detected_person_name}.json 으로 감정 수치 저장
                     save_emotion_result(detected_person_name, current_emotion)
                     #최다 감정 사진 저장
@@ -140,7 +141,6 @@ async def recognize_emotion(frame):
             print("Error in emotion recognition:", e)
             last_detected_emotions.append("unknown")
             last_detected_emotion_scores.append({})
-
 
 def draw_faces(frame):
     global last_face_positions, last_detected_nicknames, last_detected_distances, last_detected_emotions, \
@@ -177,7 +177,6 @@ def draw_faces(frame):
                         (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
     return frame
-
 
 def get_nickname_from_filename(filename):
     base_name = filename.split('/')[-1]  # 파일 경로서 파일 이름만 추출

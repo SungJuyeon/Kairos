@@ -2,10 +2,11 @@ import os
 import json
 from datetime import datetime
 import cv2
+from dateutil.utils import today
 from emotion_video import delete_old_videos
 
 def get_emotion_file_today(person_name):
-    base_dir = os.path.join(os.path.dirname(__file__), "emotions")
+    base_dir = os.path.abspath("../Backend_separation/emotions")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
     return os.path.join(base_dir, f"emotion_today_{person_name}.json")
@@ -45,15 +46,29 @@ def get_most_frequent_emotion(person_name):
         print(f"Error while retrieving most frequent emotion: {e}")
         return None
 
-def save_most_emotion_pic(frame, emotion, person_name):
-    if emotion != 'fear':
-        path = get_most_emotion_pic_path(person_name)
-        cv2.imwrite(path, frame)
-        print(f"Saved most emotion picture for {person_name}: {path}")
+def save_most_emotion_pic(frame, current_emotion, person_name):
+    # 최다 감정 사진 경로 설정
+    pic_path = get_most_emotion_pic_path(person_name)
+
+    # 현재 감정이 'fear'가 아닌 경우에만 처리
+    if current_emotion != 'Neutral':
+        # 현재 감정이 최다 감정인지 확인
+        most_frequent_emotion = get_most_frequent_emotion(person_name)
+
+        # 현재 감정이 최다 감정이거나 새로운 최다 감정이 되었을 때 사진을 저장
+        if current_emotion == most_frequent_emotion:
+            # 현재 감정이 이미 최다 감정인 경우에도 사진을 저장
+            cv2.imwrite(pic_path, frame)
+            print(f"Updated most emotion picture for {person_name} with emotion: {current_emotion}")
+
+        elif current_emotion != most_frequent_emotion:
+            # 현재 감정이 최다 감정으로 바뀌었을 경우에도 사진을 저장
+            cv2.imwrite(pic_path, frame)
+            print(f"Updated most emotion picture for {person_name}, new most frequent emotion: {current_emotion}")
 
 
 def get_most_emotion_pic_path(person_name):
-    base_dir = os.path.join(os.path.dirname(__file__), "emotions")
+    base_dir = os.path.abspath("../Backend_separation/emotions")
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
     return os.path.join(base_dir, f"most_emotion_pic_{person_name}.jpg")

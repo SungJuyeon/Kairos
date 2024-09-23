@@ -9,11 +9,15 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 # LED 핀 설정
-LED_PIN = 18
+LED_PIN = 20
 GPIO.setup(LED_PIN, GPIO.OUT)
 
+# 인덕션 핀 설정
+INDUCTION_PIN = 21
+GPIO.setup(INDUCTION_PIN, GPIO.OUT)
+
 # 릴레이 핀 설정
-RELAY_PIN = 17
+RELAY_PIN = 13
 GPIO.setup(RELAY_PIN, GPIO.OUT)
 
 # 카메라 설정
@@ -27,10 +31,15 @@ MQTT_TOPIC_VIDEO = "home/video"
 
 client = MQTTClient("home_controller")
 
-# LED 제어 함수
-def control_led(state):
+# light 제어 함수
+def control_light(state):
     GPIO.output(LED_PIN, state)
-    print(f"LED {'ON' if state else 'OFF'}")
+    print(f"light {'ON' if state else 'OFF'}")
+    
+# induction 제어 함수
+def control_induction(state):
+    GPIO.output(LED_PIN, state)
+    print(f"induction {'ON' if state else 'OFF'}")    
 
 # 릴레이 제어 함수
 def control_relay(state):
@@ -41,7 +50,9 @@ def control_relay(state):
 async def on_message(client, topic, payload, qos, properties):
     command = json.loads(payload.decode())
     if command["device"] == "led":
-        control_led(command["state"])
+        control_light(command["state"])
+    elif command["device"] == "induction":
+        control_induction(command["state"])
     elif command["device"] == "relay":
         control_relay(command["state"])
 
@@ -52,7 +63,7 @@ async def send_camera_frames():
         if ret:
             _, buffer = cv2.imencode('.jpg', frame)
             client.publish(MQTT_TOPIC_VIDEO, buffer.tobytes())
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
 
 # MQTT 연결
 async def connect_mqtt():
