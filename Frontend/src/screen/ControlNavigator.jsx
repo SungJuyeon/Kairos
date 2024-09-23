@@ -13,7 +13,6 @@ import Function7Screen from "./Function7";
 import Function8Screen from "./Function8";
 import Function9Screen from "./Function9";
 import Function10Screen from "./Function10";
-import Login from "./Login";
 import React from "react";
 
 const ControlStack = createNativeStackNavigator();

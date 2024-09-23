@@ -26,19 +26,19 @@ export default function Home() {
         <Container>
             <Overlay />
             {!isAnimationFinished && (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    {/* headImage */}
-                    <Animated.Image
-                        source={headImage}
-                        style={{
-                            opacity: headImageOpacity,
-                            width: 300, // 원하는 크기로 조정
-                            height: 300, // 원하는 크기로 조정
-                            position: 'absolute',
-                            transform: [{ translateX: 0 }, { translateY: 0 }] // 중앙 정렬
-                        }}
-                    />
-                </View>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                {/* headImage */}
+                <Animated.Image
+                    source={headImage}
+                    style={{
+                        opacity: headImageOpacity,
+                        width: 300, // 원하는 크기로 조정
+                        height: 300, // 원하는 크기로 조정
+                        position: 'absolute',
+                        transform: [{ translateX: 0 }, { translateY: 0 }] // 중앙 정렬
+                    }}
+                />
+            </View>
             )}
             {isAnimationFinished && (
                 <AnimatedContainer>
@@ -50,12 +50,20 @@ export default function Home() {
                         <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                         </CaptureButtonStyle>
+                        <RowButtonContainer>
+                            <CaptureButtonStyle2 onPress={() => navigate('Chat')}>
+                                <CaptureButtonText>가족 채팅방 들어가기</CaptureButtonText>
+                            </CaptureButtonStyle2>
+                            <CaptureButtonStyle3 onPress={() => navigate('Highlight')}>
+                                <CaptureButtonText>하이라이트 보러가기</CaptureButtonText>   
+                            </CaptureButtonStyle3>
+                        </RowButtonContainer>
                         <CaptureButtonStyle onPress={() => navigate('Tutorial')}>
                             <CaptureButtonText>튜토리얼 하러가기</CaptureButtonText>
                         </CaptureButtonStyle>
-                        <CaptureButtonStyle2 onPress={() => navigate('MyPage')}>
-                            <CaptureButtonText2>로그인 / 회원가입</CaptureButtonText2>
-                        </CaptureButtonStyle2>
+                        <CaptureButtonStyle4 onPress={() => navigate('MyPage')}>
+                            <CaptureButtonText3>로그인 / 회원가입</CaptureButtonText3>
+                        </CaptureButtonStyle4>
                     </CaptureButtonContainer>
                 </AnimatedContainer>
             )}
@@ -100,6 +108,13 @@ const CaptureButtonContainer = styled.View`
     margin-top: 20px;
 `;
 
+const RowButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`;
+
 const ControlButton = styled.TouchableOpacity`
     background-color: #FFCEFF;
     width: 300px;
@@ -120,12 +135,29 @@ const CaptureButtonStyle = styled.TouchableOpacity`
 
 const CaptureButtonStyle2 = styled.TouchableOpacity`
     background-color: white;
-    width: 170px;
+    width: 140px;
+    height: 120px;
+    border-radius: 10px;
+    padding: 20px 20px;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    width: 140px;
+    height: 120px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin-left: 20px;
+`;
+
+const CaptureButtonStyle4 = styled.TouchableOpacity`
+    background-color: #888888;
+    width: 190px;
     height: 60px;
     border-radius: 10px;
     padding: 20px 20px;
     margin-top: 20px;
-    margin-right: 130px;
+    margin-right: 110px;
 `;
 
 const CaptureButtonText = styled.Text`
@@ -136,6 +168,12 @@ const CaptureButtonText = styled.Text`
 
 const CaptureButtonText2 = styled.Text`
     color: black;
+    font-size: 18px;
+    font-weight: bold;
+`;
+
+const CaptureButtonText3 = styled.Text`
+    color: white;
     font-size: 18px;
     font-weight: bold;
 `;

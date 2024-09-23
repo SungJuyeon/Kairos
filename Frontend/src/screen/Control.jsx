@@ -275,11 +275,6 @@ export default function Control() {
                         </DownButtonContainer>
                     </ButtonContainer>
                 </ControlPadContainer>
-
-       
-
-
-
         </Container>
     );
 }
@@ -512,15 +507,15 @@ const StyledImage = styled.Image`
 `;
 
 const SliderTextContainer = styled.View`
-    background-color: #000000;
+    background-color: #FFFFFF;
     border-radius: 10px;
     margin-bottom: 70px;
-    padding: 5px;
+    padding: 7px;
 `;
 
 const SliderText = styled.Text`
-    font-size: 23px;
-    color: white;
+    font-size: 22px;
+    color: black;
     font-weight: bold;
 `;
 
