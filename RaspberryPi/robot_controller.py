@@ -8,24 +8,14 @@ import json
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
 import sounddevice as sd
+import motor_control as mc
 import speech_recognition as sr
 import concurrent.futures
 from gtts import gTTS
 import os
 
 # 핀 번호 설정
-WHEEL_PINS = {
-    'ENA': 17,
-    'IN1': 27,
-    'IN2': 22,
-    'IN3': 23,
-    'IN4': 24,
-    'ENB': 25
-}
-ACTUATOR_PINS = {
-    'IN3': 13,
-    'IN4': 19
-}
+
 ULTRASONIC_PINS = {
     'TRIG': 20,
     'ECHO': 16
@@ -35,133 +25,23 @@ ULTRASONIC_PINS = {
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-# 핀 설정
-for pin in WHEEL_PINS.values():
-    GPIO.setup(pin, GPIO.OUT)
-for pin in ACTUATOR_PINS.values():
-    GPIO.setup(pin, GPIO.OUT)
+
 GPIO.setup(ULTRASONIC_PINS['TRIG'], GPIO.OUT)
 GPIO.setup(ULTRASONIC_PINS['ECHO'], GPIO.IN)
 
-# PWM 객체 생성 후 시작 (속도조절)
-pwm_A = GPIO.PWM(WHEEL_PINS['ENA'], 100)  # 100Hz
-pwm_B = GPIO.PWM(WHEEL_PINS['ENB'], 100)  # 100Hz
-pwm_A.start(0)
-pwm_B.start(0)
+
 
 # 카메라 설정
 cap = cv2.VideoCapture(0)
 # 음성 캡처 큐
 audio_queue = queue.Queue()
 
-# 현재 모터 상태를 저장하는 변수
-wheel_direction = None
-actuator_direction = None
-wheel_speed = 100
+
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 
 
-# 바퀴 설정 #######################################################################
-async def wheel_control(direction):
-    global wheel_direction
-    wheel_direction = direction
-    logging.info(f"wheel {direction}, speed {wheel_speed}")
-    set_wheel_state(direction)
-
-    while wheel_direction == direction:
-        await asyncio.sleep(0.05)
-
-    stop_wheel()
-
-
-def set_wheel_state(direction):
-    # 모터 방향 설정
-    if direction == "forward":
-        GPIO.output(WHEEL_PINS['IN1'], GPIO.HIGH)
-        GPIO.output(WHEEL_PINS['IN2'], GPIO.LOW)
-        GPIO.output(WHEEL_PINS['IN3'], GPIO.HIGH)
-        GPIO.output(WHEEL_PINS['IN4'], GPIO.LOW)
-    elif direction == "back":
-        GPIO.output(WHEEL_PINS['IN1'], GPIO.LOW)
-        GPIO.output(WHEEL_PINS['IN2'], GPIO.HIGH)
-        GPIO.output(WHEEL_PINS['IN3'], GPIO.LOW)
-        GPIO.output(WHEEL_PINS['IN4'], GPIO.HIGH)
-    elif direction == "left":
-        GPIO.output(WHEEL_PINS['IN1'], GPIO.LOW)
-        GPIO.output(WHEEL_PINS['IN2'], GPIO.HIGH)
-        GPIO.output(WHEEL_PINS['IN3'], GPIO.HIGH)
-        GPIO.output(WHEEL_PINS['IN4'], GPIO.LOW)
-    elif direction == "right":
-        GPIO.output(WHEEL_PINS['IN1'], GPIO.HIGH)
-        GPIO.output(WHEEL_PINS['IN2'], GPIO.LOW)
-        GPIO.output(WHEEL_PINS['IN3'], GPIO.LOW)
-        GPIO.output(WHEEL_PINS['IN4'], GPIO.HIGH)
-    # PWM을 사용하여 속도 조절
-    pwm_A.ChangeDutyCycle(wheel_speed)  # ENA 핀에 속도 적용
-    pwm_B.ChangeDutyCycle(wheel_speed)  # ENB 핀에 속도 적용
-
-
-async def set_speed(speed):
-    global wheel_speed
-    wheel_speed = max(0, min(speed, 100))  # 속도를 0~100 사이로 제한
-    logging.info(f"wheel speed {wheel_speed}")
-    if wheel_direction is not None:
-        set_wheel_state(wheel_direction)  # 현재 방향에 속도 적용
-
-
-def stop_wheel():
-    logging.info("Stopping motors")
-    global wheel_direction
-    wheel_direction = None
-
-    pwm_A.ChangeDutyCycle(0)
-    pwm_B.ChangeDutyCycle(0)
-    for pin in WHEEL_PINS.values():
-        GPIO.output(pin, GPIO.LOW)
-
-    logging.info("Motors stopped")
-
-
-#############################################################################
-
-
-# 액추에이터 설정 ###############################################################
-async def actuator_control(direction):
-    global actuator_direction
-    actuator_direction = direction
-    logging.info(f"Setting actuator state to {direction}")
-    set_actuator_state(direction)
-
-    while actuator_direction == direction:
-        await asyncio.sleep(0.1)
-
-    stop_actuator()
-
-
-def set_actuator_state(direction):
-    logging.info(f"Setting actuator state to {direction}")
-    if direction == "up":
-        GPIO.output(ACTUATOR_PINS['IN4'], GPIO.HIGH)
-        GPIO.output(ACTUATOR_PINS['IN3'], GPIO.LOW)
-    elif direction == "down":
-        GPIO.output(ACTUATOR_PINS['IN4'], GPIO.LOW)
-        GPIO.output(ACTUATOR_PINS['IN3'], GPIO.HIGH)
-
-
-def stop_actuator():
-    logging.info("Stopping actuator")
-    global actuator_direction
-    actuator_direction = None
-
-    for pin in ACTUATOR_PINS.values():
-        GPIO.output(pin, GPIO.LOW)
-
-    logging.info("Motors stopped")
-
-
-#############################################################################
 
 
 # 거리 전송 ###################################################################
@@ -307,16 +187,12 @@ async def on_message(client, topic, payload, qos, properties):
     command = json.loads(payload.decode('utf-8'))
     logging.info(f"Received command: {command}")
 
-    if command["command"] == "stop_wheel":
-        stop_wheel()
-    elif command["command"] == "stop_actuator":
-        stop_actuator()
-    elif command["command"] in ["forward", "back", "left", "right"]:
-        await wheel_control(command["command"])
-    elif command["command"] in ["up", "down"]:
-        await actuator_control(command["command"])
+    if command["command"] in ["forward", "back", "left", "right", "stop_wheel"]:
+        mc.wheel_control(command["command"])
+    elif command["command"] in ["up", "down", "stop_actuator"]:
+        mc.actuator_control(command["command"])
     elif command["command"] == "set_speed":
-        await set_speed(command["speed"])  # 속도 조절 명령 처리
+        mc.set_speed(command["speed"])  # 속도 조절 명령 처리
     elif command["command"] == "text_to_speech":
         text_to_speech(command["text"])
     else:
@@ -341,9 +217,9 @@ async def lifespan():
     await on_connect()
 
     # 비동기 작업 시작
-    asyncio.create_task(send_distance(client))
-    asyncio.create_task(generate_frames(client))
-    asyncio.create_task(send_speech_text(client))  # 음성 인식 태스크 추가
+    #asyncio.create_task(send_distance(client))
+    #asyncio.create_task(generate_frames(client))
+    #asyncio.create_task(send_speech_text(client))  # 음성 인식 태스크 추가
 
     yield
 
