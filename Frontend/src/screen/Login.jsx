@@ -32,11 +32,13 @@ export default function Login() {
                 }
             } catch (error) {
                 console.error('로그인 상태 불러오기 실패', error);
+                logout(); // 오류 발생 시 로그아웃 상태로 초기화
             }
         };
-
+    
         checkLoginStatus();
     }, []);
+    
 
 
     // 로그인 버튼 클릭시 실행

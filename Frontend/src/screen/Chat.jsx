@@ -30,7 +30,7 @@ export default function Chat() {
 
           // 메시지를 불러온 후 스크롤을 가장 아래로 내리기
           setTimeout(() => {
-            flatListRef.current.scrollToEnd({ animated: true });
+            flatListRef.current.scrollToEnd({ animated: false });
           }, 100); // 약간의 지연을 두고 스크롤
         }
       } catch (error) {
@@ -116,7 +116,7 @@ export default function Chat() {
     // 메시지를 보낸 후 스크롤을 가장 아래로 내리기
     setTimeout(() => {
       flatListRef.current.scrollToEnd({ animated: true });
-    }, ); // 약간의 지연을 두고 스크롤
+    }, 100); // 약간의 지연을 두고 스크롤
   };
 
   const handleSubmit = () => {
@@ -152,7 +152,7 @@ export default function Chat() {
         />
         <ButtonContainer>
           <SendButton onPress={handleSubmit}>
-            <SendButtonText>보내기</SendButtonText>
+            <SendButtonText>전송</SendButtonText>
           </SendButton>
         </ButtonContainer>
       </InputContainer>
@@ -167,7 +167,9 @@ const Container = styled.SafeAreaView`
 
 const ChatContainer = styled.View`
   flex: 1;
-  padding: 16px;
+  padding-top: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
 `;
 
 const MessageContainer = styled.View`

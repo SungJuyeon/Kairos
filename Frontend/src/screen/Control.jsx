@@ -195,10 +195,9 @@ export default function Control() {
                             step={1}
                             value={value}
                             onValueChange={handleValueChange}
-                            minimumTrackTintColor="#1EB1FC"
-                            maximumTrackTintColor="#d3d3d3"
-                            thumbTintColor="#1EB1FC"
-                            style={{ transform: [{ rotate: '-90deg' }] }} // 슬라이더 회전
+                            minimumTrackTintColor="#FFCEFF"
+                            maximumTrackTintColor="#555555"
+                            thumbTintColor="#FFCEFF"
                         />
                     </SpeedSliderContainer>
 
@@ -297,12 +296,12 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-right: 0px;
 `;
 
 const UpButtonContainer = styled.View`
+    margin-top: 20px;
     margin-bottom: 20px;
-    margin-left: 0px;
+    margin-left: 100px;
 `;
 
 const DirectionButtonContainer = styled.View`
@@ -314,7 +313,7 @@ const DirectionButtonContainer = styled.View`
 
 const DownButtonContainer = styled.View`
     margin-top: 0px;
-    margin-left: 0px;
+    margin-left: 100px;
 `;
 
 
@@ -350,10 +349,13 @@ const SpeedSliderContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: absolute;
+    right: 160px;
+    bottom: 50px;
     padding: 5px;
     border-radius: 10px;
     padding: 10px;
-    margin-left: 100px;
+    z-index: 10;
 `;
 
 const CaptureButtonText = styled.Text`
@@ -391,7 +393,8 @@ const ButtonStyle = styled.TouchableOpacity`
     border-radius: 10px;
     padding: 10px 30px;
     margin: 0 40px;
-    width: ${scale * 100}px; 
+    width: ${scale * 120}px;
+    height: ${scale * 90}px;
     justify-content: center;
     align-items: center;
 `;
@@ -431,17 +434,15 @@ const StyledImage = styled.Image`
 `;
 
 const SliderText = styled(Text)`
-    font-size: 20px;
+    font-size: 25px;
     margin-bottom: 80px;
     color: white;
     font-weight: bold;
 `;
 
 const StyledSlider = styled(Slider)`
-    height: 10px;
-    width: 150px;
+    width: 160px;
     transform: rotate(-90deg);
-    margin-bottom: 20px;
 `;
 
 const StyledWebView = styled(WebView)`
