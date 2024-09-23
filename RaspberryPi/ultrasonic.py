@@ -4,7 +4,7 @@ import logging
 import time
 import RPi.GPIO as GPIO
 
-from robot_controller import MQTT_TOPIC_DISTANCE
+
 
 ULTRASONIC_PINS = {
     'TRIG': 20,
@@ -35,6 +35,7 @@ async def send_distance(client):
             distance = measure_distance()
             if distance is not None:
                 distance_message = json.dumps({"distance": distance})
+                from robot_controller import MQTT_TOPIC_DISTANCE
                 client.publish(MQTT_TOPIC_DISTANCE, distance_message)
                 logging.info(f"거리 발행: {distance}")
             else:

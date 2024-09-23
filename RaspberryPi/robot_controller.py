@@ -8,6 +8,7 @@ import json
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
 import sounddevice as sd
+import video
 import ultrasonic
 import motor_control as mc
 import speech_recognition as sr
@@ -15,50 +16,15 @@ import concurrent.futures
 from gtts import gTTS
 import os
 
-# 핀 번호 설정
-
-
-
 # GPIO 초기화
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-
-
-
-# 카메라 설정
-cap = cv2.VideoCapture(0)
 # 음성 캡처 큐
 audio_queue = queue.Queue()
 
-
-
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
-
-
-# 영상 전송 ####################################################################
-async def generate_frames(client):
-    while True:
-        try:
-            ret, frame = cap.read()
-            if not ret:
-                logging.warning("Failed to capture frame")
-                await asyncio.sleep(0.05)  # 프레임 캡처 실패 시 대기
-                continue
-
-            _, buffer = cv2.imencode('.jpg', frame)
-            frame_data = buffer.tobytes()
-            client.publish(MQTT_TOPIC_VIDEO, frame_data)  # 비디오 프레임 전송
-            # logging.info("Sent a video frame")
-
-            await asyncio.sleep(0.05)  # 전송 주기 조정
-        except Exception as e:
-            logging.error(f"Error in generate_frames: {e}")
-            await asyncio.sleep(1)  # 오류 발생 시 대기
-    stream.stop()
-
-
 
 
 # 음성 인식을 위한 recognizer 객체 생성#############################3
@@ -145,6 +111,10 @@ async def on_message(client, topic, payload, qos, properties):
         await ultrasonic.start_send_distance(client)
     elif command["command"] == "stop_send_distance":
         await ultrasonic.stop_send_distance()
+    elif command["command"] == "start_generate_frames":
+        await video.start_generate_frames(client)
+    elif command["command"] == "stop_generate_frames":
+        await video.stop_generate_frames()
     else:
         logging.warning(f"Invalid command: {command}")
 
