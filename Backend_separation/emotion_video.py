@@ -6,7 +6,7 @@ import json
 HIGHLIGHT_DIR = os.path.abspath("../Backend_separation/emotions/highlight")
 
 highlight_frames = []
-highlight_start_time = None  # Track when the highlight started
+highlight_start_time = None
 
 def save_frames_to_video(filename, frames):
     # Save highlight video
@@ -48,4 +48,3 @@ def delete_old_videos(directory, days=2):
                     print(f"Deleted old video file: {filename}")
             except Exception as e:
                 print(f"Error parsing date from filename: {filename}, {e}")
-

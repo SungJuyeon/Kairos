@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highlight Videos</title>
+</head>
+<body>
+<h1>Highlight Videos</h1>
+{% if videos %}
+<ul>
+    {% for video in videos %}
+    <li>
+        <p>{{ video }}</p>
+        <video width="600" controls>
+            <source src="/static/highlight/{{ video }}" type="video/avi">
+            Your browser does not support the video tag.
+        </video>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No highlight videos available</p>
+{% endif %}
+</body>
+</html>

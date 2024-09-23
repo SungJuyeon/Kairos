@@ -16,29 +16,9 @@ export default function FindPassword() {
     const [nameFocused, setNameFocused] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
 
-    // 아이디 찾기 버튼 클릭 시
-    const findPassword123 = async () => {
-        try {
-            const userData = { name: name, email: email }
-            const response = await axios.post('http://localhost:8080/find/pw', userData, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                // 비밀번호 찾기 성공 처리
-                console.log(response.data);
-            });
-        // 비밀번호 찾기 실패
-        } catch (error) {   
-            console.error('비밀번호를 찾을 수 없습니다.', error);
-        }
-        };
-
 
         // 비밀번호 찾기 버튼 클릭 시 실행
         const findPassword = async () => {
-            setUsername(name);
 
             try {
                 const response = await fetch('http://localhost:8080/find/password', {
@@ -54,7 +34,7 @@ export default function FindPassword() {
                 
                 const data = await response.text();
                 if (response.ok) {
-                    Alert.alert(data);
+                    Alert.alert('회원님의 비밀번호', data);
                 } else {
                     Alert.alert(data);
                 }
@@ -68,10 +48,10 @@ export default function FindPassword() {
         <Container>
             <Title>비밀번호 찾기</Title>
             <InputContainer>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>이름</Text>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>ID</Text>
             <StyledTextInput
-                onChangeText={text => setName(text)}
-                value={name}
+                onChangeText={text => setUsername(text)}
+                value={username}
                 onFocus={() => setNameFocused(true)}
                 onBlur={() => setNameFocused(false)}
                 focused={nameFocused}
@@ -98,7 +78,7 @@ export default function FindPassword() {
 }
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     padding: 5%;
     justify-content: center;
@@ -142,7 +122,7 @@ const StyledTextInput = styled.TextInput`
     margin-bottom: 15px;
     color: white;
     font-size: 18px;
-    background-color: #1B0C5D;
+    background-color: #222222;
 `;
 
 const RowContainer = styled.View`

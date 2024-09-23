@@ -11,14 +11,15 @@ db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_name = os.getenv('DB_NAME')
 
+
 def add_schedule(user_name, date, time, task):
     try:
         # MySQL 데이터베이스 연결
         conn = pymysql.connect(
-            host=db_host,       # 호스트 주소
-            user=db_user,       # MySQL 사용자 이름
-            password=db_password, # MySQL 비밀번호
-            database=db_name,   # 사용할 데이터베이스 이름
+            host=db_host,  # 호스트 주소
+            user=db_user,  # MySQL 사용자 이름
+            password=db_password,  # MySQL 비밀번호
+            database=db_name,  # 사용할 데이터베이스 이름
             charset='utf8'
         )
 

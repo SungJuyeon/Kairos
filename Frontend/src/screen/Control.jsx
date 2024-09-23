@@ -4,16 +4,14 @@ import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import Slider from '@react-native-community/slider';
 import * as ImagePicker from 'expo-image-picker';
-import { WebView } from 'react-native-webview'
+import { WebView } from 'react-native-webview';
 import * as MediaLibrary from 'expo-media-library';
 
+// 스타일 컴포넌트를 위함
+const { width, height } = Dimensions.get('window');
 
-    // 스타일 컴포넌트를 위함
-    const { width, height } = Dimensions.get('window');
-
-    // 비율에 따른 스타일 조정
-    const scale = width / 640; // 기준 너비에 대한 비율
-
+// 비율에 따른 스타일 조정
+const scale = width / 640; // 기준 너비에 대한 비율
 
 export default function Control() {
     const [isUpPressed, setIsUpPressed] = useState(false);
@@ -21,36 +19,14 @@ export default function Control() {
     const [isRightPressed, setIsRightPressed] = useState(false);
     const [isDownPressed, setIsDownPressed] = useState(false);
     const [isCaptureVideoPressed, setIsCaptureVideoPressed] = useState(false);
-    const [isOn, setIsOn] = useState(false); // on/off 상태 추가
+    const [isOn, setIsOn] = useState(false);
+    const [isFace, setIsFace] = useState(false);
+    const [isGesture, setIsGesture] = useState(false);
 
-    // 웹뷰 캡쳐
     const webViewRef = React.useRef(null);
-
-    // 속도 조절
     const [value, setValue] = useState(5);
-
     const BASE_URL = 'http://localhost:8000';
     const imageURL = `${BASE_URL}/video`;
-
-    // 안드로이드에서 사진 저장 권한을 위한 함수
-    // const requestCameraRollPermission = async () => {
-    //     try {
-    //         const granted = await PermissionsAndroid.request(
-    //             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-    //             {
-    //                 title: '저장 권한 요청',
-    //                 message: '앱이 갤러리에 사진을 저장할 수 있도록 권한을 요청합니다.',
-    //                 buttonNeutral: '나중에',
-    //                 buttonNegative: '취소',
-    //                 buttonPositive: '확인',
-    //             }
-    //         );
-    //         return granted === PermissionsAndroid.RESULTS.GRANTED;
-    //     } catch (err) {
-    //         console.warn(err);
-    //         return false;
-    //     }
-    // };
 
     // 방향키 버튼을 누르고 있을 때
     const handleButtonPressIn = async (direction) => {
@@ -74,7 +50,6 @@ export default function Control() {
         }
     };
 
-
     // 방향키 버튼을 누르다가 땔 때
     const handleButtonPressOut = async (direction) => {
         switch (direction) {
@@ -95,128 +70,96 @@ export default function Control() {
         await fetch(`${BASE_URL}/stop`, { method: 'POST' });
     };
 
+    // 웹뷰 캡쳐 함수
+    useEffect(() => {
+        const requestPermission = async () => {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission needed', 'This app needs access to your photo library.');
+            }
+        };
+        requestPermission();
+    }, []);
 
-
-    
-
-// 웹뷰 캡쳐 함수
-useEffect(() => {
-    const requestPermission = async () => {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert('Permission needed', 'This app needs access to your photo library.');
+    const handleCapturePhoto = async () => {
+        if (webViewRef.current) {
+            console.log('Capturing photo from WebView...');
+            webViewRef.current.injectJavaScript(`
+                (function() {
+                    const img = document.querySelector('img'); // 캡처할 이미지 선택
+                    if (img) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        const dataURL = canvas.toDataURL('image/jpeg');
+                        window.ReactNativeWebView.postMessage(dataURL);
+                    }
+                })();
+            `);
         }
     };
-    requestPermission();
-}, []);
 
-const handleCapturePhoto = async () => {
-    if (webViewRef.current) {
-        console.log('Capturing photo from WebView...');
-        webViewRef.current.injectJavaScript(`
-            (function() {
-                const img = document.querySelector('img'); // 캡처할 이미지 선택
-                if (img) {
-                    console.log('Image found in WebView'); // 이미지 발견 로그
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    const dataURL = canvas.toDataURL('image/jpeg');
-                    console.log('Image captured as dataURL:', dataURL); // 데이터 URL 캡처 로그
-                    window.ReactNativeWebView.postMessage(dataURL);
-                } else {
-                    console.log('No image found in WebView'); // 이미지 미발견 로그
-                }
-            })();
-        `);
-    }
-};
-
-const onMessage = async (event) => {
-    const base64Data = event.nativeEvent.data;
-    console.log('Received data from WebView', base64Data.length); // 데이터 수신 로그 및 길이
-    try {
-        console.log('Saving image to photo library...');
-        // Base64 데이터에서 메타데이터 제거
-        const base64Image = base64Data.split(',')[1]; // 'data:image/jpeg;base64,' 부분을 제거
-        
-        // 임시 파일 경로 생성
-        const fileUri = FileSystem.documentDirectory + 'image.jpg';
-        
-        // Base64 데이터를 파일로 저장
-        await FileSystem.writeAsStringAsync(fileUri, base64Image, {
-            encoding: FileSystem.EncodingType.Base64,
-        });
-
-        // MediaLibrary에 저장
-        const asset = await MediaLibrary.createAssetAsync(fileUri);
-        console.log('Image saved to photo library successfully:', asset); // 저장 성공 로그
-        Alert.alert('사진 찍기 완료', '사진이 갤러리에 저장되었습니다.');
-    } catch (error) {
-        console.error('Error saving image:', error); // 에러 로그
-        Alert.alert('사진 찍기 실패', '오류가 발생했습니다.');
-    }
-};
-
-
+    const onMessage = async (event) => {
+        const base64Data = event.nativeEvent.data;
+        try {
+            const base64Image = base64Data.split(',')[1];
+            const fileUri = FileSystem.documentDirectory + 'image.jpg';
+            await FileSystem.writeAsStringAsync(fileUri, base64Image, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+            const asset = await MediaLibrary.createAssetAsync(fileUri);
+            Alert.alert('사진 찍기 완료', '사진이 갤러리에 저장되었습니다.');
+        } catch (error) {
+            Alert.alert('사진 찍기 실패', '오류가 발생했습니다.');
+        }
+    };
 
     // 속도 조절 코드
     const handleValueChange = async (newValue) => {
-        setValue(newValue); // 새로운 값으로 업데이트
-
-
-        // 서버에 fetch 요청
-        await fetch(`http://localhost:8000/speed/${newValue > value ? 'up' : 'down'}`, { method: 'POST' });
-        
+        setValue(newValue);
+        await fetch(`http://localhost:8000/speed/${newValue * 10}`, { method: 'POST' });
     };
 
-
-
     // 갤러리 열기
-
     const openGallery = async () => {
-    // 권한 요청
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permissionResult.granted === false) {
+            alert('사진 접근 권한이 필요합니다!');
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
 
-    if (permissionResult.granted === false) {
-        alert('사진 접근 권한이 필요합니다!');
-        return;
-    }
-
-    // 갤러리 열기
-    const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-    });
-
-    if (!result.canceled) {
-        setImage(result.assets[0].uri);
-    }
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
     };
-    
 
+    // Face 버튼 클릭 핸들러
+    const toggleFace = () => {
+        setIsFace(prev => !prev);
+    };
+
+    // Gesture 버튼 클릭 핸들러
+    const toggleGesture = () => {
+        setIsGesture(prev => !prev);
+    };
 
     return (
         <Container>
-
             <MarginContainer />
-
             <ImageContainer>
                 {Platform.OS === 'web' ? (
                     <img src={imageURL} width="100%" alt="Live Stream" />
-                ) : Platform.OS === 'android' ? (
-                    <StyledWebView
-                        source={{ uri: 'http://10.0.2.2:8000/video' }}
-                        ref={webViewRef}
-                        onMessage={onMessage}
-                    />
                 ) : (
                     <StyledWebView
-                        source={{ uri: imageURL }}
+                        source={{ uri: `http://localhost:8000/video_feed/${isFace}` }}
                         ref={webViewRef}
                         onMessage={onMessage}
                     />
@@ -224,81 +167,76 @@ const onMessage = async (event) => {
             </ImageContainer>
 
             <Margin2Container />
-            <BorderContainer></BorderContainer>
+            <BorderContainer />
 
-            <Border2Container>
+                <CaptureButtonContainer>
+                    <CaptureButtonStyle onPress={handleCapturePhoto}>
+                        <CaptureButtonText>Picture</CaptureButtonText>
+                    </CaptureButtonStyle>
+                    <CaptureButtonStyle onPress={openGallery}>
+                        <CaptureButtonText>Gallery</CaptureButtonText>
+                    </CaptureButtonStyle>
+                    <RemoveContainer>
+                        <OnOffButton onPress={toggleFace} isOn={isFace}>
+                            <OnOffButtonText isOn={isFace}>{isFace ? 'Face' : 'Face'}</OnOffButtonText>
+                        </OnOffButton>
+                        <OnOffButton onPress={toggleGesture} isOn={isGesture}>
+                            <OnOffButtonText isOn={isGesture}>{isGesture ? 'Gesture' : 'Gesture'}</OnOffButtonText>
+                        </OnOffButton>
+                    </RemoveContainer>
+                </CaptureButtonContainer>
 
-            <CaptureButtonContainer>
-                <CaptureButtonStyle
-                    onPress={() => handleCapturePhoto(webViewRef)}>
-                    <CaptureButtonText>Picture</CaptureButtonText>
-                </CaptureButtonStyle>
-                <RemoveContainer>
-                    <StyledText>__________</StyledText>
-                    <OnOffButton
-                        onPress={openGallery}
-                        isOn={isOn}>
-                        <OnOffButtonText isOn={isOn}>{isOn ? 'Gallery' : 'Gallery'}</OnOffButtonText>
-                    </OnOffButton>
-                </RemoveContainer>
-            </CaptureButtonContainer>
+                <ControlPadContainer>
+                    <SpeedSliderContainer>
+                        <SliderText>속도: {value}</SliderText>
+                        <StyledSlider
+                            minimumValue={0}
+                            maximumValue={10}
+                            step={1}
+                            value={value}
+                            onValueChange={handleValueChange}
+                            minimumTrackTintColor="#FFCEFF"
+                            maximumTrackTintColor="#555555"
+                            thumbTintColor="#FFCEFF"
+                        />
+                    </SpeedSliderContainer>
 
+                    <ButtonContainer>
+                        <UpButtonContainer>
+                            <ButtonStyle
+                                onPressIn={() => handleButtonPressIn('up')}
+                                onPressOut={() => handleButtonPressOut('up')}
+                            >
+                                <ButtonText>{isUpPressed ? '↑' : '↑'}</ButtonText>
+                            </ButtonStyle>
+                        </UpButtonContainer>
+                        <DirectionButtonContainer>
+                            <ButtonStyle
+                                onPressIn={() => handleButtonPressIn('left')}
+                                onPressOut={() => handleButtonPressOut('left')}
+                            >
+                                <ButtonText>{isLeftPressed ? '←' : '←'}</ButtonText>
+                            </ButtonStyle>
+                            <ButtonStyle
+                                onPressIn={() => handleButtonPressIn('right')}
+                                onPressOut={() => handleButtonPressOut('right')}
+                            >
+                                <ButtonText>{isRightPressed ? '→' : '→'}</ButtonText>
+                            </ButtonStyle>
+                        </DirectionButtonContainer>
+                        <DownButtonContainer>
+                            <ButtonStyle
+                                onPressIn={() => handleButtonPressIn('down')}
+                                onPressOut={() => handleButtonPressOut('down')}
+                            >
+                                <ButtonText>{isDownPressed ? '↓' : '↓'}</ButtonText>
+                            </ButtonStyle>
+                        </DownButtonContainer>
+                    </ButtonContainer>
+                </ControlPadContainer>
 
-            <ControlPadContainer>
+       
 
-                
-            <SpeedSliderContainer>
-            <SliderText>속도: {value}</SliderText>
-            <StyledSlider
-                minimumValue={0}
-                maximumValue={10}
-                step={1}
-                value={value}
-                onValueChange={handleValueChange}
-                minimumTrackTintColor="#1EB1FC"
-                maximumTrackTintColor="#d3d3d3"
-                thumbTintColor="#1EB1FC"
-                style={{ transform: [{ rotate: '-90deg' }] }} // 슬라이더 회전
-            />
-            </SpeedSliderContainer>
-
-            <ButtonContainer>
-                <UpButtonContainer>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('up')}
-                        onPressOut={() => handleButtonPressOut('up')}
-                    >
-                        <ButtonText>{isUpPressed ? '↑' : '↑'}</ButtonText>
-                    </ButtonStyle>
-                </UpButtonContainer>
-                <DirectionButtonContainer>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('left')}
-                        onPressOut={() => handleButtonPressOut('left')}
-                    >
-                        <ButtonText>{isLeftPressed ? '←' : '←'}</ButtonText>
-                    </ButtonStyle>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('right')}
-                        onPressOut={() => handleButtonPressOut('right')}
-                    >
-                        <ButtonText>{isRightPressed ? '→' : '→'}</ButtonText>
-                    </ButtonStyle>
-                </DirectionButtonContainer>
-                <DownButtonContainer>
-                    <ButtonStyle
-                        onPressIn={() => handleButtonPressIn('down')}
-                        onPressOut={() => handleButtonPressOut('down')}
-                    >
-                        <ButtonText>{isDownPressed ? '↓' : '↓'}</ButtonText>
-                    </ButtonStyle>
-                </DownButtonContainer>
-            </ButtonContainer>
-            
-            </ControlPadContainer>
-            
-
-            </Border2Container>
 
 
         </Container>
@@ -325,7 +263,7 @@ const RemoveContainer = styled.View`
 `;
 
 const Container = styled.SafeAreaView`
-    background-color: #1B0C5D;
+    background-color: #222222;
     flex: 1;
     justify-content: center;
     align-items: center;
@@ -340,14 +278,14 @@ const Margin2Container = styled.View`
 `;
 
 const BorderContainer = styled.View`
-    border: 1px solid #FFFFFF;
+    border: 3px solid #ADCDFF;
     width: ${width * 0.90}px;
     margin: 2%;
 `;
 
 const Border2Container = styled.View`
-    background-color: #2D1F80;
-    border: 2px solid #F8098B;
+    background-color: #222222;
+    border: 2px solid #FFCEFF;
     border-radius: 10px;
     padding: 10px;
     width: ${width * 0.95}px;
@@ -358,24 +296,24 @@ const ButtonContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-left: 10px;
 `;
 
 const UpButtonContainer = styled.View`
+    margin-top: 20px;
     margin-bottom: 20px;
-    margin-left: 15px;
+    margin-left: 100px;
 `;
 
 const DirectionButtonContainer = styled.View`
     flex-direction: row;
     justify-content: space-between;
     margin-bottom: 20px;
-    width: 300px;
+    width: 200px;
 `;
 
 const DownButtonContainer = styled.View`
     margin-top: 0px;
-    margin-left: 15px;
+    margin-left: 100px;
 `;
 
 
@@ -411,7 +349,13 @@ const SpeedSliderContainer = styled.View`
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: absolute;
+    right: 160px;
+    bottom: 50px;
     padding: 5px;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 10;
 `;
 
 const CaptureButtonText = styled.Text`
@@ -421,18 +365,18 @@ const CaptureButtonText = styled.Text`
 `;
 
 const OnOffButton = styled.TouchableOpacity`
-    width: ${scale * 100}px; 
-    height: ${scale * 50}px;
+    width: ${scale * 110}px; 
+    height: ${scale * 70}px;
     justify-content: center;
     align-items: center;
-    background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#F8098B')};
+    background-color: ${({ isOn }) => (isOn ? '#ADCDFF' : '#AAAAAA')};
     border-radius: 10px;
     padding: 10px 10px;
     margin-left: 15px;
 `;
 
 const OnOffButtonText = styled.Text`
-    color: white;
+    color: black;
     font-size: ${scale * 18}px;
     font-weight: bold;
 `;
@@ -449,7 +393,8 @@ const ButtonStyle = styled.TouchableOpacity`
     border-radius: 10px;
     padding: 10px 30px;
     margin: 0 40px;
-    width: ${scale * 100}px; 
+    width: ${scale * 120}px;
+    height: ${scale * 90}px;
     justify-content: center;
     align-items: center;
 `;
@@ -466,7 +411,7 @@ const SpeedButton = styled.TouchableOpacity`
 
 const CaptureButtonStyle = styled.TouchableOpacity`
     width: ${scale * 120}px; 
-    height: ${scale * 50}px;
+    height: ${scale * 70}px;
     justify-content: center;
     align-items: center;
     background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : 'white')};
@@ -479,7 +424,7 @@ const ImageContainer = styled.View`
     width: 90%;
     height: 34%;
     border-width: 2px; 
-    border-color: #F8098B;
+    border-color: #FFCEFF;
     background-color: #222222; 
 `;
 
@@ -489,37 +434,17 @@ const StyledImage = styled.Image`
 `;
 
 const SliderText = styled(Text)`
-    font-size: 20px;
-    margin-bottom: 70px;
+    font-size: 25px;
+    margin-bottom: 80px;
     color: white;
+    font-weight: bold;
 `;
 
 const StyledSlider = styled(Slider)`
-    height: 10px;
-    width: 150px;
+    width: 160px;
     transform: rotate(-90deg);
 `;
-
 
 const StyledWebView = styled(WebView)`
   flex: 1;
 `;
-
-
-
-
-// const ImageContainer = styled.View`
-//     width: 90%;  // 이미지보다 작은 너비
-//     height: 50%; // 이미지보다 작은 높이
-//     border-width: 2px; // 테두리 두께
-//     border-color: white; // 테두리 색상
-//     background-color: #222222; // 배경 색상
-//     justify-content: center; // 내용 중앙 정렬
-//     align-items: center; // 내용 중앙 정렬
-//     border-radius: 10px; // 모서리 둥글게
-// `;
-
-// const StyledImage = styled.Image`
-//     width: 90%;  // 줄어든 이미지 크기
-//     height: 100%; // 줄어든 이미지 높이
-// `;
