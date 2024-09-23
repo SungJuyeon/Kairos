@@ -12,7 +12,7 @@ from follow import follow, generate_video_frames
 import hand_gesture_recognition
 from hand_gesture_recognition import recognize_hand_gesture_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_audio, video_frames
+from mqtt_client import home_control, setup_mqtt, distance_data, move, speed, text_to_audio, video_frames
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
 from calendar_app import get_all_schedules, add_schedules, delete_schedule, Schedule
@@ -74,11 +74,6 @@ async def post_move(direction: str):
 @app.post("/speed/{action}")
 async def post_speed(action: str):
     await speed(action)
-
-
-@app.post("/text_to_speech/{text}")
-async def post_text_to_speech(text: str):
-    await text_to_speech(text)
     
 
 @app.get("/distance")
@@ -184,7 +179,13 @@ async def get_video_list():
 @app.get("/follow")
 async def get_follow():
     asyncio.create_task(follow())
+@app.get("/follow_video")
+async def get_follow_video():
     return StreamingResponse(generate_video_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
+
+@app.post("/home_control/{device}/{state}")
+async def post_home_control(device: str, state: bool):
+    await home_control(device, state)
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)

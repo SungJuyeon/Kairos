@@ -69,7 +69,7 @@ def load_faces_from_db():
                         file_path = os.path.join(faces_dir, f"{nickname}.jpg")
                         with open(file_path, 'wb') as file:
                             file.write(image_data)
-                        logger.info(f"저장된 이미지: {file_path}")
+                        #logger.info(f"저장된 이미지: {file_path}")
                     except Exception as e:
                         logger.error(f"사용자 {nickname}의 사진 처리 중 오류 발생: {e}")
                 else:

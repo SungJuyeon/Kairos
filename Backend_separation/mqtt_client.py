@@ -18,15 +18,15 @@ MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-#MQTT_BROKER = "3.27.221.93"
-MQTT_BROKER = "localhost"
+MQTT_BROKER = "3.27.221.93"
+#MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_AUDIOTOTEXT = "robot/audio_to_text"
 MQTT_TOPIC_TEXTTOAUDIO = "robot/text_to_audio"
-
+MQTT_TOPIC_HOME_CONTROL = "home/commands"
 client = MQTTClient(client_id="fastapi_client")
 
 
@@ -107,3 +107,10 @@ async def text_to_audio(text):
     client.publish(MQTT_TOPIC_COMMAND, command)
     logger.info(f"Text to speech command sent: {command}")
     return {"message": "Text to speech command sent successfully"}
+
+async def home_control(device, state):
+    command = json.dumps({"command": "home_control", "device": device, "state": state})
+    client.publish(MQTT_TOPIC_HOME_CONTROL, command)
+    logger.info(f"Home control command sent: {command}")
+    return {"message": "Home control command sent successfully"}
+
