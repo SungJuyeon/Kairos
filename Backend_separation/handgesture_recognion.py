@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import mediapipe as mp
+import  mediapipe as mp
 from tensorflow import keras
 import logging
 import asyncio
