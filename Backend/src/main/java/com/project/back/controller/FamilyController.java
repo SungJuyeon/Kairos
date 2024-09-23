@@ -3,7 +3,6 @@ package com.project.back.controller;
 import com.project.back.dto.FamilyRequestDTO;
 import com.project.back.dto.FamilyUserDTO;
 import com.project.back.entity.FamilyRequest;
-import com.project.back.entity.Familyship;
 import com.project.back.entity.UserEntity;
 import com.project.back.repository.UserRepository;
 import com.project.back.service.FamilyService;
@@ -34,35 +33,39 @@ public class FamilyController {
             throw new RuntimeException("User not found");
         }
         Long senderId = sender.getId();  // UserEntity에서 ID를 얻기
-        String receiverUsername = request.getSenderUsername();
-        return familyService.sendFamilyRequest(senderId, receiverUsername);
+        String receiverUsername = request.getReceiverUsername();
+        UserEntity receiver = userRepository.findByUsername(receiverUsername);
+        if (receiver == null) {
+            throw new RuntimeException("Receiver user not found");
+        }
+        return familyService.sendFamilyRequest(senderId, receiver.getId());
     }
 
-
-    // URL 쿼리 파라미터 http://localhost:8080/family/accept?requestId=2902 형식으로 요청받음
-    // requestId 는 /requests/received 에서 확인
+    // 가족 요청 수락
     @PostMapping("/request/accept")
     public ResponseEntity<String> acceptFamilyRequest(@RequestParam(name = "requestId") Long requestId) {
         System.out.println("Attempting to accept family request with ID: " + requestId);
         try {
             familyService.acceptFamilyRequest(requestId);
-            return ResponseEntity.ok("Family request accepted successfully.");
+            return ResponseEntity.ok("Family request accepted and connections updated successfully.");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Family request not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
+    // 가족 요청 거절
     @PostMapping("/request/reject")
     public ResponseEntity<String> rejectFamilyRequest(@RequestParam(name = "requestId") Long requestId) {
-        System.out.println("Attempting to accept family request with ID: " + requestId);
+        System.out.println("Attempting to reject family request with ID: " + requestId);
         try {
             familyService.rejectFamilyRequest(requestId);
             return ResponseEntity.ok("Family request rejected successfully.");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Family request not found.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
+    // 가족 목록 조회
     @GetMapping("/list")
     public List<FamilyUserDTO> getFamily(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -75,11 +78,11 @@ public class FamilyController {
 
         List<UserEntity> family = familyService.getFamily(user.getId());
         return family.stream()
-                .map(familyName -> new FamilyUserDTO(familyName.getNickname(), familyName.getPhotoname()))
+                .map(familyMember -> new FamilyUserDTO(familyMember.getNickname(), familyMember.getPhotoname()))
                 .collect(Collectors.toList());
     }
 
-    //사용자가 보낸 친구 요청들을 조회
+    // 사용자가 보낸 가족 요청들을 조회
     @GetMapping("/requests/sent")
     public ResponseEntity<List<FamilyRequestDTO>> getSentRequests() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -94,6 +97,7 @@ public class FamilyController {
         List<FamilyRequestDTO> requestDTOs = sentRequests.stream()
                 .map(request -> new FamilyRequestDTO(
                         request.getId(),
+                        request.getSender().getUsername(),
                         request.getReceiver().getUsername(),
                         request.getStatus().name()
                 ))
@@ -102,8 +106,7 @@ public class FamilyController {
         return ResponseEntity.ok(requestDTOs);
     }
 
-
-    //사용자가 받은 친구 요청들을 조회
+    // 사용자가 받은 가족 요청들을 조회
     @GetMapping("/requests/received")
     public ResponseEntity<List<FamilyRequestDTO>> getReceivedRequests() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -119,6 +122,7 @@ public class FamilyController {
                 .map(request -> new FamilyRequestDTO(
                         request.getId(),
                         request.getSender().getUsername(),
+                        request.getReceiver().getUsername(),
                         request.getStatus().name()
                 ))
                 .collect(Collectors.toList());
@@ -126,5 +130,28 @@ public class FamilyController {
         return ResponseEntity.ok(requestDTOs);
     }
 
-}
+    // delete 로 http://localhost:8080/family/delete?memberUsername=3
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteFamilyMember(@RequestParam(name = "memberUsername") String memberUsername) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();  // 현재 로그인한 사용자의 username
 
+        UserEntity currentUser = userRepository.findByUsername(currentUsername);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Current user not found.");
+        }
+
+        UserEntity member = userRepository.findByUsername(memberUsername);
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Member user not found.");
+        }
+
+        try {
+            familyService.deleteFamilyMember(currentUser.getId(), member.getId());
+            return ResponseEntity.ok("Family member deleted successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+}

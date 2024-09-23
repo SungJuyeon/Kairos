@@ -11,6 +11,13 @@ from hand_gesture_recognition import draw_hand_gesture, hand_gesture_action, han
 
 logger = logging.getLogger(__name__)
 
+import cv2
+import numpy as np
+
+from face_recognition import detect_faces, draw_faces
+from mqtt_client import video_frames
+
+logger = logging.getLogger(__name__)
 
 async def generate_frames():
     while True:
@@ -50,8 +57,8 @@ async def video_frame_generator(face=True, hand=True):
             if success:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
         else:
             logging.warning("No frames available, sleeping...")
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 

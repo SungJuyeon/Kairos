@@ -1,11 +1,7 @@
-# app.py
-# FastAPI 서버 및 엔드포인트를 설정하는 파일
-
 import asyncio
 import logging
 import os
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
@@ -14,27 +10,34 @@ from starlette.responses import HTMLResponse, StreamingResponse
 
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames, speech_text
+from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames
 from db_face_loader import load_faces_from_db
-from s3_uploader import list_s3_videos
 from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
+
+
+#validate_token
+from face_recognition import recognize_periodically
+from video_processing import generate_frames, video_frame_generator
+from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
+
+# 환경 변수에서 테스트 모드 설정 확인
+TEST_MODE = True
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory="templates")
-
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+user_photo_for_comparison = None
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 필요에 따라 특정 도메인으로 설정
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.on_event("startup")
 async def startup_event():
@@ -50,11 +53,9 @@ async def startup_event():
 async def read_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
 @app.post("/move/{direction}")
 async def post_move(direction: str):
     await move(direction)
-
 
 @app.post("/speed/{action}")
 async def post_speed(action: str):
@@ -68,8 +69,8 @@ async def post_text_to_speech(text: str):
 
 @app.get("/distance")
 async def get_distance():
+    logger.info(f"get_distance 엔드포인트 호출됨.")
     return {"distance": distance_data}
-
 
 @app.get("/video")
 async def video_stream():
@@ -80,6 +81,75 @@ async def video_stream():
 async def get_video_feed(face: bool, hand: bool):
     return StreamingResponse(video_frame_generator(face, hand),
                              media_type='multipart/x-mixed-replace; boundary=frame')
+
+@app.get("/calendar")
+def calendar(token: str = Header(...)):
+    schedules = get_all_schedules(token)
+    return {"schedules": schedules}
+
+@app.post("/schedules/add")
+def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
+    return add_schedules(schedule, token)
+
+@app.delete("/schedules/{schedule_id}")
+def delete_schedule_endpoint(
+        schedule_id: int,
+        token: str = Header(...)
+):
+    try:
+        return delete_schedule(schedule_id, token)
+    except HTTPException as e:
+        raise e  # 발생한 HTTPException을 그대로 재발생
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
+@app.get("/most_emotion")
+async def most_emotion(token: str = Header(...)):
+    user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
+    logging.info(user_id)
+    most_frequent_emotion = get_most_frequent_emotion(user_id)  # user_id로 감정 데이터 가져오기
+    if most_frequent_emotion is None:
+        raise HTTPException(status_code=404, detail="Emotion data not found.")
+    return {"most_frequent_emotion": most_frequent_emotion}
+
+# 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
+@app.get("/most_emotion_pic")
+async def most_emotion_pic(token: str = Header(...)):
+    user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
+    pic_path = get_most_emotion_pic_path(user_id)  # user_id로 사진 경로 가져오기
+    if not os.path.exists(pic_path):
+        raise HTTPException(status_code=404, detail="Emotion picture not found.")
+
+    return FileResponse(pic_path, media_type="image/jpeg")
+
+@app.get("/messages/{username}")
+async def get_messages(username: str):
+    user_id = fetch_user_id_by_username(username)
+    if user_id is None:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    message_log = f"{user_id}_messages.json"
+
+    if not os.path.exists(message_log):
+        return {"messages": []}
+
+    with open(message_log, "r", encoding="utf-8") as file:
+        try:
+            messages = json.load(file)
+        except json.JSONDecodeError:
+            messages = []
+    return {"messages": messages}
+
+@app.websocket("/ws/chat")
+async def websocket_endpoint(websocket: WebSocket):
+    await handle_connection(websocket)
+
+# @app.get("/gesture")
+# async def get_gesture():
+#     logger.info(f"get_gesture 엔드포인트 호출됨.")
+#     from handgesture_recognition import this_action
+#     return {"gesture": this_action}
 
 
 @app.post("/load_faces")
@@ -111,3 +181,4 @@ if __name__ == "__main__":
     server = uvicorn.Server(config)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(server.serve())
+
