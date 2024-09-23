@@ -30,6 +30,6 @@ public class Familyship {
 
     @Override
     public int hashCode() {
-        return user1.hashCode() + user2.hashCode();
+        return 31 * user1.hashCode() + user2.hashCode();
     }
 }
