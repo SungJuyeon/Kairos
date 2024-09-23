@@ -57,8 +57,8 @@ async def video_frame_generator(face=True, hand=True):
             if success:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
         else:
             logging.warning("No frames available, sleeping...")
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
 

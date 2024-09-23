@@ -1,7 +1,8 @@
-import { FA5Style } from '@expo/vector-icons/build/FontAwesome5';
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import styled from 'styled-components/native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function Repository() {
   const [data, setData] = useState([]);
@@ -11,32 +12,67 @@ export default function Repository() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+        console.log('데이터 로딩 시작...');
+        const response = await fetch('http://localhost:8000/s3_video_list');
         if (!response.ok) {
           throw new Error('네트워크 응답이 좋지 않습니다.');
         }
         const json = await response.json();
-        setData(json);
+        console.log('데이터 로딩 완료:', json.videos);
+        setData(json.videos);
       } catch (error) {
+        console.error('데이터 로딩 중 오류 발생:', error.message);
         setError(error.message);
       } finally {
         setLoading(false);
+        console.log('로딩 상태 업데이트:', loading);
       }
     };
 
     fetchData();
   }, []);
 
-  const handleButtonPress = (item) => {
-    Alert.alert(`아이템 선택: ${item.title}`);
-    // 여기에 원하는 작업을 추가할 수 있습니다.
+  const handleButtonPress = async (item) => {
+    console.log(`다운로드 버튼 클릭: ${item.file_name}`);
+
+    if (!item.video_url) {
+      Alert.alert('다운로드 실패', '유효한 비디오 URL이 없습니다.');
+      return;
+    }
+
+    const downloadPath = FileSystem.documentDirectory + item.file_name;
+
+    try {
+      console.log(`다운로드 시작: ${item.video_url}`);
+      const { uri } = await FileSystem.downloadAsync(item.video_url, downloadPath);
+      console.log(`다운로드 완료: ${uri}`);
+      
+      // 파일 공유 기능 호출
+      await handleShare(uri);
+      
+      Alert.alert('다운로드 완료', `${item.file_name}이 저장되었습니다.`);
+    } catch (error) {
+      console.error('다운로드 중 오류 발생:', error.message);
+      Alert.alert('다운로드 실패', error.message);
+    }
+  };
+
+  const handleShare = async (uri) => {
+    try {
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.error('파일 공유 중 오류 발생:', error.message);
+      Alert.alert('공유 실패', error.message);
+    }
   };
 
   if (loading) {
+    console.log('로딩 중...');
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
   if (error) {
+    console.error('에러 상태:', error);
     return <Text>{error}</Text>;
   }
 
@@ -48,9 +84,10 @@ export default function Repository() {
         showsVerticalScrollIndicator={false}
       >
         {data.map(item => (
-          <Item key={item.id}>
-            <ItemTitle>{item.title}</ItemTitle>
-            <ItemText>{item.body}</ItemText>
+          <Item key={item.file_name}>
+            <ItemTitle>{item.person_name}의 {item.emotion}</ItemTitle>
+            <ItemText>{item.date_time}</ItemText>
+            <Thumbnail source={{ uri: item.thumbnail_url }} />
             <Button onPress={() => handleButtonPress(item)}>
               <ButtonText>다운로드</ButtonText>
             </Button>
@@ -70,7 +107,7 @@ const Title = styled.Text`
 `;
 
 const Container = styled.SafeAreaView`
-  background-color: #1B0C5D;
+  background-color: #222222;
   flex: 1;
   justify-content: center;
   align-items: center;
@@ -90,6 +127,12 @@ const ItemTitle = styled.Text`
 
 const ItemText = styled.Text`
   color: #FFFFFF;
+`;
+
+const Thumbnail = styled.Image`
+  width: 100%;
+  height: 75px;
+  margin-top: 10px;
 `;
 
 const Button = styled(TouchableOpacity)`

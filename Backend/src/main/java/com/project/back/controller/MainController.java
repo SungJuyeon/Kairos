@@ -32,6 +32,8 @@ public class MainController {
         return "Main Controller: " + username + ", Role: " + userEntity.getRole();
     }
 
+
+    // 유저 네임 가져오기
     @GetMapping("/user/username")
     public String getUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -43,7 +45,7 @@ public class MainController {
         }
     }
 
-
+    // 이메일 가져오기
     @GetMapping("/user/email")
     public String getEmail() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -57,7 +59,7 @@ public class MainController {
         }
     }
 
-
+    // 닉네임 가져오기
     @GetMapping("/user/nickname")
     public String getNickname() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -70,6 +72,7 @@ public class MainController {
         }
     }
 
+    // 사진 가져오기
     @GetMapping("/user/photo")
     public byte[] getPhoto() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();

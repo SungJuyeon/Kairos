@@ -1,9 +1,11 @@
 import asyncio
 import logging
 import os
+import json
+from fastapi.responses import FileResponse
+import uvicorn  # uvicorn 모듈 임포트 추가
 
-from fastapi import FastAPI
-from fastapi import Request
+from fastapi import FastAPI, Request, HTTPException, Header, WebSocket
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse
@@ -14,21 +16,21 @@ from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, 
 from db_face_loader import load_faces_from_db
 from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
 
-
-#validate_token
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
-
-# 환경 변수에서 테스트 모드 설정 확인
-TEST_MODE = True
+from db_face_loader import load_faces_from_db
+from s3_uploader import list_s3_videos
+from calendar_app import get_all_schedules, add_schedules, delete_schedule, Schedule
+from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
+from face_image_db import current_userId, fetch_family_photos
+from message_server import handle_connection, fetch_user_id_by_username
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
-user_photo_for_comparison = None
+templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
 app.add_middleware(
@@ -69,7 +71,7 @@ async def post_text_to_speech(text: str):
 
 @app.get("/distance")
 async def get_distance():
-    logger.info(f"get_distance 엔드포인트 호출됨.")
+    logger.info("get_distance 엔드포인트 호출됨.")
     return {"distance": distance_data}
 
 @app.get("/video")
@@ -103,7 +105,6 @@ def delete_schedule_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-# 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
 @app.get("/most_emotion")
 async def most_emotion(token: str = Header(...)):
     user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
@@ -113,7 +114,6 @@ async def most_emotion(token: str = Header(...)):
         raise HTTPException(status_code=404, detail="Emotion data not found.")
     return {"most_frequent_emotion": most_frequent_emotion}
 
-# 프론트에서 Header에 " token: 사용자 토큰 " 전달해주기
 @app.get("/most_emotion_pic")
 async def most_emotion_pic(token: str = Header(...)):
     user_id = await current_userId(token)  # 비동기 함수 호출로 user_id 추출
@@ -181,4 +181,3 @@ if __name__ == "__main__":
     server = uvicorn.Server(config)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(server.serve())
-
