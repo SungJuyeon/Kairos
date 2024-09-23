@@ -50,9 +50,9 @@ export default function Home() {
                         <CaptureButtonStyle onPress={() => navigate('SmartHome')}>
                             <CaptureButtonText>Smart Home 제어하기</CaptureButtonText>
                         </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('MyPage')}>
-                            <CaptureButtonText>로그인 / 회원가입</CaptureButtonText>
-                        </CaptureButtonStyle>
+                        <CaptureButtonStyle2 onPress={() => navigate('MyPage')}>
+                            <CaptureButtonText2>로그인 / 회원가입</CaptureButtonText2>
+                        </CaptureButtonStyle2>
                     </CaptureButtonContainer>
                 </AnimatedContainer>
             )}
@@ -115,7 +115,23 @@ const CaptureButtonStyle = styled.TouchableOpacity`
     margin-top: 20px;
 `;
 
+const CaptureButtonStyle2 = styled.TouchableOpacity`
+    background-color: white;
+    width: 170px;
+    height: 60px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin-top: 20px;
+    margin-right: 130px;
+`;
+
 const CaptureButtonText = styled.Text`
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+`;
+
+const CaptureButtonText2 = styled.Text`
     color: black;
     font-size: 18px;
     font-weight: bold;
