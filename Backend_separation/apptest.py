@@ -12,23 +12,19 @@ from starlette.responses import HTMLResponse, StreamingResponse
 
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames
+from mqtt_client import setup_mqtt, distance_data, text_to_speech, video_frames
 from db_face_loader import load_faces_from_db
 from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
 
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
+from mqtt_client import setup_mqtt, distance_data, video_frames
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
 from calendar_app import get_all_schedules, add_schedules, delete_schedule, Schedule
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
 from face_image_db import current_userId, fetch_family_photos
 from message_server import handle_connection, fetch_user_id_by_username
-import sys
-
-# Kairos 루트 디렉토리를 Python 경로에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -48,24 +44,22 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     await setup_mqtt()
-    asyncio.create_task(recognize_periodically())
-    load_faces_from_db()  # 얼굴 이미지 로드
-    if init_hand_gesture():
-        asyncio.create_task(recognize_hand_gesture_periodically())
-    else:
-        logger.error("손동작 인식 초기화 실패")
+    #asyncio.create_task(recognize_periodically())
+    #load_faces_from_db()  # 얼굴 이미지 로드
+    #if init_hand_gesture():
+    #    asyncio.create_task(recognize_hand_gesture_periodically())
+    #else:
+    #    logger.error("손동작 인식 초기화 실패")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.post("/move/{direction}")
-async def post_move(direction: str):
-    await move(direction)
 
-@app.post("/speed/{action}")
-async def post_speed(action: str):
-    await speed(action)
+@app.post("/text_to_speech/{text}")
+async def post_text_to_speech(text: str):
+    await text_to_speech(text)
+
 
 @app.get("/distance")
 async def get_distance():
@@ -171,12 +165,7 @@ async def get_video_list():
 
 @app.get("/speech_text")
 async def get_speech_text():
-    #return {"speech_text": speech_text}
-    return {"message": "speech_text는 MQTT를 통해 처리됩니다."}
-
-@app.post("/text_to_speech/{text}")
-async def post_text_to_speech(text: str):
-    await text_to_speech(text)
+    return {"speech_text": speech_text}
 
 
 if __name__ == "__main__":

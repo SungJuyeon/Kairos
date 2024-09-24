@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 from face_recognition import detect_faces, draw_faces
 from mqtt_client import video_frames
-from hand_gesture_recognition import draw_hand_gesture, hand_gesture_action, hand_gesture_landmarks
+#from hand_gesture_recognition import draw_hand_gesture, hand_gesture_action, hand_gesture_landmarks
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +47,11 @@ async def video_frame_generator(face=True, hand=True):
 
             if face:
                 frame = draw_faces(frame) 
-            if hand:
-                frame, action, landmarks = draw_hand_gesture(frame)
-                if action != '?':
-                    cv2.putText(frame, f'Action: {action}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                logging.info(f"Detected hand action: {action}")
+            # if hand:
+            #     frame, action, landmarks = draw_hand_gesture(frame)
+            #     if action != '?':
+            #         cv2.putText(frame, f'Action: {action}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            #     logging.info(f"Detected hand action: {action}")
 
             success, buffer = cv2.imencode('.jpg', frame)
             if success:

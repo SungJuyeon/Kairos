@@ -7,6 +7,8 @@ import logging
 import cv2
 from gmqtt import Client as MQTTClient
 
+from GPT.openai_api import process_user_input
+
 # Logging 설정
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,6 @@ logger = logging.getLogger(__name__)
 distance_data = None
 video_frames = []
 audio_data = []
-speech_text = None
 MAX_FRAMES = 3
 current_speed = 50
 
@@ -34,25 +35,16 @@ client = MQTTClient(client_id="fastapi_client")
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logger.info("연결: MQTT Broker")
-    client.subscribe(MQTT_TOPIC_DISTANCE)
-    client.subscribe(MQTT_TOPIC_VIDEO)
+    #client.subscribe(MQTT_TOPIC_DISTANCE)
+    #client.subscribe(MQTT_TOPIC_VIDEO)
     client.subscribe(MQTT_TOPIC_SPEECH)  # 음성 텍스트 토픽 구독
     logger.info("구독 완료")
 
 
 async def on_message(client, topic, payload, qos, properties):
-    global audio_data, distance_data, video_frames, speech_text
-
+    global audio_data, distance_data, video_frames
     # 비디오 데이터 처리
-    if topic == MQTT_TOPIC_VIDEO:
-        if len(video_frames) >= MAX_FRAMES:
-            video_frames.pop(0)  # 가장 오래된 프레임 삭제
-        img_encode = cv2.imdecode(np.frombuffer(payload, np.uint8), cv2.IMREAD_COLOR)
-        video_frames.append(img_encode)
-        return
 
-
-    # 다른 데이터 처리
     try:
         message = json.loads(payload.decode('utf-8'))  # JSON 디코딩
 
@@ -61,49 +53,30 @@ async def on_message(client, topic, payload, qos, properties):
             # logger.info(f"Distance data received: {distance_data}")
         # 음성 텍스트 처리
         elif topic == MQTT_TOPIC_SPEECH:
-            speech_text = message.get("speech_text")
+            speech_text = message.get("text")
             logger.info(f"Received speech text: {speech_text}")
-            # 텍스트를 GPT에 전달하는 함수 실행##################################
+            command = {"command": "text_to_speech", "text": speech_text}
+            # 텍스트를 GPT에 전달하고 결과를 얻음
+            response_text = process_user_input(speech_text)
+            if response_text:  # response_text가 None이 아닌 경우
+                await text_to_speech(response_text)
+            else:
+                logger.warning("No response text received from process_user_input.")
+
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
 
-    
-
-    return
 
 
 async def setup_mqtt():
     client.on_message = on_message
     await on_connect()
 
-
-async def move(direction: str):
-    logger.info(f"Attempting to move {direction}")
-    command = json.dumps({"command": direction})
-    client.publish(MQTT_TOPIC_COMMAND, command)
-    logger.info(f"Command sent: {command}")
-
-
-async def speed(action):
-    global current_speed
-    logger.info(f"Attempting to set speed: {action}")
-    if action == "up":
-        current_speed = min(100, current_speed + 10)  # 속도를 10 증가, 최대 100으로 제한
-    elif action == "down":
-        current_speed = max(0, current_speed - 10)  # 속도를 10 감소, 최소 0으로 제한
-    elif action >=0 and action <=100:
-        current_speed = action
-    else:
-        logger.warning(f"Invalid action for speed: {action}")
-        return {"error": "Invalid action"}, 400
-
-    command = json.dumps({"command": "set_speed", "speed": current_speed})
-    client.publish(MQTT_TOPIC_COMMAND, command)
-    logger.info(f"Speed command sent: {command}")
-    return {"message": "Speed command sent successfully", "current_speed": current_speed}
-
 async def text_to_speech(text):
+    if client is None:  # client가 None인지 확인
+        logging.error("MQTT client is not initialized.")
+        return
     command = json.dumps({"command": "text_to_speech", "text": text})
     client.publish(MQTT_TOPIC_COMMAND, command)
-    logger.info(f"Text to speech command sent: {command}")
+    logging.info(f"Text to speech command sent: {command}")
     return {"message": "Text to speech command sent successfully"}

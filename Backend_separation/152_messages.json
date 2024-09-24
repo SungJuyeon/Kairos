@@ -10,5 +10,17 @@
     {
         "sender_id": 103,
         "message": "나는 2"
+    },
+    {
+        "sender_id": 103,
+        "message": "hi2"
+    },
+    {
+        "sender_id": 102,
+        "message": "hi"
+    },
+    {
+        "sender_id": 152,
+        "message": "hi3"
     }
 ]

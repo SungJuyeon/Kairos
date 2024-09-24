@@ -1,17 +1,18 @@
+#openai_api.py
 import arrow
 import openai
 import os
 import re
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-
-from youtube import play_music_on_youtube, close_browser
-from add_schedule import add_schedule
-from delete_schedule import delete_schedule
-from select_schedule import select_schedule
-from weather_info import get_weather_info
-from speaker import listen, speak
-from control_home import control_led, control_induction, control_air_conditioner
+from gtts import gTTS
+from GPT.add_schedule import add_schedule
+from GPT.delete_schedule import delete_schedule
+from GPT.select_schedule import select_schedule
+from GPT.speaker import speak
+from GPT.weather_info import get_weather_info
+from GPT.control_home import control_led, control_induction, control_air_conditioner
+from GPT.youtube import play_music_on_youtube
 
 # secret API 키를 가져오기 위해 .env file 로드
 load_dotenv()
@@ -146,82 +147,59 @@ def handle_smart_home_control(user_input):
         elif "꺼" in user_input:
             control_air_conditioner("꺼줘")
 
-def wait_herobot():
-    while True:
-        user_input = listen()
-        #user_content = input("user: ")
+def process_user_input(user_input):
+    if not user_input:
+        return
 
-        if "here 로봇" in user_input or "히어로봇" in user_input or "히어 로봇" in user_input:
-            return
-while True:
-    wait_herobot()
-    speak("네, 무엇을 도와드릴까요?", always_speak=True)
+    if is_weather_request(user_input):
+        speak("날씨 정보를 가져오고 있습니다.")
+        forecast_day = determine_forecast_day(user_input)
+        if forecast_day is not None:
+            weather_info = get_weather_info(forecast_day)
+            speak(weather_info)
 
-    while True:
-        user_content = listen()
-        #user_content = input("user: ")
+    elif is_schedule_request(user_input):
+        user_name, date, time, task = parse_gpt_schedule_instruction(user_input)
 
-        if "종료해" in user_content:
-            speak("종료합니다")
-            close_browser()  # 유튜브 창 닫기
-            break
+        if "추가" in user_input:
+            if user_name and date and time and task:
+                response = add_schedule(user_name, date, time, task)
+                speak(response)
+            else:
+                speak("일정 추가를 위해 사용자 이름, 날짜, 시간, 일정 내용을 모두 입력해 주세요.")
 
-        if not user_content:
-            continue
+        elif "삭제" in user_input:
+            if user_name and date and time:
+                response = delete_schedule(user_name, date, time)
+                speak(response)
+            else:
+                speak("일정 삭제를 위해 사용자 이름, 날짜, 시간을 모두 입력해 주세요.")
 
-        if is_weather_request(user_content):
-            speak("날씨 정보를 가져오고 있습니다.")
-            forecast_day = determine_forecast_day(user_content)
-            if forecast_day is not None:
-                weather_info = get_weather_info(forecast_day)
-                speak(weather_info)
-            continue
-
-        elif is_schedule_request(user_content):
-            user_name, date, time, task = parse_gpt_schedule_instruction(user_content)
-
-            if "추가" in user_content:
-                if user_name and date and time and task:
-                    response = add_schedule(user_name, date, time, task)
-                    speak(response)
+        elif "알려" in user_input or "말해" in user_input:
+            if user_name and date:
+                schedules = select_schedule(user_name, date)
+                if schedules:
+                    response = f"{user_name}의 {date} 일정입니다.\n"
+                    for schedule in schedules:
+                        response += f"{schedule[0]}: {schedule[1]}\n"
                 else:
-                    speak("일정 추가를 위해 사용자 이름, 날짜, 시간, 일정 내용을 모두 입력해 주세요.")
+                    response = f"{user_name}의 {date} 일정이 없습니다."
+                speak(response)
+            else:
+                speak("일정을 조회하려면 사용자 이름과 날짜를 입력해 주세요.")
 
-            elif "삭제" in user_content:
-                if user_name and date and time:
-                    response = delete_schedule(user_name, date, time)
-                    speak(response)
-                else:
-                    speak("일정 삭제를 위해 사용자 이름, 날짜, 시간을 모두 입력해 주세요.")
+    elif "너" in user_input and "이름" in user_input:
+        speak("제 이름은 히어로봇입니다. 저는 당신의 AI 비서입니다.")
 
-            elif "알려" in user_content or "말해" in user_content:
-                if user_name and date:
-                    schedules = select_schedule(user_name, date)
-                    if schedules:
-                        response = f"{user_name}의 {date} 일정입니다.\n"
-                        for schedule in schedules:
-                            response += f"{schedule[0]}: {schedule[1]}\n"
-                    else:
-                        response = f"{user_name}의 {date} 일정이 없습니다."
-                    speak(response)
-                else:
-                    speak("일정을 조회하려면 사용자 이름과 날짜를 입력해 주세요.")
-            continue
+    elif is_smart_home_control_request(user_input):
+        handle_smart_home_control(user_input)
 
-        elif "너" in user_content and "이름" in user_content:
-            speak("제 이름은 히어로봇입니다. 저는 당신의 AI 비서입니다.")
-            continue
+    elif "틀어 줘" in user_input or "틀어줘" in user_input:
+        music = re.sub(r"(틀어줘)", "", user_input).strip()
+        play_music_on_youtube(music)
 
-        elif is_smart_home_control_request(user_content):
-            handle_smart_home_control(user_content)
-            continue
-
-        elif "틀어 줘" in user_content or "틀어줘" in user_content:
-            music = re.sub(r"(틀어줘)", "", user_content).strip()
-            play_music_on_youtube(music)
-            continue
-
-        prompt = user_content
+    else:
+        prompt = user_input
         ai_message = generate_gpt_response(prompt)
         messages.append({"role": "assistant", "content": ai_message})
         speak(ai_message)

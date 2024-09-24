@@ -1,4 +1,5 @@
-from speaker import speak
+from GPT.speaker import speak
+
 
 def control_led(action):
     if action == "켜줘":
