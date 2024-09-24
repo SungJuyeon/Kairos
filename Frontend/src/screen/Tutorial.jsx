@@ -9,7 +9,7 @@ export default function Tutorial() {
     return (
         <Container>
             <AnimatedContainer>
-                <Title>튜토리얼에 오신 것을 환영합니다.</Title>
+                <Title>히어로봇 알아가기</Title>
                 <ScrollView 
                     contentContainerStyle={{ alignItems: 'center' }} 
                     showsVerticalScrollIndicator={false} // 스크롤바 숨기기
@@ -70,7 +70,7 @@ const AnimatedContainer = styled(Animated.View)`
 const Title = styled.Text`
     color: white;
     font-size: 25px;
-    margin-bottom: 10px;
+    margin-top: 20px;
     font-weight: bold;
 `;
 

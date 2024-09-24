@@ -42,12 +42,12 @@ export default function ControlNavigator() {
         <ControlStack.Screen 
           name="SmartHome" 
           component={SmartHomeScreen} 
-          options={{ title: '' }} // 타이틀을 직접 설정
+          options={{ title: 'SMARTHOME REMOTE' }} // 타이틀을 직접 설정
         />
         <ControlStack.Screen 
           name="Tutorial" 
           component={TutorialScreen} 
-          options={{ title: '' }} // 타이틀을 직접 설정
+          options={{ title: 'HEROBOT TUTORIAL' }} // 타이틀을 직접 설정
         />
         <ControlStack.Screen 
           name="Function1" 

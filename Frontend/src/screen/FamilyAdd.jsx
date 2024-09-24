@@ -4,6 +4,8 @@ import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const BASE_URL = 'http://223.194.139.32:8080';
+
 export default function SignIn() {
     const { navigate } = useNavigation();
 
@@ -30,7 +32,7 @@ export default function SignIn() {
             const accessToken = await AsyncStorage.getItem('token');
     
             // senderUsername 받아오기
-            const usernameResponse = await fetch('http://localhost:8080/user/username', {
+            const usernameResponse = await fetch(`${BASE_URL}/user/username`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -50,7 +52,7 @@ export default function SignIn() {
             const receiverUsername = username; // 현재 입력된 username 사용
     
             // POST 요청
-            const requestResponse = await fetch('http://localhost:8080/family/request', {
+            const requestResponse = await fetch(`${BASE_URL}/family/request`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -82,7 +84,7 @@ export default function SignIn() {
         <Container>
             <Title>가족 초대</Title>
             <InputContainer>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>유저 이름</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>유저 ID</Text>
                 <StyledTextInput
                     onChangeText={text => setUsername(text)}
                     value={username}

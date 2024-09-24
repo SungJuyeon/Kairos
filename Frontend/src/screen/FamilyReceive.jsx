@@ -3,6 +3,8 @@ import { Alert, FlatList } from "react-native";
 import styled from 'styled-components/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const BASE_URL = 'http://223.194.139.32:8080';
+
 export default function FamilyReceive() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ export default function FamilyReceive() {
                 throw new Error('토큰이 없습니다. 로그인 후 다시 시도해주세요.');
             }
 
-            const response = await fetch('http://localhost:8080/family/requests/received', {
+            const response = await fetch(`${BASE_URL}/family/requests/received`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -38,10 +40,9 @@ export default function FamilyReceive() {
     };
 
     const handleAccept = async (requestId) => {
-        // 수락 요청 처리
         try {
             const accessToken = await AsyncStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/family/request/accept?requestId=${requestId}`, {
+            const response = await fetch(`${BASE_URL}/family/request/accept?requestId=${requestId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -62,10 +63,9 @@ export default function FamilyReceive() {
     };
 
     const handleReject = async (requestId) => {
-        // 거절 요청 처리
         try {
             const accessToken = await AsyncStorage.getItem('token');
-            const response = await fetch(`http://localhost:8080/family/request/reject?requestId=${requestId}`, {
+            const response = await fetch(`${BASE_URL}/family/request/reject?requestId=${requestId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -92,15 +92,14 @@ export default function FamilyReceive() {
     const renderItem = ({ item }) => (
         <RequestItem>
             <RequestText>보낸 사람: {item.senderUsername}</RequestText>
-            <RequestText>상태: {item.status}</RequestText>
-            <RequestText>RequestId: {item.requestId}</RequestText>
+            <RequestText>상태: {item.status === 'PENDING' ? '수락 대기중' : item.status}</RequestText>
             <ButtonContainer>
-                <ActionButton onPress={() => handleAccept(item.requestId)}>
+                <AcceptButton onPress={() => handleAccept(item.requestId)}>
                     <ButtonText>수락</ButtonText>
-                </ActionButton>
-                <ActionButton onPress={() => handleReject(item.requestId)}>
+                </AcceptButton>
+                <RejectButton onPress={() => handleReject(item.requestId)}>
                     <ButtonText>거절</ButtonText>
-                </ActionButton>
+                </RejectButton>
             </ButtonContainer>
         </RequestItem>
     );
@@ -111,13 +110,15 @@ export default function FamilyReceive() {
 
     return (
         <Container>
-            <Title>받은 가족 요청</Title>
+            <Title>가족 요청</Title>
             <FlatList
                 data={requests}
                 renderItem={renderItem}
-                keyExtractor={(item, index) => item.requestId ? item.requestId.toString() : index.toString()} // requestId 사용
+                keyExtractor={(item) => item.requestId ? item.requestId.toString() : Math.random().toString()} // requestId 사용
             />
-            <RefreshButton title="새로 고침" onPress={fetchReceivedRequests} />
+            <RefreshButton onPress={fetchReceivedRequests}>
+                <RefreshButtonText>새로 고침</RefreshButtonText>
+            </RefreshButton>
         </Container>
     );
 };
@@ -130,9 +131,10 @@ const Container = styled.SafeAreaView`
 
 const Title = styled.Text`
     color: white;
-    font-size: 20px;
+    font-size: 36px;
     font-weight: bold;
     margin-bottom: 10px;
+    text-align: center; /* 중앙 정렬 */
 `;
 
 const RequestItem = styled.View`
@@ -141,10 +143,12 @@ const RequestItem = styled.View`
     border-bottom-color: #ccc;
     background-color: white;
     margin-bottom: 5px;
+    border-radius: 10px; /* 모서리 둥글게 만들기 */
 `;
 
 const RequestText = styled.Text`
-    font-size: 16px;
+    font-size: 18px; /* 폰트 사이즈를 크게 설정 */
+    font-weight: bold; /* 폰트 웨이트를 bold로 설정 */
 `;
 
 const ButtonContainer = styled.View`
@@ -153,7 +157,7 @@ const ButtonContainer = styled.View`
     margin-top: 10px;
 `;
 
-const ActionButton = styled.TouchableOpacity`
+const AcceptButton = styled.TouchableOpacity`
     background-color: #4CAF50; /* 수락 버튼 색상 */
     padding: 10px;
     border-radius: 5px;
@@ -161,11 +165,29 @@ const ActionButton = styled.TouchableOpacity`
     margin-right: 5px;
 `;
 
+const RejectButton = styled.TouchableOpacity`
+    background-color: #FF4D4D; /* 거절 버튼 색상 */
+    padding: 10px;
+    border-radius: 5px;
+    flex: 1;
+`;
+
 const ButtonText = styled.Text`
     color: white;
     text-align: center;
 `;
 
-const RefreshButton = styled.Button`
-    margin-top: 10px;
+const RefreshButton = styled.TouchableOpacity`
+    background-color: #FFCEFF; /* 새로 고침 버튼 색상 */
+    padding: 12px 24px;
+    border-radius: 10px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    align-items: center; /* 텍스트 중앙 정렬 */
+`;
+
+const RefreshButtonText = styled.Text`
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
 `;

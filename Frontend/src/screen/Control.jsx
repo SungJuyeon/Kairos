@@ -10,6 +10,9 @@ import * as MediaLibrary from 'expo-media-library';
 // 스타일 컴포넌트를 위함
 const { width, height } = Dimensions.get('window');
 
+const BASE_URL = 'http://223.194.139.32:8000';
+const imageURL = `${BASE_URL}/video`;
+
 // 비율에 따른 스타일 조정
 const scale = width / 640; // 기준 너비에 대한 비율
 
@@ -27,8 +30,6 @@ export default function Control() {
 
     const webViewRef = React.useRef(null);
     const [value, setValue] = useState(5);
-    const BASE_URL = 'http://localhost:8000';
-    const imageURL = `${BASE_URL}/video`;
 
     // 방향키 버튼을 누르고 있을 때
     const handleButtonPressIn = async (direction) => {
@@ -52,6 +53,7 @@ export default function Control() {
             case 'stop':
                 setIsStopPressed(true);
                 await fetch(`${BASE_URL}/stop`, { method: 'POST' });
+                await fetch(`${BASE_URL}/move/stop_actuator`, { method: 'POST' });
                 break;
             case 'up':
                 setIsUpPressed(true);
@@ -88,6 +90,7 @@ export default function Control() {
         }
         // 모터 정지 요청
         await fetch(`${BASE_URL}/stop`, { method: 'POST' });
+        await fetch(`${BASE_URL}/move/stop_actuator`, { method: 'POST' });
         setIsStopPressed(true);
     };
 
@@ -140,7 +143,7 @@ export default function Control() {
     // 속도 조절 코드
     const handleValueChange = async (newValue) => {
         setValue(newValue);
-        await fetch(`http://localhost:8000/speed/${newValue * 10}`, { method: 'POST' });
+        await fetch(`/speed/${newValue * 10}`, { method: 'POST' });
     };
 
     // 갤러리 열기
@@ -180,7 +183,7 @@ export default function Control() {
                     <img src={imageURL} width="100%" alt="Live Stream" />
                 ) : (
                     <StyledWebView
-                        source={{ uri: `http://localhost:8000/video_feed/${isFace}` }}
+                        source={{ uri: `${BASE_URL}/video_feed/${isFace}` }}
                         ref={webViewRef}
                         onMessage={onMessage}
                     />
@@ -188,6 +191,7 @@ export default function Control() {
             </ImageContainer>
 
             <Margin2Container />
+
             <BorderContainer />
 
                 <CaptureButtonContainer>
@@ -210,7 +214,8 @@ export default function Control() {
                 <ControlPadContainer>
                     <SpeedSliderContainer>
                         <SliderTextContainer>
-                            <SliderText>속도: {value}</SliderText>
+                            <SliderText>Speed</SliderText>
+                            <SliderText>     {value}</SliderText>
                         </SliderTextContainer>
                         <StyledSlider
                             minimumValue={0}
@@ -273,8 +278,9 @@ export default function Control() {
                                 <ButtonText>{isBackPressed ? '▼' : '▼'}</ButtonText>
                             </ButtonStyle>
                         </DownButtonContainer>
-                    </ButtonContainer>
+                    </ButtonContainer>        
                 </ControlPadContainer>
+            <BorderContainer />
         </Container>
     );
 }
@@ -481,16 +487,15 @@ const StopButton = styled.TouchableOpacity`
     margin-left: 20px;
 `;
 
-
 const CaptureButtonStyle = styled.TouchableOpacity`
-    width: 70px; 
+    width: 80px; 
     height: 45px;
     justify-content: center;
     align-items: center;
     background-color: ${({ isCaptureVideoPressed }) => (isCaptureVideoPressed ? '#AAAAAA' : '#FFCEFF')};
     border-radius: 10px;
     padding: 10px 10px;
-    margin: 0 10px;
+    margin: 0 8px;
 `;
 
 const ImageContainer = styled.View`
@@ -509,12 +514,12 @@ const StyledImage = styled.Image`
 const SliderTextContainer = styled.View`
     background-color: #FFFFFF;
     border-radius: 10px;
-    margin-bottom: 70px;
+    margin-bottom: 60px;
     padding: 7px;
 `;
 
 const SliderText = styled.Text`
-    font-size: 22px;
+    font-size: 18px;
     color: black;
     font-weight: bold;
 `;

@@ -1,9 +1,11 @@
-import React, { useContext, useEffect, useState }from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { View, Text, SafeAreaView, TouchableOpacity, Image, ScrollView, Alert } from "react-native";
-import styled from 'styled-components/native'
+import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const BASE_URL = 'http://223.194.139.32:8080';
 
 export default function MyPage() {
     const { navigate } = useNavigation();
@@ -11,89 +13,85 @@ export default function MyPage() {
     const [username, setUsername] = useState('');
     const [photo, setPhoto] = useState('');
 
-
     const fetchUsername = async () => {
-      try {
-          const accessToken = await AsyncStorage.getItem('token');
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
 
-          const response = await fetch('http://localhost:8080/user/username', {
-              method: 'GET',
-              headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json',
-              },
-          });
+            const response = await fetch(`${BASE_URL}/user/username`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-          if (!response.ok) {
-              throw new Error('네트워크 응답이 좋지 않습니다.');
-          }
+            if (!response.ok) {
+                throw new Error('네트워크 응답이 좋지 않습니다.');
+            }
 
-          const data = await response.text();
-          setUsername(data);
-      } catch (error) {
-          Alert.alert('오류 발생', error.message);
-      }
-  };
-
-  const fetchPhoto = async () => {
-    try {
-        const accessToken = await AsyncStorage.getItem('token');
-
-        const response = await fetch('http://localhost:8080/user/photo', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error('사진을 가져오는 데 실패했습니다. ');
+            const data = await response.text();
+            setUsername(data);
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
         }
+    };
 
-        const blob = await response.blob(); // Base64 문자열을 가져옵니다.
-        console.log();
-        const reader = new FileReader();
+    const fetchPhoto = async () => {
+        try {
+            const accessToken = await AsyncStorage.getItem('token');
 
-        reader.onloadend = () => {
-          const base64data = reader.result; // Base64 문자열
-          setPhoto(base64data); // 상태에 저장
-      };
+            const response = await fetch(`${BASE_URL}/user/photo`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        reader.readAsDataURL(blob); // Blob을 Base64로 변환
+            if (!response.ok) {
+                throw new Error('사진을 가져오는 데 실패했습니다.');
+            }
 
-    } catch (error) {
-        Alert.alert('오류 발생', error.message);
-    }
-};
+            const blob = await response.blob();
+            const reader = new FileReader();
 
-useEffect(() => {
-  fetchUsername();
-  fetchPhoto();
-}, []);
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                setPhoto(base64data);
+            };
 
+            reader.readAsDataURL(blob);
+
+        } catch (error) {
+            Alert.alert('오류 발생', error.message);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsername();
+        fetchPhoto();
+    }, []);
 
     return (
         <Container>
-          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
-          style={{ backgroundColor: '#222222' }}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }} style={{ backgroundColor: '#222222' }}>
+                <Title>{username || '로딩 중...'}님 반갑습니다!</Title>
 
-          <Title>{username || '로딩 중...'}님 반갑습니다!</Title>
-
-          <Image
-            source={{ uri: photo }}
-            style={{ width: 300, height: 300, margin: 15 }}
-          />
-          <Button onPress={() => navigate('FamilyManage')}>
-            <ButtonText>가족 관리</ButtonText>
-          </Button>
-          <Button onPress={() => navigate('ScheduleManage')}>
-            <ButtonText>일정 관리</ButtonText>
-          </Button>
-          <LogoutButton onPress={() => logout()}>
-            <LogoutButtonText>로그 아웃</LogoutButtonText>
-          </LogoutButton>
-          </ScrollView>
+                <ProfileImage
+                    source={{ uri: photo }}
+                />
+                <RowButtonContainer>
+                    <CaptureButtonStyle2 onPress={() => navigate('FamilyManage')}>
+                        <ButtonText>가족 관리</ButtonText>
+                    </CaptureButtonStyle2>
+                    <CaptureButtonStyle2 onPress={() => navigate('ScheduleManage')}>
+                        <ButtonText>일정 관리</ButtonText>
+                    </CaptureButtonStyle2>
+                </RowButtonContainer>
+                <LogoutButton onPress={() => logout()}>
+                    <LogoutButtonText>로그 아웃</LogoutButtonText>
+                </LogoutButton>
+            </ScrollView>
         </Container>
     );
 }
@@ -112,28 +110,51 @@ const Container = styled.SafeAreaView`
     align-items: center;
 `;
 
-const Button = styled.TouchableOpacity`
-  background-color: #FFFFFF;
-  padding: 10px 20px;
-  border-radius: 5px;
-  margin: 15px;
-`;
-
-const ButtonText = styled.Text`
-  color: black;
-  font-size: 24px;
-  font-weight: bold;
+const ProfileImage = styled.Image`
+    width: 300px;
+    height: 300px;
+    margin: 15px;
+    border-radius: 150px;
 `;
 
 const LogoutButton = styled.TouchableOpacity`
-  background-color: #FFCEFF;
-  padding: 10px 20px;
-  border-radius: 5px;
-  margin: 15px;
+    width: 130px;
+    height: 60px;
+    background-color: #FFCEFF;
+    border-radius: 10px;
+    margin: 15px;
+    padding: 0; /* 내부 패딩을 제거하여 중앙 정렬 */
+    justify-content: center; /* 텍스트 중앙 정렬 */
+    align-items: center; /* 텍스트 중앙 정렬 */
 `;
 
 const LogoutButtonText = styled.Text`
-  color: black;
-  font-size: 16px;
-  font-weight: bold;
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+`;
+
+const RowButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`;
+
+const CaptureButtonStyle2 = styled.TouchableOpacity`
+    background-color: white;
+    width: 140px;
+    height: 70px;
+    border-radius: 10px;
+    padding: 0; /* 내부 패딩을 제거하여 중앙 정렬 */
+    margin-left: 10px;
+    margin-right: 10px;
+    justify-content: center; /* 텍스트 중앙 정렬 */
+    align-items: center; /* 텍스트 중앙 정렬 */
+`;
+
+const ButtonText = styled.Text`
+    color: black;
+    font-size: 24px;
+    font-weight: bold;
 `;
