@@ -3,6 +3,8 @@ import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Alert } from "re
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 
+const BASE_URL = 'http://223.194.139.32:8080';
+
 export default function FindPassword() {
     const { navigate } = useNavigation();
 
@@ -21,7 +23,7 @@ export default function FindPassword() {
         const findPassword = async () => {
 
             try {
-                const response = await fetch('http://localhost:8080/find/password', {
+                const response = await fetch(`${BASE_URL}/find/password`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

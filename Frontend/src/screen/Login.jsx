@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions, Alert } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Dimensions, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +7,8 @@ import MyPage from "./MyPage";
 import { AuthContext } from './AuthContext';
 
 const { width, height } = Dimensions.get('window');
+
+const BASE_URL = 'http://223.194.139.32:8080';
 
 export default function Login() {
     const { navigate } = useNavigation();
@@ -16,11 +18,8 @@ export default function Login() {
     const [idFocused, setIdFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
 
-    // 백엔드에서는 id 말고 username을 사용하기에
-    const [username, setUsername] = useState('');
-
     const { isLoggedIn, login, logout } = useContext(AuthContext);
-    
+
     useEffect(() => {
         const checkLoginStatus = async () => {
             try {
@@ -32,20 +31,16 @@ export default function Login() {
                 }
             } catch (error) {
                 console.error('로그인 상태 불러오기 실패', error);
-                logout(); // 오류 발생 시 로그아웃 상태로 초기화
+                logout();
             }
         };
-    
+
         checkLoginStatus();
     }, []);
-    
 
-
-    // 로그인 버튼 클릭시 실행
     const tryLogin = async () => {
-
         try {
-            const response = await fetch('http://10.0.2.2:8080/login', {
+            const response = await fetch(`${BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,24 +51,19 @@ export default function Login() {
                 }),
             });
 
-        // 응답 상태 로그 추가
             console.log('응답 상태:', response.status);
 
-
             if (response.ok) {
-                // 헤더에서 access 토큰을 가져오기
-                const accessToken = response.headers.get('access'); // 'access' 헤더에서 토큰 가져오기
-                //console.log('Access Token:', accessToken); // 토큰 로그 출력
-
+                const accessToken = response.headers.get('access');
                 if (accessToken) {
-                    await AsyncStorage.setItem('token', accessToken); // AsyncStorage에 토큰 저장
+                    await AsyncStorage.setItem('token', accessToken);
                     login();
                     Alert.alert('로그인 성공', '환영합니다!');
                 } else {
                     Alert.alert('로그인 실패', '토큰을 찾을 수 없습니다.');
                 }
             } else {
-                const errorText = await response.text();  // 오류 메시지 텍스트 가져오기
+                const errorText = await response.text();
                 console.log('로그인 실패 내용:', errorText);
                 Alert.alert('로그인 실패', errorText);
             }
@@ -83,49 +73,53 @@ export default function Login() {
         }
     };
 
-
-
     return (
-        <Container>
-            {isLoggedIn ? (
-                <MyPage />
-            ) : (
-                <View style={{ alignItems: 'center' }}>
-                    <Title>Log In!</Title>
-                    <StyledTextInput
-                        onChangeText={setId}
-                        value={id}
-                        placeholderTextColor="gray"
-                        placeholder="ID"
-                        onFocus={() => setIdFocused(true)}
-                        onBlur={() => setIdFocused(false)}
-                        focused={idFocused}
-                    />
-                    <StyledTextInput
-                        onChangeText={setPassword}
-                        value={password}
-                        placeholderTextColor="gray"
-                        placeholder="PASSWORD"
-                        secureTextEntry={true}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                        focused={passwordFocused}
-                    />
-                    <RowContainer>
-                        <LoginButton onPress={tryLogin}>
-                            <ButtonText>로그인</ButtonText>
-                        </LoginButton>
-                        <Button onPress={() => navigate('FindUserData')}>
-                            <ButtonText>내 정보 찾기</ButtonText>
-                        </Button>
-                    </RowContainer>
-                    <StyledText>처음이시라면...?</StyledText>
-                    <SignIn onPress={() => navigate('SignUp')}>
-                        <ButtonText>회원 가입 하러가기</ButtonText>
-                    </SignIn>
-                </View>
-            )}
-        </Container>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }} // 전체 화면을 차지하도록 설정
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // iOS와 Android에 따라 다르게 설정
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // 필요에 따라 조정
+        >
+            <Container>
+                {isLoggedIn ? (
+                    <MyPage />
+                ) : (
+                    <View style={{ alignItems: 'center' }}>
+                        <Title>Log In!</Title>
+                        <StyledTextInput
+                            onChangeText={setId}
+                            value={id}
+                            placeholderTextColor="gray"
+                            placeholder="ID"
+                            onFocus={() => setIdFocused(true)}
+                            onBlur={() => setIdFocused(false)}
+                            focused={idFocused}
+                        />
+                        <StyledTextInput
+                            onChangeText={setPassword}
+                            value={password}
+                            placeholderTextColor="gray"
+                            placeholder="PASSWORD"
+                            secureTextEntry={true}
+                            onFocus={() => setPasswordFocused(true)}
+                            onBlur={() => setPasswordFocused(false)}
+                            focused={passwordFocused}
+                        />
+                        <RowContainer>
+                            <LoginButton onPress={tryLogin}>
+                                <ButtonText>로그인</ButtonText>
+                            </LoginButton>
+                            <Button onPress={() => navigate('FindUserData')}>
+                                <ButtonText>내 정보 찾기</ButtonText>
+                            </Button>
+                        </RowContainer>
+                        <StyledText>처음이시라면...?</StyledText>
+                        <SignIn onPress={() => navigate('SignUp')}>
+                            <ButtonText>회원 가입 하러가기</ButtonText>
+                        </SignIn>
+                    </View>
+                )}
+            </Container>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -172,7 +166,7 @@ const RowContainer = styled.View`
 `;
 
 const LoginButton = styled.TouchableOpacity`
-    background-color: #FFB0F9;
+    background-color: #FFCEFF;
     padding: ${height * 0.02}px ${width * 0.06}px;
     border-radius: 10px;
     margin: 0 10px;

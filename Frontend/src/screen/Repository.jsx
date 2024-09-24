@@ -4,6 +4,8 @@ import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
+const BASE_URL = 'http://223.194.139.32:8000';
+
 export default function Repository() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export default function Repository() {
     const fetchData = async () => {
       try {
         console.log('데이터 로딩 시작...');
-        const response = await fetch('http://localhost:8000/s3_video_list');
+        const response = await fetch(`${BASE_URL}/s3_video_list`);
         if (!response.ok) {
           throw new Error('네트워크 응답이 좋지 않습니다.');
         }

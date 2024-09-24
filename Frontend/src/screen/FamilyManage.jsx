@@ -4,6 +4,8 @@ import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const BASE_URL = 'http://223.194.139.32:8080';
+
 export default function FamilyManage() {
     const { navigate } = useNavigation();
     const [data, setData] = useState([]);
@@ -16,7 +18,7 @@ export default function FamilyManage() {
                 throw new Error('토큰이 없습니다. 로그인 후 다시 시도해주세요.');
             }
 
-            const response = await fetch('http://localhost:8080/family/list', {
+            const response = await fetch(`${BASE_URL}/family/list`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -48,7 +50,7 @@ export default function FamilyManage() {
                 throw new Error('토큰이 없습니다. 로그인 후 다시 시도해주세요.');
             }
 
-            const response = await fetch(`http://localhost:8080/family/delete?memberUsername=${nickname}`, {
+            const response = await fetch(`${BASE_URL}/family/delete?memberUsername=${nickname}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -62,7 +64,7 @@ export default function FamilyManage() {
             }
 
             const message = await response.text();
-            Alert.alert('성공', message); // 삭제 성공 메시지
+            Alert.alert('성공', message);
 
             // 가족 목록에서 해당 구성원 제거
             setData(prevData => prevData.filter(item => item.nickname !== nickname));
@@ -73,14 +75,16 @@ export default function FamilyManage() {
 
     const renderItem = ({ item }) => {
         const imageUri = item.photoname.startsWith('data:') ? item.photoname : `data:image/png;base64,${item.photoname}`;
-    
+
         return (
             <Item>
                 <ItemImage source={{ uri: imageUri }} />
-                <ItemText>{item.nickname}</ItemText>
-                <RemoveButton onPress={() => removeItem(item.nickname)}>
-                    <RemoveButtonText>제거</RemoveButtonText>
-                </RemoveButton>
+                <ItemTextContainer>
+                    <ItemText>{item.nickname}</ItemText>
+                    <RemoveButton onPress={() => removeItem(item.nickname)}>
+                        <RemoveButtonText>제거</RemoveButtonText>
+                    </RemoveButton>
+                </ItemTextContainer>
             </Item>
         );
     };
@@ -91,7 +95,7 @@ export default function FamilyManage() {
             <FlatList
                 data={data}
                 renderItem={renderItem}
-                keyExtractor={(item, index) => item.nickname} // nickname을 키로 사용
+                keyExtractor={(item, index) => item.nickname}
                 contentContainerStyle={{ paddingBottom: 20 }}
             />
             <RowContainer>
@@ -128,32 +132,34 @@ const Item = styled.View`
     border-radius: 5px;
     margin: 5px;
     width: 300px;
-    align-items: center;
-    height: 120px;
-    justify-content: space-between;
-    flex-direction: row;
+    flex-direction: row; /* 수평 방향으로 배치 */
+    align-items: center; /* 세로 중앙 정렬 */
 `;
 
 const ItemImage = styled.Image`
     width: 80px;
     height: 80px;
     border-radius: 40px;
-    margin-bottom: 5px;
-    margin-top: 5px;
+    margin-right: 10px; /* 이미지와 텍스트 사이의 여백 추가 */
+`;
+
+const ItemTextContainer = styled.View`
+    flex: 1; /* 남는 공간을 모두 사용 */
+    flex-direction: row; /* 텍스트와 버튼을 수평으로 배치 */
+    justify-content: space-between; /* 텍스트와 버튼 간의 공간을 최대로 */
+    align-items: center; /* 세로 중앙 정렬 */
 `;
 
 const ItemText = styled.Text`
     color: black;
     font-size: 16px;
     font-weight: bold;
-    flex: 1;
 `;
 
 const RemoveButton = styled.TouchableOpacity`
     background-color: #FF4D4D;
     padding: 5px 10px;
     border-radius: 5px;
-    margin-left: 10px;
 `;
 
 const RemoveButtonText = styled.Text`
@@ -180,6 +186,7 @@ const RowContainer = styled.View`
     align-items: left;
     margin-top: 30px;
     margin-left: 20px;
+    margin-bottom: 30px;
 `;
 
 const Button3 = styled.TouchableOpacity`

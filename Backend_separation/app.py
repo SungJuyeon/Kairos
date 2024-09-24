@@ -2,26 +2,19 @@ import asyncio
 import logging
 import os
 import json
-from fastapi.responses import FileResponse
 import uvicorn  # uvicorn 모듈 임포트 추가
 
 from fastapi import FastAPI, Request, HTTPException, Header, WebSocket
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import HTMLResponse, StreamingResponse
-
-from face_recognition import recognize_periodically
-from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames
-from db_face_loader import load_faces_from_db
-from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
+from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
 
 from face_recognition import recognize_periodically
 from video_processing import generate_frames, video_frame_generator
 from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
-from calendar_app import get_all_schedules, add_schedules, delete_schedule, Schedule
+from calendar_app import get_all_schedules, add_schedule, delete_schedule, Schedule
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
 from face_image_db import current_userId, fetch_family_photos
 from message_server import handle_connection, fetch_user_id_by_username
@@ -44,12 +37,8 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     await setup_mqtt()
-    asyncio.create_task(recognize_periodically())
+    asyncio.create_task(recognize_periodically(video_frames))
     load_faces_from_db()  # 얼굴 이미지 로드
-    if init_hand_gesture():
-        asyncio.create_task(recognize_hand_gesture_periodically())
-    else:
-        logger.error("손동작 인식 초기화 실패")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
@@ -63,12 +52,6 @@ async def post_move(direction: str):
 async def post_speed(action: str):
     await speed(action)
 
-
-@app.post("/text_to_speech/{text}")
-async def post_text_to_speech(text: str):
-    await text_to_speech(text)
-    
-
 @app.get("/distance")
 async def get_distance():
     logger.info("get_distance 엔드포인트 호출됨.")
@@ -78,32 +61,37 @@ async def get_distance():
 async def video_stream():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
-
-@app.get("/video_feed/{face}/{hand}")
-async def get_video_feed(face: bool, hand: bool):
-    return StreamingResponse(video_frame_generator(face, hand),
+@app.get("/video_feed/{face}")
+async def get_video_feed(face: bool):
+    return StreamingResponse(video_frame_generator(face),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
+@app.post("/load_faces")
+async def load_faces():
+    try:
+        load_faces_from_db()
+        return {"message": "얼굴 이미지가 성공적으로 로드되었습니다."}
+    except Exception as e:
+        logger.error(f"얼굴 이미지 로드 중 오류 발생: {str(e)}")
+        return {"error": "얼굴 이미지 로드 중 오류가 발생했습니다.", "details": str(e)}, 500
+
+@app.get("/s3_video_list")
+async def get_video_list():
+    video_list = await list_s3_videos()
+    return {"videos": video_list}
+
 @app.get("/calendar")
-def calendar(token: str = Header(...)):
+async def calendar(token: str = Header(...)):
     schedules = get_all_schedules(token)
     return {"schedules": schedules}
 
 @app.post("/schedules/add")
-def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
-    return add_schedules(schedule, token)
+async def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
+    return add_schedule(schedule, token)
 
 @app.delete("/schedules/{schedule_id}")
-def delete_schedule_endpoint(
-        schedule_id: int,
-        token: str = Header(...)
-):
-    try:
-        return delete_schedule(schedule_id, token)
-    except HTTPException as e:
-        raise e  # 발생한 HTTPException을 그대로 재발생
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+async def delete_schedule_endpoint(schedule_id: int, token: str = Header(...)):
+    return delete_schedule(schedule_id, token)
 
 @app.get("/most_emotion")
 async def most_emotion(token: str = Header(...)):
@@ -144,37 +132,6 @@ async def get_messages(username: str):
 @app.websocket("/ws/chat")
 async def websocket_endpoint(websocket: WebSocket):
     await handle_connection(websocket)
-
-# @app.get("/gesture")
-# async def get_gesture():
-#     logger.info(f"get_gesture 엔드포인트 호출됨.")
-#     from handgesture_recognition import this_action
-#     return {"gesture": this_action}
-
-
-@app.post("/load_faces")
-async def load_faces():
-    try:
-        load_faces_from_db()
-        return {"message": "얼굴 이미지가 성공적으로 로드되었습니다."}
-    except Exception as e:
-        logger.error(f"얼굴 이미지 로드 중 오류 발생: {str(e)}")
-        return {"error": "얼굴 이미지 로드 중 오류가 발생했습니다.", "details": str(e)}, 500
-
-
-@app.get("/s3_video_list")
-async def get_video_list():
-    """
-    S3에 저장된 영상 목록을 반환하는 엔드포인트
-    """
-    video_list = await list_s3_videos()
-    return {"videos": video_list}
-
-
-@app.get("/speech_text")
-async def get_speech_text():
-    return {"speech_text": speech_text}
-
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
