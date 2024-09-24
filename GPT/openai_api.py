@@ -151,55 +151,73 @@ def process_user_input(user_input):
     if not user_input:
         return
 
-    if is_weather_request(user_input):
-        speak("날씨 정보를 가져오고 있습니다.")
-        forecast_day = determine_forecast_day(user_input)
-        if forecast_day is not None:
-            weather_info = get_weather_info(forecast_day)
-            speak(weather_info)
+    # "종료" 명령 시 함수 종료
+    if "종료" in user_input:
+        speak("종료합니다.")
+        return  # 함수를 즉시 종료
 
-    elif is_schedule_request(user_input):
-        user_name, date, time, task = parse_gpt_schedule_instruction(user_input)
+    # "히어로봇" 호출 시만 다음 명령을 처리
+    if "히어로봇" in user_input or "히어로" in user_input or "here" in user_input:
+        speak("네 무엇을 도와드릴까요?")
 
-        if "추가" in user_input:
-            if user_name and date and time and task:
-                response = add_schedule(user_name, date, time, task)
-                speak(response)
-            else:
-                speak("일정 추가를 위해 사용자 이름, 날짜, 시간, 일정 내용을 모두 입력해 주세요.")
+        # 날씨 요청 처리
+        if is_weather_request(user_input):
+            speak("날씨 정보를 가져오고 있습니다.")
+            forecast_day = determine_forecast_day(user_input)
+            if forecast_day is not None:
+                weather_info = get_weather_info(forecast_day)
+                speak(weather_info)
 
-        elif "삭제" in user_input:
-            if user_name and date and time:
-                response = delete_schedule(user_name, date, time)
-                speak(response)
-            else:
-                speak("일정 삭제를 위해 사용자 이름, 날짜, 시간을 모두 입력해 주세요.")
+        # 일정 관련 요청 처리
+        elif is_schedule_request(user_input):
+            user_name, date, time, task = parse_gpt_schedule_instruction(user_input)
 
-        elif "알려" in user_input or "말해" in user_input:
-            if user_name and date:
-                schedules = select_schedule(user_name, date)
-                if schedules:
-                    response = f"{user_name}의 {date} 일정입니다.\n"
-                    for schedule in schedules:
-                        response += f"{schedule[0]}: {schedule[1]}\n"
+            if "추가" in user_input:
+                if user_name and date and time and task:
+                    response = add_schedule(user_name, date, time, task)
+                    speak(response)
                 else:
-                    response = f"{user_name}의 {date} 일정이 없습니다."
-                speak(response)
-            else:
-                speak("일정을 조회하려면 사용자 이름과 날짜를 입력해 주세요.")
+                    speak("일정 추가를 위해 사용자 이름, 날짜, 시간, 일정 내용을 모두 입력해 주세요.")
 
-    elif "너" in user_input and "이름" in user_input:
-        speak("제 이름은 히어로봇입니다. 저는 당신의 AI 비서입니다.")
+            elif "삭제" in user_input:
+                if user_name and date and time:
+                    response = delete_schedule(user_name, date, time)
+                    speak(response)
+                else:
+                    speak("일정 삭제를 위해 사용자 이름, 날짜, 시간을 모두 입력해 주세요.")
 
-    elif is_smart_home_control_request(user_input):
-        handle_smart_home_control(user_input)
+            elif "알려" in user_input or "말해" in user_input:
+                if user_name and date:
+                    schedules = select_schedule(user_name, date)
+                    if schedules:
+                        response = f"{user_name}의 {date} 일정입니다.\n"
+                        for schedule in schedules:
+                            response += f"{schedule[0]}: {schedule[1]}\n"
+                    else:
+                        response = f"{user_name}의 {date} 일정이 없습니다."
+                    speak(response)
+                else:
+                    speak("일정을 조회하려면 사용자 이름과 날짜를 입력해 주세요.")
 
-    elif "틀어 줘" in user_input or "틀어줘" in user_input:
-        music = re.sub(r"(틀어줘)", "", user_input).strip()
-        play_music_on_youtube(music)
+        # 이름을 묻는 경우
+        elif "너" in user_input and "이름" in user_input:
+            speak("제 이름은 히어로봇입니다. 저는 당신의 AI 비서입니다.")
+
+        # 스마트 홈 제어 요청 처리
+        elif is_smart_home_control_request(user_input):
+            handle_smart_home_control(user_input)
+
+        # 유튜브 음악 재생 요청 처리
+        elif "틀어 줘" in user_input or "틀어줘" in user_input:
+            music = re.sub(r"(틀어줘)", "", user_input).strip()
+            play_music_on_youtube(music)
+
+        # 그 외 일반적인 명령 처리
+        else:
+            prompt = user_input
+            ai_message = generate_gpt_response(prompt)
+            messages.append({"role": "assistant", "content": ai_message})
+            speak(ai_message)
 
     else:
-        prompt = user_input
-        ai_message = generate_gpt_response(prompt)
-        messages.append({"role": "assistant", "content": ai_message})
-        speak(ai_message)
+        return  # "히어로봇"이라고 부르지 않으면 아무 작업도 하지 않음
