@@ -6,8 +6,8 @@ import { Calendar } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL_8080 = 'http://223.194.139.32:8080';
-const BASE_URL_8000 = 'http://223.194.139.32:8000';
+const BASE_URL_8080 = 'http://10.0.2.2:8080';
+const BASE_URL_8000 = 'http://10.0.2.2:8000';
 
 export default function ScheduleManage() {
     const { navigate } = useNavigation();

@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://10.0.2.2:8000';
 
 export default function Repository() {
   const [data, setData] = useState([]);

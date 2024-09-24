@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://223.194.139.32:8080';
+const BASE_URL = 'http://10.0.2.2:8080';
 
 export default function MyPage() {
     const { navigate } = useNavigation();

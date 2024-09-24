@@ -23,8 +23,8 @@ async def generate_frames(client):
         logging.error("카메라를 열 수 없습니다.")
         return
 
-    while True:
-            try:
+    try:
+            while True:
                 ret, frame = cap.read()
                 if not ret:
                     logging.warning("Failed to capture frame")
@@ -38,8 +38,8 @@ async def generate_frames(client):
                 # logging.info("Sent a video frame")
 
                 await asyncio.sleep(0.05)  # 전송 주기 조정
-            except Exception as e:
-                logging.error(f"Error in generate_frames: {e}")
-                await asyncio.sleep(1)  # 오류 발생 시 대기
-            finally:
-                cap.release()  # 카메라 자원 해제
+    except Exception as e:
+        logging.error(f"Error in generate_frames: {e}")
+        await asyncio.sleep(1)  # 오류 발생 시 대기
+    finally:
+        cap.release()  # 카메라 자원 해제

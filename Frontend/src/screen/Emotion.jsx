@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 스타일 컴포넌트를 위함
 const { width } = Dimensions.get('window');
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://10.0.2.2:8000';
 
 export default function Control() {
     const { navigate } = useNavigation();
