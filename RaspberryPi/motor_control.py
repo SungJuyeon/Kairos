@@ -27,8 +27,8 @@ for pin in ACTUATOR_PINS.values():
     
 # PWM 객체 생성 후 시작 (속도조절)
 
-pwm_A = GPIO.PWM(WHEEL_PINS['ENA'], 50)  # 50Hz
-pwm_B = GPIO.PWM(WHEEL_PINS['ENB'], 50)  # 50Hz
+pwm_A = GPIO.PWM(WHEEL_PINS['ENA'], 100)  # 50Hz
+pwm_B = GPIO.PWM(WHEEL_PINS['ENB'], 100)  # 50Hz
 pwm_A.start(0)
 pwm_B.start(0)
 GPIO.output(WHEEL_PINS['IN1'], GPIO.LOW)

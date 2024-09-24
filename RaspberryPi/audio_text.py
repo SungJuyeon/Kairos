@@ -1,14 +1,12 @@
 # 음성 캡처 큐
 import os
 import queue
-import pyttsx3
 import speech_recognition as sr
 import asyncio
 import concurrent.futures
 import json
 import logging
-import pyttsx3
-
+from gtts import gTTS
 
 audio_queue = queue.Queue()
 
@@ -64,17 +62,12 @@ async def audio_to_text():
     return None
 
 
-# 글로벌 엔진 객체 생성
-engine = pyttsx3.init()
-
-# 음성 속성 설정 (시스템에 맞는 음성 선택)
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[66].id)
-
-def speak_blocking(text):
-    engine.say(text)
-    engine.runAndWait()
-
 async def text_to_audio(text, lang='ko'):
+    tts = gTTS(text=text, lang=lang)
+    tts.save("output.mp3")
+    
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, speak_blocking, text)
+    await loop.run_in_executor(None, play_audio)
+
+def play_audio():
+    os.system("mpg321 output.mp3")
