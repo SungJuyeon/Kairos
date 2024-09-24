@@ -5,6 +5,7 @@ import numpy as np
 import mediapipe as mp
 import tensorflow as tf 
 import asyncio
+from gesture_action import gesture_action
 from video_processing import video_frames
 from tensorflow.keras.layers import Input, LSTM, Dense
 from tensorflow.keras.models import Model
@@ -139,6 +140,7 @@ async def recognize_hand_gesture_periodically():
             frame = video_frames[-1]
             action, landmarks = recognize_and_store_gesture(frame)
             update_hand_gesture(action, landmarks)
+            await gesture_action(action)
         await asyncio.sleep(0.1)  # 0.1초마다 실행
 
 def draw_hand_gesture(image):
@@ -164,9 +166,16 @@ def draw_hand_gesture(image):
     
     return image, hand_gesture_action, hand_gesture_landmarks
 
-if __name__ == "__main__":
-    # 테스트를 위한 코드
+
+
+#테스트
+def main():
     if init():
         logger.info("초기화 성공")
     else:
         logger.error("초기화 실패")
+
+    video_frames(draw_hand_gesture, hand_gesture_action, hand_gesture_landmarks)
+
+if __name__ == "__main__":
+    main()

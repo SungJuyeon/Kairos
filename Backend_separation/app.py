@@ -2,23 +2,17 @@ import asyncio
 import logging
 import os
 import json
-from fastapi.responses import FileResponse
-import uvicorn  # uvicorn 모듈 임포트 추가
-
+import uvicorn
 from fastapi import FastAPI, Request, HTTPException, Header, WebSocket
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import HTMLResponse, StreamingResponse
-
+from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
 from face_recognition import recognize_periodically
+from follow import follow, generate_video_frames
+import hand_gesture_recognition
+from hand_gesture_recognition import recognize_hand_gesture_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, text_to_speech, video_frames
-from db_face_loader import load_faces_from_db
-from hand_gesture_recognition import init as init_hand_gesture, recognize_hand_gesture_periodically
-
-from face_recognition import recognize_periodically
-from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
+from mqtt_client import home_control, setup_mqtt, distance_data, move, speed, text_to_audio, video_frames
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
 from calendar_app import get_all_schedules, add_schedules, delete_schedule, Schedule
@@ -34,7 +28,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
 app.add_middleware(
@@ -48,16 +41,35 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     await setup_mqtt()
-    asyncio.create_task(recognize_periodically())
+    #get_face_recognition()
     load_faces_from_db()  # 얼굴 이미지 로드
-    if init_hand_gesture():
-        asyncio.create_task(recognize_hand_gesture_periodically())
-    else:
-        logger.error("손동작 인식 초기화 실패")
+    #get_hand_gesture_recognition()
+        
+face_recognition_task = None
+@app.get("/face_recognition")
+async def get_face_recognition():
+    global face_recognition_task
+    face_recognition_task = asyncio.create_task(recognize_periodically())
+    return {"message": "얼굴 인식 태스크가 시작되었습니다."}
 
-@app.get("/", response_class=HTMLResponse)
-async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/face_recognition_stop")
+async def get_face_recognition_stop():
+    global face_recognition_task
+    face_recognition_task.cancel()
+    return {"message": "얼굴 인식 태스크가 종료되었습니다."}
+
+@app.get("/hand_gesture_recognition")
+async def get_hand_gesture_recognition():
+    hand_gesture_recognition.init()
+    asyncio.create_task(recognize_hand_gesture_periodically())
+    return {"message": "손동작 인식 태스크가 시작되었습니다."}
+
+@app.get("/hand_gesture_recognition_stop")
+async def get_hand_gesture_recognition_stop():
+    hand_gesture_recognition.stop()
+    return {"message": "손동작 인식 태스크가 종료되었습니다."}
+
+
 
 @app.post("/move/{direction}")
 async def post_move(direction: str):
@@ -76,32 +88,37 @@ async def get_distance():
 async def video_stream():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
-
 @app.get("/video_feed/{face}/{hand}")
 async def get_video_feed(face: bool, hand: bool):
     return StreamingResponse(video_frame_generator(face, hand),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
+@app.post("/load_faces")
+async def load_faces():
+    try:
+        load_faces_from_db()
+        return {"message": "얼굴 이미지가 성공적으로 로드되었습니다."}
+    except Exception as e:
+        logger.error(f"얼굴 이미지 로드 중 오류 발생: {str(e)}")
+        return {"error": "얼굴 이미지 로드 중 오류가 발생했습니다.", "details": str(e)}, 500
+
+@app.get("/s3_video_list")
+async def get_video_list():
+    video_list = await list_s3_videos()
+    return {"videos": video_list}
+
 @app.get("/calendar")
-def calendar(token: str = Header(...)):
+async def calendar(token: str = Header(...)):
     schedules = get_all_schedules(token)
     return {"schedules": schedules}
 
 @app.post("/schedules/add")
-def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
+async def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
     return add_schedules(schedule, token)
 
 @app.delete("/schedules/{schedule_id}")
-def delete_schedule_endpoint(
-        schedule_id: int,
-        token: str = Header(...)
-):
-    try:
-        return delete_schedule(schedule_id, token)
-    except HTTPException as e:
-        raise e  # 발생한 HTTPException을 그대로 재발생
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+async def delete_schedule_endpoint(schedule_id: int, token: str = Header(...)):
+    return delete_schedule(schedule_id, token)
 
 @app.get("/most_emotion")
 async def most_emotion(token: str = Header(...)):
@@ -143,12 +160,6 @@ async def get_messages(username: str):
 async def websocket_endpoint(websocket: WebSocket):
     await handle_connection(websocket)
 
-# @app.get("/gesture")
-# async def get_gesture():
-#     logger.info(f"get_gesture 엔드포인트 호출됨.")
-#     from handgesture_recognition import this_action
-#     return {"gesture": this_action}
-
 
 @app.post("/load_faces")
 async def load_faces():
@@ -168,6 +179,12 @@ async def get_video_list():
     video_list = await list_s3_videos()
     return {"videos": video_list}
 
+@app.get("/follow")
+async def get_follow():
+    asyncio.create_task(follow())
+@app.get("/follow_video")
+async def get_follow_video():
+    return StreamingResponse(generate_video_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
 @app.get("/speech_text")
 async def get_speech_text():
@@ -178,6 +195,9 @@ async def get_speech_text():
 async def post_text_to_speech(text: str):
     await text_to_speech(text)
 
+@app.post("/home_control/{device}/{state}")
+async def post_home_control(device: str, state: bool):
+    await home_control(device, state)
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)

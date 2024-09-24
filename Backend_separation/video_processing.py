@@ -6,6 +6,7 @@ import logging
 import cv2
 import numpy as np
 from face_recognition import detect_faces, draw_faces
+
 from mqtt_client import video_frames
 #from hand_gesture_recognition import draw_hand_gesture, hand_gesture_action, hand_gesture_landmarks
 
@@ -24,15 +25,14 @@ async def generate_frames():
         if len(video_frames) > 0:
             frame = video_frames[-1]
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
+            
             # 변환된 프레임을 JPEG 형식으로 인코딩
             success, buffer = cv2.imencode('.jpg', frame)
             if success:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-        await asyncio.sleep(0.1)  # 프레임을 가져오는 간격 조절
+        await asyncio.sleep(0.05)  # 프레임을 가져오는 간격 조절
 
 
 async def video_frame_generator(face=True, hand=True):
@@ -47,11 +47,12 @@ async def video_frame_generator(face=True, hand=True):
 
             if face:
                 frame = draw_faces(frame) 
-            # if hand:
-            #     frame, action, landmarks = draw_hand_gesture(frame)
-            #     if action != '?':
-            #         cv2.putText(frame, f'Action: {action}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            #     logging.info(f"Detected hand action: {action}")
+            if hand:
+                from hand_gesture_recognition import draw_hand_gesture
+                frame, action, landmarks = draw_hand_gesture(frame)
+                if action != '?':
+                    cv2.putText(frame, f'Action: {action}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 0), 3)
+                #logging.info(f"Detected hand action: {action}")
 
             success, buffer = cv2.imencode('.jpg', frame)
             if success:
