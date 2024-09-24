@@ -20,7 +20,7 @@ MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"
+MQTT_BROKER = "223.194.129.221"
 #MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
@@ -37,7 +37,7 @@ async def on_connect():
     logger.info("연결: MQTT Broker")
     #client.subscribe(MQTT_TOPIC_DISTANCE)
     #client.subscribe(MQTT_TOPIC_VIDEO)
-    client.subscribe(MQTT_TOPIC_SPEECH)  # 음성 텍스트 토픽 구독
+    #client.subscribe(MQTT_TOPIC_SPEECH)  # 음성 텍스트 토픽 구독
     
     client.subscribe(MQTT_TOPIC_DISTANCE)
     client.subscribe(MQTT_TOPIC_VIDEO)
@@ -70,7 +70,7 @@ async def on_message(client, topic, payload, qos, properties):
             # 텍스트를 GPT에 전달하고 결과를 얻음
             response_text = process_user_input(speech_text)
             if response_text:  # response_text가 None이 아닌 경우
-                await text_to_speech(response_text)
+                await text_to_audio(response_text)
             else:
                 logger.warning("No response text received from process_user_input.")
 
