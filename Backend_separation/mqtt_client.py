@@ -20,7 +20,8 @@ MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"
+MQTT_BROKER = "223.194.157.85"
+#MQTT_BROKER = "3.27.221.93"
 #MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
