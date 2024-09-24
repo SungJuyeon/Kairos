@@ -32,33 +32,33 @@ export default function Function3() {
         <Container>
             <Title>원격 스마트홈 시스템</Title>
 
-            <Button onPress={() => handleMove("home_control/led/true")}>
-                <ButtonText>조명 켜기</ButtonText>
-            </Button>
-
-            <Button onPress={() => handleMove("home_control/led/false")}>
-                <ButtonText>조명 끄기</ButtonText>
-            </Button>
-
-
-            <Button onPress={() => handleMove("home_control/induction/true")}>
-                <ButtonText>인덕션 켜기</ButtonText>
-            </Button>
+            <RowButtonContainer>
+                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/true")}>
+                    <CaptureButtonText>조명 켜기</CaptureButtonText>
+                </CaptureButtonStyle2>
+                <CaptureButtonStyle3 onPress={() => handleMove("home_control/led/false")}>
+                    <CaptureButtonText>조명 끄기</CaptureButtonText>
+                </CaptureButtonStyle3>
+            </RowButtonContainer>
 
 
-            <Button onPress={() => handleMove("home_control/induction/false")}>
-                <ButtonText>인덕션 끄기</ButtonText>
-            </Button>
+            <RowButtonContainer>
+                <CaptureButtonStyle onPress={() => handleMove("home_control/led/true")}>
+                    <CaptureButtonText>인뎍션 켜기</CaptureButtonText>
+                </CaptureButtonStyle>
+                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/false")}>
+                    <CaptureButtonText>인덕션 끄기</CaptureButtonText>
+                </CaptureButtonStyle2>
+            </RowButtonContainer>
 
-
-            <Button onPress={() => handleMove("home_control/Relay/true")}>
-                <ButtonText>선풍기 켜기</ButtonText>
-            </Button>
-
-
-            <Button onPress={() => handleMove("home_control/Relay/false")}>
-                <ButtonText>선풍기 끄기</ButtonText>
-            </Button>
+            <RowButtonContainer>
+                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/true")}>
+                    <CaptureButtonText>선풍기 켜기</CaptureButtonText>
+                </CaptureButtonStyle2>
+                <CaptureButtonStyle3 onPress={() => handleMove("home_control/led/false")}>
+                    <CaptureButtonText>선풍기 끄기</CaptureButtonText>
+                </CaptureButtonStyle3>
+            </RowButtonContainer>
 
         </Container>
     );
@@ -89,4 +89,47 @@ const ButtonText = styled.Text`
   color: black;
   font-size: 16px;
   font-weight: bold;
+`;
+
+const RowButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`;
+
+const CaptureButtonStyle = styled.TouchableOpacity`
+    background-color: #FFCEFF;
+    width: 140px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+`;
+
+const CaptureButtonStyle2 = styled.TouchableOpacity`
+    background-color: white;
+    width: 140px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+`;
+
+const CaptureButtonText = styled.Text`
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    width: 140px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin-left: 10px;
+    margin-right: 10px;
 `;

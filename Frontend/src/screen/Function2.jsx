@@ -32,13 +32,13 @@ export default function Function2() {
         <Container>
             <Title>히어로봇 영상 전송 기능</Title>
 
-            <Button onPress={() => handleMove("start_generate_frames")}>
-                <ButtonText>영상 전송 시작</ButtonText>
-            </Button>
+            <CaptureButtonStyle onPress={() => handleMove("start_generate_frames")}>
+                <CaptureButtonText>영상 전송 시작</CaptureButtonText>
+            </CaptureButtonStyle>
 
-            <Button onPress={() => handleMove("stop_generate_frames")}>
-                <ButtonText>영상 전송 정지</ButtonText>
-            </Button>
+            <CaptureButtonStyle2 onPress={() => handleMove("stop_generate_frames")}>
+                <CaptureButtonText>영상 전송 정지</CaptureButtonText>
+            </CaptureButtonStyle2>
 
         </Container>
     );
@@ -69,4 +69,44 @@ const ButtonText = styled.Text`
   color: black;
   font-size: 16px;
   font-weight: bold;
+`;
+
+const RowButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`;
+
+const CaptureButtonStyle = styled.TouchableOpacity`
+    background-color: #FFCEFF;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
+`;
+
+const CaptureButtonStyle2 = styled.TouchableOpacity`
+    background-color: white;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
+`;
+
+const CaptureButtonText = styled.Text`
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
 `;

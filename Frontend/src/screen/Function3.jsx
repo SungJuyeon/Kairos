@@ -32,13 +32,13 @@ export default function Function3() {
         <Container>
             <Title>히어로봇 음성 감지 기능</Title>
 
-            <Button onPress={() => handleMove("start_send_audio")}>
-                <ButtonText>음성 감지 시작</ButtonText>
-            </Button>
+            <CaptureButtonStyle2 onPress={() => handleMove("start_send_audio")}>
+                <CaptureButtonText>음성 감지 시작</CaptureButtonText>
+            </CaptureButtonStyle2>
 
-            <Button onPress={() => handleMove("sstop_send_audio")}>
-                <ButtonText>음성 감지 정지</ButtonText>
-            </Button>
+            <CaptureButtonStyle3 onPress={() => handleMove("sstop_send_audio")}>
+                <CaptureButtonText>음성 감지 정지</CaptureButtonText>
+            </CaptureButtonStyle3>
 
         </Container>
     );
@@ -69,4 +69,44 @@ const ButtonText = styled.Text`
   color: black;
   font-size: 16px;
   font-weight: bold;
+`;
+
+const RowButtonContainer = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`;
+
+const CaptureButtonStyle = styled.TouchableOpacity`
+    background-color: #FFCEFF;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
+`;
+
+const CaptureButtonStyle2 = styled.TouchableOpacity`
+    background-color: white;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
+`;
+
+const CaptureButtonText = styled.Text`
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
 `;

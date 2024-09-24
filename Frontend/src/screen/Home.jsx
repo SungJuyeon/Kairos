@@ -112,7 +112,7 @@ const RowButtonContainer = styled.View`
 const ControlButton = styled.TouchableOpacity`
     background-color: #FFCEFF;
     width: 300px;
-    height: 60px;
+    height: 65px;
     border-radius: 10px;
     padding: 20px 20px;
     margin-top: 20px;
@@ -121,7 +121,7 @@ const ControlButton = styled.TouchableOpacity`
 const CaptureButtonStyle = styled.TouchableOpacity`
     background-color: white;
     width: 300px;
-    height: 60px;
+    height: 65px;
     border-radius: 10px;
     padding: 20px 20px;
     margin-top: 20px;
@@ -147,7 +147,7 @@ const CaptureButtonStyle3 = styled.TouchableOpacity`
 const CaptureButtonStyle4 = styled.TouchableOpacity`
     background-color: #888888;
     width: 190px;
-    height: 60px;
+    height: 65px;
     border-radius: 10px;
     padding: 20px 20px;
     margin-top: 20px;
