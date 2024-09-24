@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, Image, View, TouchableOpacity, Alert, PermissionsAndroid, Platform, Dimensions } from "react-native";
+import { SafeAreaView, Image, View, TouchableOpacity, Alert, Platform, Dimensions, ScrollView } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 스타일 컴포넌트를 위함
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// 비율에 따른 스타일 조정
-const scale = width / 640; // 기준 너비에 대한 비율
+const BASE_URL = 'http://223.194.139.32:8000';
 
 export default function Control() {
     const { navigate } = useNavigation();
 
-    const [mostEmotion, setMostEmotion] = useState("-");
+    const [mostEmotion, setMostEmotion] = useState("");
     const [emotionImage, setEmotionImage] = useState(null); // 감정 이미지를 저장할 상태 변수
 
     // 모스트 감정 가져오기
@@ -22,7 +21,7 @@ export default function Control() {
         try {
             const accessToken = await AsyncStorage.getItem('token');
 
-            const response = await fetch('http://localhost:8000/most_emotion', {
+            const response = await fetch(`${BASE_URL}/most_emotion`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -30,7 +29,6 @@ export default function Control() {
                     'Content-Type': 'application/json',
                 },
             });
-
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -57,7 +55,7 @@ export default function Control() {
     // 감정 이미지를 가져오는 함수
     const fetchEmotionImage = async (emotion, accessToken) => {
         try {
-            const response = await fetch(`http://localhost:8000/most_emotion_pic`, {
+            const response = await fetch(`${BASE_URL}/most_emotion_pic`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -65,7 +63,6 @@ export default function Control() {
                     'Content-Type': 'application/json',
                 },
             });
-
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -88,34 +85,36 @@ export default function Control() {
 
     return (
         <Container>
-            <RowContainer>
-                <Title>현재 나의 감정</Title>
-                <RepositoryButton onPress={() => navigate("Repository")}>
-                    <RepositoryButtonText>
-                        저장소
-                    </RepositoryButtonText>
-                </RepositoryButton>
-            </RowContainer>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <RowContainer>
+                    <Title>현재 나의 감정</Title>
+                    <RepositoryButton onPress={() => navigate("Repository")}>
+                        <RepositoryButtonText>
+                            하이라이트 저장소
+                        </RepositoryButtonText>
+                    </RepositoryButton>
+                </RowContainer>
 
-            <ImageContainer>
-                {Platform.OS === 'web' ? (
-                    <img src={imageURL} width="100%" alt="Live Stream" />
-                ) : (
-                    <StyledWebView
-                        source={{ uri: 'http://localhost:8000/video_feed/true' }}
-                    />
-                )}
-            </ImageContainer>
-            <BorderContainer />
+                <ImageContainer>
+                    {Platform.OS === 'web' ? (
+                        <img src={emotionImage} width="100%" alt="Live Stream" />
+                    ) : (
+                        <StyledWebView
+                            source={{ uri: `${BASE_URL}/video_feed/true` }}
+                        />
+                    )}
+                </ImageContainer>
+                <BorderContainer />
 
-            <Title>오늘의 최다 감정: {mostEmotion}</Title>
-            <ImageContainer>
-                {emotionImage ? (
-                    <StyledImage source={{ uri: emotionImage }} />
-                ) : (
-                    <StyledImage source={{ uri: 'placeholder_image_url' }} /> // 기본 이미지 URL
-                )}
-            </ImageContainer>
+                <Title>오늘의 최다 감정 - {mostEmotion}</Title>
+                <ImageContainer>
+                    {emotionImage ? (
+                        <StyledImage source={{ uri: emotionImage }} />
+                    ) : (
+                        <StyledImage source={{ uri: 'placeholder_image_url' }} /> // 기본 이미지 URL
+                    )}
+                </ImageContainer>
+            </ScrollView>
         </Container>
     );
 }
@@ -130,11 +129,9 @@ const Title = styled.Text`
 const Container = styled.SafeAreaView`
     background-color: #222222;
     flex: 1;
-    justify-content: center;
-    align-items: center;
 `;
 
-const RowContainer = styled.SafeAreaView`
+const RowContainer = styled.View`
     background-color: #222222;
     flex-direction: row;
     justify-content: center;
@@ -162,8 +159,8 @@ const StyledImage = styled.Image`
 `;
 
 const RepositoryButton = styled.TouchableOpacity`
-    width: ${scale * 100}px; 
-    height: ${scale * 50}px;
+    width: 150px; 
+    height: 50px;
     justify-content: center;
     align-items: center;
     background-color: ${({ isOn }) => (isOn ? '#AAAAAA' : '#FFCEFF')};
@@ -175,7 +172,7 @@ const RepositoryButton = styled.TouchableOpacity`
 
 const RepositoryButtonText = styled.Text`
     color: black;
-    font-size: ${scale * 18}px;
+    font-size: 17px;
     font-weight: bold;
 `;
 

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image, ScrollView } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, Alert, Image, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
+
+const BASE_URL = 'http://223.194.139.32:8080';
 
 export default function SignUp() {
     const { navigate } = useNavigation();
@@ -38,7 +40,7 @@ export default function SignUp() {
             }
     
             console.log('서버에 전송할 FormData:', formData); // FormData 로그
-            const response = await fetch('http://127.0.0.1:8080/join', {
+            const response = await fetch(`${BASE_URL}/join`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -63,10 +65,6 @@ export default function SignUp() {
         }
     };
     
-    
-
-
-
     const uploadFile = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -93,54 +91,60 @@ export default function SignUp() {
     };
 
     return (
-        <Container>
-            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Title>회원가입</Title>
-                <InputContainer>
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>ID</Text>
-                    <StyledTextInput
-                        onChangeText={text => setUsername(text)}
-                        value={username}
-                    />
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호</Text>
-                    <StyledTextInput
-                        onChangeText={text => setPassword(text)}
-                        value={password}
-                        secureTextEntry={true}
-                    />
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
-                    <StyledTextInput
-                        onChangeText={text => setConfirmPW(text)}
-                        value={confirmPW}
-                        secureTextEntry={true}
-                    />
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
-                    <StyledTextInput
-                        onChangeText={text => setEmail(text)}
-                        value={email}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                    />
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>닉네임</Text>
-                    <StyledTextInput
-                        onChangeText={text => setNickname(text)}
-                        value={nickname}
-                    />
-                </InputContainer>
-                {selectedImage && (
-                    <ImagePreview source={{ uri: selectedImage }} />
-                )}
-                <RowContainer>
-                    <Button onPress={createMember}>
-                        <ButtonText>회원 가입</ButtonText>
-                    </Button>
-                    <Button onPress={uploadFile}>
-                        <ButtonText>사진 업로드</ButtonText>
-                    </Button>
-                </RowContainer>
-            </ScrollView>
-        </Container>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }} // 전체 화면을 차지하도록 설정
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // iOS와 Android에 따라 다르게 설정
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // 필요에 따라 조정
+        >
+            <Container>
+                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Title>회원가입</Title>
+                    <InputContainer>
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>ID</Text>
+                        <StyledTextInput
+                            onChangeText={text => setUsername(text)}
+                            value={username}
+                        />
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호</Text>
+                        <StyledTextInput
+                            onChangeText={text => setPassword(text)}
+                            value={password}
+                            secureTextEntry={true}
+                        />
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>비밀번호 확인</Text>
+                        <StyledTextInput
+                            onChangeText={text => setConfirmPW(text)}
+                            value={confirmPW}
+                            secureTextEntry={true}
+                        />
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>E-mail</Text>
+                        <StyledTextInput
+                            onChangeText={text => setEmail(text)}
+                            value={email}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                        />
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>닉네임</Text>
+                        <StyledTextInput
+                            onChangeText={text => setNickname(text)}
+                            value={nickname}
+                        />
+                    </InputContainer>
+                    {selectedImage && (
+                        <ImagePreview source={{ uri: selectedImage }} />
+                    )}
+                    <RowContainer>
+                        <Button onPress={createMember}>
+                            <ButtonText>회원 가입</ButtonText>
+                        </Button>
+                        <Button onPress={uploadFile}>
+                            <ButtonText>사진 업로드</ButtonText>
+                        </Button>
+                    </RowContainer>
+                </ScrollView>
+            </Container>
+        </KeyboardAvoidingView>
     );
 }
 

@@ -4,14 +4,14 @@ import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 
-export default function SmartHome() {
+export default function Funciton9() {
     const { navigate } = useNavigation();
     
     const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
 
     return (
         <Container>
-            <Title>Smart Home</Title>
+            <Title>기능 9</Title>
 
         </Container>
     );
