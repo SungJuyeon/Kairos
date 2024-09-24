@@ -125,7 +125,7 @@ async def generate_video_frames():
             # 멀티파트 응답 생성
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
         else:
             # 프레임이 없으면 잠시 대기
             time.sleep(0.1)

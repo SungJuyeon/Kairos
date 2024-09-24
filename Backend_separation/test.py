@@ -108,7 +108,7 @@ async def generate_frames(client):
             client.publish(MQTT_TOPIC_VIDEO, buffer.tobytes())  # 바이너리 형식 전송
             # logging.info("Sent a video frame")
 
-            await asyncio.sleep(1 / 30)  # 전송 주기 조정
+            await asyncio.sleep(1 / 20)  # 전송 주기 조정
         except Exception as e:
             logging.error(f"Error in generate_frames: {e}")
             await asyncio.sleep(1)  # 오류 발생 시 대기
@@ -145,7 +145,8 @@ async def send_audio(client):
 ##############################################################################
 # MQTT 설정
 #MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
-MQTT_BROKER = "localhost"
+MQTT_BROKER = "223.194.157.85"
+#MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
@@ -198,9 +199,9 @@ async def lifespan():
     await on_connect()
 
     # 비동기 작업 시작
-    asyncio.create_task(send_distance(client))
+    #asyncio.create_task(send_distance(client))
     asyncio.create_task(generate_frames(client))
-    asyncio.create_task(send_audio(client))####################################################
+    #asyncio.create_task(send_audio(client))####################################################
 
     yield
 
