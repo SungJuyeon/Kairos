@@ -19,10 +19,6 @@ from calendar_app import get_all_schedules, add_schedules, delete_schedule, Sche
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
 from face_image_db import current_userId, fetch_family_photos
 from message_server import handle_connection, fetch_user_id_by_username
-import sys
-
-# Kairos 루트 디렉토리를 Python 경로에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
@@ -78,6 +74,7 @@ async def post_move(direction: str):
 @app.post("/speed/{action}")
 async def post_speed(action: str):
     await speed(action)
+    
 
 @app.get("/distance")
 async def get_distance():
@@ -186,15 +183,6 @@ async def get_follow():
 async def get_follow_video():
     return StreamingResponse(generate_video_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
-@app.get("/speech_text")
-async def get_speech_text():
-    #return {"speech_text": speech_text}
-    return {"message": "speech_text는 MQTT를 통해 처리됩니다."}
-
-# @app.post("/text_to_speech/{text}")
-# async def post_text_to_speech(text: str):
-#     await text_to_speech(text)
-
 @app.post("/home_control/{device}/{state}")
 async def post_home_control(device: str, state: bool):
     await home_control(device, state)
@@ -202,11 +190,6 @@ async def post_home_control(device: str, state: bool):
 @app.get("/text_to_audio/{text}")
 async def post_text_to_audio(text: str):
     await text_to_audio(text)
-
-@app.get("/video_feed/{face}")
-async def get_video_feed(face: bool):
-    return StreamingResponse(video_frame_generator(face),
-                             media_type='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
