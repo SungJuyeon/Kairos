@@ -148,7 +148,7 @@ def handle_smart_home_control(user_input):
         elif "꺼" in user_input:
             control_relay("꺼줘")
 
-def process_user_input(user_input):
+async def process_user_input(user_input):
     if not user_input:
         return
 

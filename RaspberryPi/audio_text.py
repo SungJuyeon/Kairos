@@ -69,7 +69,7 @@ engine = pyttsx3.init()
 
 # 음성 속성 설정 (시스템에 맞는 음성 선택)
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[0].id)
+engine.setProperty('voice', voices[66].id)
 
 def speak_blocking(text):
     engine.say(text)

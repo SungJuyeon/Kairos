@@ -73,7 +73,7 @@ async def on_message(client, topic, payload, qos, properties):
             speech_text = message.get("text")    #juyeon 브랜치에서는 text
             logger.info(f"Received speech text: {speech_text}")
             # 텍스트를 GPT에 전달하고 결과를 얻음
-            process_user_input(speech_text)
+            await process_user_input(speech_text)
                 
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
