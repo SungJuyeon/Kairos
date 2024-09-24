@@ -3,6 +3,8 @@ import pygame
 import speech_recognition as sr
 from gtts import gTTS
 
+
+
 def listen():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
@@ -21,32 +23,8 @@ def listen():
             #print(f"Could not request results from Google Speech Recognition service; {e}")
             return ""
 
-def speak(text, always_speak=False):
-    if not text and not always_speak:
-        return
-
-    print(f"assistant: {text}")
-    tts = gTTS(text=text, lang='ko')
-    file_path = 'temp_assistant.mp3'
-
-    # Save the new audio file
-    tts.save(file_path)
-
-    # Initialize pygame mixer
-    pygame.mixer.init()
-    pygame.mixer.music.load(file_path)
-    pygame.mixer.music.play()
-
-    # Wait until the audio file is done playing
-    while pygame.mixer.music.get_busy():
-        pygame.time.Clock().tick(10)
-
-    # Ensure the file is no longer being used
-    pygame.mixer.quit()
-
-    # Remove the file after playing
-    if os.path.exists(file_path):
-        try:
-            os.remove(file_path)
-        except Exception as e:
-            print(f"Error deleting file: {e}")
+def speak(text):
+    print(text)
+    from mqtt_client import text_to_audio
+    text_to_audio(text)
+    print("발행 완료")

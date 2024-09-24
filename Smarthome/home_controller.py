@@ -26,7 +26,8 @@ GPIO.setup(RELAY_PIN, GPIO.OUT)
 #cap = cv2.VideoCapture(0)
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"
+#MQTT_BROKER = "3.27.221.93"
+MQTT_BROKER = "223.194.129.221"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "home/commands"
 MQTT_TOPIC_VIDEO = "home/video"

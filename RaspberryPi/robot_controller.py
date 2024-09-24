@@ -11,13 +11,12 @@ import audio_text
 logging.basicConfig(level=logging.INFO)
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "52.78.166.219"  # MQTT 브로커 주소 입력
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_AUDIOTOTEXT = "robot/audio_to_text"
-MQTT_TOPIC_TEXTTOAUDIO = "robot/text_to_audio"
 
 client = MQTTClient(client_id="robot_controller")
 
@@ -56,6 +55,7 @@ async def on_message(client, topic, payload, qos, properties):
         await audio_text.stop_send_audio()
     elif command["command"] == "text_to_audio":
         await audio_text.text_to_audio(command["text"])
+        logging.info(f"Sent audio: {command['text']}")
         
     else:
         logging.warning(f"Invalid command: {command}")
@@ -77,7 +77,8 @@ async def on_disconnect():
 async def lifespan():
     client.on_message = on_message
     await on_connect()
-
+    asyncio.create_task(video.generate_frames(client))
+    
     yield
 
     logging.info("종료")

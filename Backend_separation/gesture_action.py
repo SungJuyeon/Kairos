@@ -22,28 +22,28 @@ async def gesture_action(action):
         return
 
     if action == 'come':
-        await speed(40)
+        await speed(80)
         await move("forward")
         logger.info("명령 전송: 전진")
         last_command_time = current_time
         while True:
             if distance_data is not None and distance_data < 10:
-                await move("stop")
+                await move("stop_wheel")
                 break
             await asyncio.sleep(0.1)
 
     elif action == 'spin':
-        await speed(40)
+        await speed(100)
         await move("right")
         logger.info("명령 전송: 우회전")
         last_command_time = current_time
         await asyncio.sleep(2)
-        await move("stop")
+        await move("stop_wheel")
 
     elif action == 'away':
-        await speed(40)
+        await speed(80)
         await move("back")
         logger.info("명령 전송: 후진")
         last_command_time = current_time
         await asyncio.sleep(2)
-        await move("stop")
+        await move("stop_wheel")

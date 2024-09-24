@@ -144,8 +144,8 @@ async def send_audio(client):
 
 ##############################################################################
 # MQTT 설정
-#MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
-MQTT_BROKER = "223.194.157.85"
+MQTT_BROKER = "52.78.166.219"  # MQTT 브로커 주소 입력
+#MQTT_BROKER = "223.194.157.85"
 #MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"

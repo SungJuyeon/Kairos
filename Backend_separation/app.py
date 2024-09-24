@@ -186,6 +186,10 @@ async def get_follow_video():
 @app.post("/home_control/{device}/{state}")
 async def post_home_control(device: str, state: bool):
     await home_control(device, state)
+    
+@app.get("/text_to_audio/{text}")
+async def post_text_to_audio(text: str):
+    await text_to_audio(text)
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
