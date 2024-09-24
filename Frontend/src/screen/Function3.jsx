@@ -30,35 +30,15 @@ export default function Function3() {
 
     return (
         <Container>
-            <Title>원격 스마트홈 시스템</Title>
+            <Title>히어로봇 음성 감지 기능</Title>
 
-            <RowButtonContainer>
-                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/true")}>
-                    <CaptureButtonText>조명 켜기</CaptureButtonText>
-                </CaptureButtonStyle2>
-                <CaptureButtonStyle3 onPress={() => handleMove("home_control/led/false")}>
-                    <CaptureButtonText>조명 끄기</CaptureButtonText>
-                </CaptureButtonStyle3>
-            </RowButtonContainer>
+            <CaptureButtonStyle2 onPress={() => handleMove("start_send_audio")}>
+                <CaptureButtonText>음성 감지 시작</CaptureButtonText>
+            </CaptureButtonStyle2>
 
-
-            <RowButtonContainer>
-                <CaptureButtonStyle onPress={() => handleMove("home_control/led/true")}>
-                    <CaptureButtonText>인뎍션 켜기</CaptureButtonText>
-                </CaptureButtonStyle>
-                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/false")}>
-                    <CaptureButtonText>인덕션 끄기</CaptureButtonText>
-                </CaptureButtonStyle2>
-            </RowButtonContainer>
-
-            <RowButtonContainer>
-                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/true")}>
-                    <CaptureButtonText>선풍기 켜기</CaptureButtonText>
-                </CaptureButtonStyle2>
-                <CaptureButtonStyle3 onPress={() => handleMove("home_control/led/false")}>
-                    <CaptureButtonText>선풍기 끄기</CaptureButtonText>
-                </CaptureButtonStyle3>
-            </RowButtonContainer>
+            <CaptureButtonStyle3 onPress={() => handleMove("sstop_send_audio")}>
+                <CaptureButtonText>음성 감지 정지</CaptureButtonText>
+            </CaptureButtonStyle3>
 
         </Container>
     );
@@ -100,36 +80,33 @@ const RowButtonContainer = styled.View`
 
 const CaptureButtonStyle = styled.TouchableOpacity`
     background-color: #FFCEFF;
-    width: 140px;
+    width: 200px;
     height: 100px;
     border-radius: 10px;
     padding: 20px 20px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 10px;
 `;
 
 const CaptureButtonStyle2 = styled.TouchableOpacity`
     background-color: white;
-    width: 140px;
+    width: 200px;
     height: 100px;
     border-radius: 10px;
     padding: 20px 20px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 10px;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
 `;
 
 const CaptureButtonText = styled.Text`
     color: black;
     font-size: 20px;
     font-weight: bold;
-`;
-
-const CaptureButtonStyle3 = styled.TouchableOpacity`
-    background-color: #ADCDFF;
-    width: 140px;
-    height: 100px;
-    border-radius: 10px;
-    padding: 20px 20px;
-    margin-left: 10px;
-    margin-right: 10px;
 `;

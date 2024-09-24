@@ -1,12 +1,13 @@
 import React, { useContext } from "react";
-import { View, Text, Image, SafeAreaView, TouchableOpacity, Alert } from "react-native";
+import { View, Text, Image, SafeAreaView, TouchableOpacity, Alert, Platform } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
+import { WebView } from 'react-native-webview';
 
 const BASE_URL = 'http://223.194.139.32:8000';
 
-export default function Function3() {
+export default function Function4() {
     const { navigate } = useNavigation();
 
     const handleMove = async (start) => {
@@ -30,36 +31,21 @@ export default function Function3() {
 
     return (
         <Container>
-            <Title>원격 스마트홈 시스템</Title>
+            <Title>히어로봇 음성 감지 기능</Title>
 
-            <RowButtonContainer>
-                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/true")}>
-                    <CaptureButtonText>조명 켜기</CaptureButtonText>
-                </CaptureButtonStyle2>
-                <CaptureButtonStyle3 onPress={() => handleMove("home_control/led/false")}>
-                    <CaptureButtonText>조명 끄기</CaptureButtonText>
-                </CaptureButtonStyle3>
-            </RowButtonContainer>
+            <ImageContainer>
+                {Platform.OS === 'web' ? (
+                    <img src={imageURL} width="100%" alt="Live Stream" />
+                ) : (
+                    <StyledWebView
+                        source={{ uri: `${BASE_URL}/follow_video}` }}
+                    />
+                )}
+            </ImageContainer>
 
-
-            <RowButtonContainer>
-                <CaptureButtonStyle onPress={() => handleMove("home_control/led/true")}>
-                    <CaptureButtonText>인뎍션 켜기</CaptureButtonText>
-                </CaptureButtonStyle>
-                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/false")}>
-                    <CaptureButtonText>인덕션 끄기</CaptureButtonText>
-                </CaptureButtonStyle2>
-            </RowButtonContainer>
-
-            <RowButtonContainer>
-                <CaptureButtonStyle2 onPress={() => handleMove("home_control/led/true")}>
-                    <CaptureButtonText>선풍기 켜기</CaptureButtonText>
-                </CaptureButtonStyle2>
-                <CaptureButtonStyle3 onPress={() => handleMove("home_control/led/false")}>
-                    <CaptureButtonText>선풍기 끄기</CaptureButtonText>
-                </CaptureButtonStyle3>
-            </RowButtonContainer>
-
+            <CaptureButtonStyle onPress={() => handleMove("follow")}>
+                <CaptureButtonText>음성 감지 시작</CaptureButtonText>
+            </CaptureButtonStyle>
         </Container>
     );
 }
@@ -69,6 +55,7 @@ const Title = styled.Text`
     font-size: 30px;
     margin-bottom: 10px;
     font-weight: bold;
+    margin-bottom: 10px;
 `;
 
 const Container = styled.SafeAreaView`
@@ -91,6 +78,22 @@ const ButtonText = styled.Text`
   font-weight: bold;
 `;
 
+const ImageContainer = styled.View`
+    width: 90%;
+    height: 34%;
+    border-width: 2px; 
+    border-color: #FFCEFF;
+    background-color: #222222; 
+`;
+
+const Margin2Container = styled.View`
+    margin-top: 2%;
+`;
+
+const StyledWebView = styled(WebView)`
+  flex: 1;
+`;
+
 const RowButtonContainer = styled.View`
     flex-direction: row;
     justify-content: center;
@@ -100,36 +103,34 @@ const RowButtonContainer = styled.View`
 
 const CaptureButtonStyle = styled.TouchableOpacity`
     background-color: #FFCEFF;
-    width: 140px;
+    width: 200px;
     height: 100px;
     border-radius: 10px;
-    padding: 20px 20px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 20px;
+    justify-content: center;
+    align-items: center;
 `;
 
 const CaptureButtonStyle2 = styled.TouchableOpacity`
     background-color: white;
-    width: 140px;
+    width: 200px;
     height: 100px;
     border-radius: 10px;
     padding: 20px 20px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 10px;
+`;
+
+const CaptureButtonStyle3 = styled.TouchableOpacity`
+    background-color: #ADCDFF;
+    width: 200px;
+    height: 100px;
+    border-radius: 10px;
+    padding: 20px 20px;
+    margin: 10px;
 `;
 
 const CaptureButtonText = styled.Text`
     color: black;
     font-size: 20px;
     font-weight: bold;
-`;
-
-const CaptureButtonStyle3 = styled.TouchableOpacity`
-    background-color: #ADCDFF;
-    width: 140px;
-    height: 100px;
-    border-radius: 10px;
-    padding: 20px 20px;
-    margin-left: 10px;
-    margin-right: 10px;
 `;
