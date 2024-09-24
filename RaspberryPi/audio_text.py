@@ -1,12 +1,13 @@
 # 음성 캡처 큐
 import os
 import queue
-from gtts import gTTS
+import pyttsx3
 import speech_recognition as sr
 import asyncio
 import concurrent.futures
 import json
 import logging
+import pyttsx3
 
 
 audio_queue = queue.Queue()
@@ -31,8 +32,8 @@ async def send_audio(client):
             text = await audio_to_text()
             if text:
                 speech_message = json.dumps({"speech_text": text})
-                from robot_controller import MQTT_TOPIC_SPEECH
-                client.publish(MQTT_TOPIC_SPEECH, speech_message)
+                from robot_controller import MQTT_TOPIC_AUDIOTOTEXT
+                client.publish(MQTT_TOPIC_AUDIOTOTEXT, speech_message)
                 logging.info(f"음성 텍스트 발행: {text}")
         except Exception as e:
             logging.error(f"send_speech_text 오류: {e}")
@@ -63,9 +64,17 @@ async def audio_to_text():
     return None
 
 
+# 글로벌 엔진 객체 생성
+engine = pyttsx3.init()
 
-def text_to_audio(text, lang='ko'):
-    tts = gTTS(text=text, lang=lang, slow=False)
-    tts.save("output.mp3")
-    os.system("omxplayer output.mp3")
-    os.remove("output.mp3")
+# 음성 속성 설정 (시스템에 맞는 음성 선택)
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+
+def speak_blocking(text):
+    engine.say(text)
+    engine.runAndWait()
+
+async def text_to_audio(text, lang='ko'):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, speak_blocking, text)

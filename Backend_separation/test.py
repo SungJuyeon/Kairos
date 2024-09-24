@@ -88,7 +88,7 @@ async def send_distance(client):
 
 def measure_distance():
     # 1~100 랜덤 거리 반환
-    distance = random.randint(1, 100)
+    distance = random.randint(20, 100)
     # logging.info(f"Measured distance: {distance}")
     return distance
 #############################################################################
@@ -144,8 +144,8 @@ async def send_audio(client):
 
 ##############################################################################
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
-#MQTT_BROKER = "localhost"
+#MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"

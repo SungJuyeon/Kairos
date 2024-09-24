@@ -49,8 +49,8 @@ def load_faces_from_db():
                 if photoname:
                     try:
                         # 이미지 데이터 형식 확인
-                        logger.info(f"사용자 {nickname}의 이미지 데이터 형식: {type(photoname)}")
-                        logger.info(f"이미지 데이터 시작 부분: {photoname[:50]}")  # 처음 50자만 출력
+                        #logger.info(f"사용자 {nickname}의 이미지 데이터 형식: {type(photoname)}")
+                        #logger.info(f"이미지 데이터 시작 부분: {photoname[:50]}")  # 처음 50자만 출력
                         
                         # Base64 문자열에서 'data:image/jpeg;base64,' 부분 제거
                         if isinstance(photoname, str) and photoname.startswith('data:image/jpeg;base64,'):
@@ -69,7 +69,7 @@ def load_faces_from_db():
                         file_path = os.path.join(faces_dir, f"{nickname}.jpg")
                         with open(file_path, 'wb') as file:
                             file.write(image_data)
-                        logger.info(f"저장된 이미지: {file_path}")
+                        #logger.info(f"저장된 이미지: {file_path}")
                     except Exception as e:
                         logger.error(f"사용자 {nickname}의 사진 처리 중 오류 발생: {e}")
                 else:
