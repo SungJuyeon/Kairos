@@ -56,7 +56,7 @@ export default function Home() {
                                 </CaptureButtonStyle3>
                             </RowButtonContainer>
                             <CaptureButtonStyle onPress={() => navigate('Tutorial')}>
-                                <CaptureButtonText>튜토리얼 하러가기</CaptureButtonText>
+                                <CaptureButtonText>히어로봇 알아가기</CaptureButtonText>
                             </CaptureButtonStyle>
                             <CaptureButtonStyle4 onPress={() => navigate('MyPage')}>
                                 <CaptureButtonText3>로그인 / 회원가입</CaptureButtonText3>

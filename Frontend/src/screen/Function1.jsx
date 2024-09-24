@@ -1,6 +1,6 @@
-import React, { useContext }from "react";
-import { View, Text, Image, SafeAreaView, TouchableOpacity } from "react-native";
-import styled from 'styled-components/native'
+import React, { useContext } from "react";
+import { View, Text, Image, SafeAreaView, TouchableOpacity, Alert } from "react-native";
+import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 
@@ -9,14 +9,37 @@ const BASE_URL = 'http://223.194.139.32:8000';
 export default function Function1() {
     const { navigate } = useNavigation();
 
+    const handleMove = async (start) => {
+        try {
+            const response = await fetch(`${BASE_URL}/move/${start}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (!response.ok) {
+                throw new Error('네트워크 응답이 좋지 않습니다.');
+            }
+            const data = await response.json();
+            Alert.alert("응답", JSON.stringify(data));
+        } catch (error) {
+            console.error(error);
+            Alert.alert("오류", "요청 중 오류가 발생했습니다.");
+        }
+    };
+
     return (
         <Container>
-            <Title>Herobot의 기능 1</Title>
+            <Title>히어로봇 거리 전송 기능</Title>
 
-
-            <Button onPress={() => navigate("Emotion")}>
-              <ButtonText>감정 보러가기</ButtonText>
+            <Button onPress={() => handleMove("start_send_distance")}>
+                <ButtonText>거리 전송 시작</ButtonText>
             </Button>
+
+            <Button onPress={() => handleMove("stop_send_distance")}>
+                <ButtonText>거리 전송 정지</ButtonText>
+            </Button>
+
         </Container>
     );
 }

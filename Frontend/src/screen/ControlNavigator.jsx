@@ -47,7 +47,7 @@ export default function ControlNavigator() {
         <ControlStack.Screen 
           name="Tutorial" 
           component={TutorialScreen} 
-          options={{ title: 'HEROBOT TUTORIAL' }} // 타이틀을 직접 설정
+          options={{ title: '' }} // 타이틀을 직접 설정
         />
         <ControlStack.Screen 
           name="Function1" 
