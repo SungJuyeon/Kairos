@@ -16,34 +16,16 @@ export default function Tutorial() {
                 >
                     <CaptureButtonContainer>
                         <CaptureButtonStyle onPress={() => navigate('Function1')}>
-                            <CaptureButtonText>1. </CaptureButtonText>
+                            <CaptureButtonText>1. 히어로봇의 거리 전송 기능 </CaptureButtonText>
                         </CaptureButtonStyle>
                         <CaptureButtonStyle onPress={() => navigate('Function2')}>
-                            <CaptureButtonText>2.  </CaptureButtonText>
+                            <CaptureButtonText>2. 히어로봇의 영상 전송 기능 </CaptureButtonText>
                         </CaptureButtonStyle>
                         <CaptureButtonStyle onPress={() => navigate('Function3')}>
-                            <CaptureButtonText>3.  </CaptureButtonText>
+                            <CaptureButtonText>3. 히어로봇의 음성 감지 기능 </CaptureButtonText>
                         </CaptureButtonStyle>
                         <CaptureButtonStyle onPress={() => navigate('Function4')}>
-                            <CaptureButtonText>4.  </CaptureButtonText>
-                        </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('Function5')}>
-                            <CaptureButtonText>5.  </CaptureButtonText>
-                        </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('Function6')}>
-                            <CaptureButtonText>6.  </CaptureButtonText>
-                        </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('Function7')}>
-                            <CaptureButtonText>7.  </CaptureButtonText>
-                        </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('Function8')}>
-                            <CaptureButtonText>8.  </CaptureButtonText>
-                        </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('Function9')}>
-                            <CaptureButtonText>9.  </CaptureButtonText>
-                        </CaptureButtonStyle>
-                        <CaptureButtonStyle onPress={() => navigate('Function10')}>
-                            <CaptureButtonText>10.  </CaptureButtonText>
+                            <CaptureButtonText>4. 히어로봇의 따라오기 기능 </CaptureButtonText>
                         </CaptureButtonStyle>
                     </CaptureButtonContainer>
                 </ScrollView>

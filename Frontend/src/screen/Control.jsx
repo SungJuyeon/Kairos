@@ -231,24 +231,12 @@ export default function Control() {
 
                     <ButtonContainer>
                         <DirectionButtonContainer>
-                            <CamButton
-                                onPressIn={() => handleButtonPressIn('up')}
-                                onPressOut={() => handleButtonPressOut('up')}
-                            >
-                                <CamButtonText>{isUpPressed ? 'Up' : 'Up'}</CamButtonText>
-                            </CamButton>
-                            <ButtonStyle3
+                            <ButtonStyle4
                                 onPressIn={() => handleButtonPressIn('forward')}
                                 onPressOut={() => handleButtonPressOut('forward')}
                             >
                                 <ButtonText>{isForwardPressed ? '▲' : '▲'}</ButtonText>
-                            </ButtonStyle3>
-                            <CamButton2
-                                onPressIn={() => handleButtonPressIn('down')}
-                                onPressOut={() => handleButtonPressOut('down')}
-                            >
-                                <CamButtonText>{isDownPressed ? 'Down' : 'Down'}</CamButtonText>
-                            </CamButton2>
+                            </ButtonStyle4>
                         </DirectionButtonContainer>
                         <DirectionButtonContainer2>
                             <ButtonStyle2
@@ -339,7 +327,7 @@ const UpButtonContainer = styled.View`
 
 const DirectionButtonContainer = styled.View`
     flex-direction: row;
-    margin-top: 20px;
+    margin-top: 10px;
     margin-bottom: 20px;
     width: 200px;
 
@@ -474,6 +462,17 @@ const ButtonStyle3 = styled.TouchableOpacity`
     justify-content: center;
     align-items: center;
     margin-left: 20px;
+`;
+
+const ButtonStyle4 = styled.TouchableOpacity`
+    background-color: white;
+    border-radius: 10px;
+    padding: 10px 10px;
+    width: 65px;
+    height: 55px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 115px;
 `;
 
 const StopButton = styled.TouchableOpacity`

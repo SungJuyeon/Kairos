@@ -1,0 +1,10 @@
+SECRET_KEY=vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdqdvaldgkhqlkjghsdklgkhweinv
+
+DB_HOST=whichx2.mysql.database.azure.com
+DB_USER=gongsoonjin99
+DB_PASSWORD=abcdhajindcba9210!
+DB_NAME=mypage
+
+S3_BUCKET_NAME=kairosbucket
+
+AWS_REGION=ap-northeast-2

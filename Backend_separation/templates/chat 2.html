@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #messages { border: 1px solid #ccc; height: 200px; overflow-y: scroll; padding: 5px; }
+        .message { margin: 5px; }
+        .my-message { text-align: right; color: blue; }  /* 사용자가 보낸 메시지 스타일 */
+        .other-message { text-align: left; color: black; }  /* 다른 사용자가 보낸 메시지 스타일 */
+    </style>
+</head>
+<body>
+<h1>채팅</h1>
+<div id="messages"></div>
+<input id="messageInput" type="text" placeholder="메시지를 입력하세요..." />
+<button id="sendButton">전송</button>
+
+<script>
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    const socket = new WebSocket('ws://localhost:8000/ws/chat');
+
+    socket.onmessage = function(event) {
+        const message = document.createElement('div');
+        message.className = 'other-message';  // 기본적으로 다른 사용자의 메시지
+        message.textContent = event.data;
+        messagesDiv.appendChild(message);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;  // 스크롤을 가장 아래로
+    };
+
+    sendButton.onclick = function() {
+        const message = messageInput.value;
+        if (message) {
+            const myMessage = document.createElement('div');
+            myMessage.className = 'my-message';  // 사용자의 메시지
+            myMessage.textContent = message;
+            messagesDiv.appendChild(myMessage);
+            socket.send(message);
+            messageInput.value = '';
+        }
+    };
+</script>
+</body>
+</html>

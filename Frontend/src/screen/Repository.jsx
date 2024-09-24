@@ -68,15 +68,15 @@ export default function Repository() {
     }
   };
 
-  if (loading) {
-    console.log('로딩 중...');
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  }
+  // if (loading) {
+  //   console.log('로딩 중...');
+  //   return <ActivityIndicator size="large" color="#0000ff" />;
+  // }
 
-  if (error) {
-    console.error('에러 상태:', error);
-    return <Text>{error}</Text>;
-  }
+  // if (error) {
+  //   console.error('에러 상태:', error);
+  //   return <Text>{error}</Text>;
+  // }
 
   return (
     <Container>
