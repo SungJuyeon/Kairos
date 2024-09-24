@@ -52,8 +52,7 @@ export default function Control() {
                 break;
             case 'stop':
                 setIsStopPressed(true);
-                await fetch(`${BASE_URL}/stop`, { method: 'POST' });
-                await fetch(`${BASE_URL}/move/stop_actuator`, { method: 'POST' });
+                await fetch(`${BASE_URL}/stop_wheel`, { method: 'POST' });
                 break;
             case 'up':
                 setIsUpPressed(true);
@@ -89,8 +88,7 @@ export default function Control() {
                 break;
         }
         // 모터 정지 요청
-        await fetch(`${BASE_URL}/stop`, { method: 'POST' });
-        await fetch(`${BASE_URL}/move/stop_actuator`, { method: 'POST' });
+        await fetch(`${BASE_URL}/stop_wheel`, { method: 'POST' });
         setIsStopPressed(true);
     };
 
@@ -143,7 +141,7 @@ export default function Control() {
     // 속도 조절 코드
     const handleValueChange = async (newValue) => {
         setValue(newValue);
-        await fetch(`/speed/${newValue * 10}`, { method: 'POST' });
+        await fetch(`${BASE_URL}/speed/${newValue * 10}`, { method: 'POST' });
     };
 
     // 갤러리 열기
@@ -166,12 +164,23 @@ export default function Control() {
     };
 
     // Face 버튼 클릭 핸들러
-    const toggleFace = () => {
+    const toggleFace = async () => {
+        if (!isFace) {
+            await fetch(`${BASE_URL}/face_recognition`, { method: 'GET' });
+        } else {
+            await fetch(`${BASE_URL}/face_recognition_stop`, { method: 'GET' });
+        }
+        
         setIsFace(prev => !prev);
     };
 
-    // Gesture 버튼 클릭 핸들러
-    const toggleGesture = () => {
+    const toggleGesture = async () => {
+        if (!isGesture) {
+            await fetch(`${BASE_URL}/hand_gesture_recognition`, { method: 'GET' });
+        } else {
+            await fetch(`${BASE_URL}/hand_gesture_recognition_stop`, { method: 'GET' });
+        }
+        
         setIsGesture(prev => !prev);
     };
 
@@ -183,7 +192,7 @@ export default function Control() {
                     <img src={imageURL} width="100%" alt="Live Stream" />
                 ) : (
                     <StyledWebView
-                        source={{ uri: `${BASE_URL}/video_feed/${isFace}` }}
+                        source={{ uri: `${BASE_URL}/video_feed/${isFace}/${isGesture}` }}
                         ref={webViewRef}
                         onMessage={onMessage}
                     />
@@ -202,10 +211,14 @@ export default function Control() {
                         <CaptureButtonText>Gallery</CaptureButtonText>
                     </CaptureButtonStyle>
                     <RemoveContainer>
-                        <OnOffButton onPress={toggleFace} isOn={isFace}>
+                        <OnOffButton
+                            onPress={toggleFace}
+                            isOn={isFace}>
                             <OnOffButtonText isOn={isFace}>{isFace ? 'Face' : 'Face'}</OnOffButtonText>
                         </OnOffButton>
-                        <OnOffButton onPress={toggleGesture} isOn={isGesture}>
+                        <OnOffButton
+                            onPress={toggleGesture}
+                            isOn={isGesture}>
                             <OnOffButtonText isOn={isGesture}>{isGesture ? 'Gesture' : 'Gesture'}</OnOffButtonText>
                         </OnOffButton>
                     </RemoveContainer>

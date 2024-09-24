@@ -14,6 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.project.herobot",
+      "buildNumber": "1.0.0",
       "NSPhotoLibraryUsageDescription": "사진을 저장하기 위해 접근이 필요합니다."
     },
     "android": {
