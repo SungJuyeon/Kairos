@@ -8,7 +8,7 @@ import { AuthContext } from './AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-const BASE_URL = 'http://223.194.139.32:8080';
+const BASE_URL = 'http://223.194.158.191:8080';
 
 export default function Login() {
     const { navigate } = useNavigation();

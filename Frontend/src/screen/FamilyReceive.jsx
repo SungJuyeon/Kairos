@@ -3,7 +3,7 @@ import { Alert, FlatList } from "react-native";
 import styled from 'styled-components/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://223.194.139.32:8080';
+const BASE_URL = 'http://223.194.158.191:8080';
 
 export default function FamilyReceive() {
     const [requests, setRequests] = useState([]);

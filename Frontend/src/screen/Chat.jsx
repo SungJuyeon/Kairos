@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwt_decode from 'jwt-decode';
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://223.194.158.191:8080';
 const WS_BASE_URL = 'ws://223.194.139.32:8000';
 
 const WEBSOCKET_URL = `${WS_BASE_URL}/ws/chat`;

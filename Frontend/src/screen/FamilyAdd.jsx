@@ -4,7 +4,7 @@ import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://223.194.139.32:8080';
+const BASE_URL = 'http://223.194.158.191:8080';
 
 export default function SignIn() {
     const { navigate } = useNavigation();

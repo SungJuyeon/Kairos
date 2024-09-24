@@ -115,10 +115,11 @@ def get_all_schedules(token: str) -> Dict[str, List[Dict]]:
     finally:
         connection.close()
 
-def add_schedule(schedule: Schedule, token: str) -> Dict[str, str]:
+def add_schedules(schedule: Schedule, token: str) -> Dict[str, str]:
     username = get_username_from_token(token)
     user_id = fetch_user_id_by_username(username)
 
+    print(user_id)
     if user_id is None:
         raise HTTPException(status_code=404, detail="User not found")
 

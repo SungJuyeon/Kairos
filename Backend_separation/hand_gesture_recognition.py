@@ -6,7 +6,6 @@ import mediapipe as mp
 import tensorflow as tf 
 import asyncio
 from gesture_action import gesture_action
-from video_processing import video_frames
 from tensorflow.keras.layers import Input, LSTM, Dense
 from tensorflow.keras.models import Model
 

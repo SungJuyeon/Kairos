@@ -6,8 +6,8 @@ import { Calendar } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL_8080 = 'http://223.194.139.32:8080';
-const BASE_URL_8000 = 'http://223.194.139.32:8000';
+const BASE_URL_8080 = 'http://223.194.158.191:8080';
+const BASE_URL_8000 = 'http://223.194.158.191:8000';
 
 export default function ScheduleManage() {
     const { navigate } = useNavigation();
@@ -31,9 +31,7 @@ export default function ScheduleManage() {
                 },
             });
 
-            if (!response.ok) {
-                throw new Error('사용자 이름을 가져오는 데 실패했습니다.');
-            }
+
 
             const nickname = await response.text();
             setUserName(nickname);
@@ -132,7 +130,7 @@ export default function ScheduleManage() {
     
         try {
             const accessToken = await AsyncStorage.getItem('token');
-            const response = await fetch(`${BASE_URL_8000}/schedules/${id}`, {
+            const response = await fetch(`${BASE_URL}/schedules/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

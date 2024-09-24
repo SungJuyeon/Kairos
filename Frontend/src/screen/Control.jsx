@@ -10,7 +10,7 @@ import * as MediaLibrary from 'expo-media-library';
 // 스타일 컴포넌트를 위함
 const { width, height } = Dimensions.get('window');
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://223.194.158.191:8080';
 const imageURL = `${BASE_URL}/video`;
 
 // 비율에 따른 스타일 조정

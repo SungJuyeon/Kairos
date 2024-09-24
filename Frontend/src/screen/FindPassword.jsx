@@ -3,7 +3,7 @@ import { View, Text, SafeAreaView, TouchableOpacity, TextInput, Alert } from "re
 import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 
-const BASE_URL = 'http://223.194.139.32:8080';
+const BASE_URL = 'http://223.194.158.191:8080';
 
 export default function FindPassword() {
     const { navigate } = useNavigation();

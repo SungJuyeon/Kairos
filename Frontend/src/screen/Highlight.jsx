@@ -10,7 +10,7 @@ export default function Highlight() {
 
     //const BASE_URL = 'http://172.30.1.36:8000'; // 라즈베리파이 서버 URL
     //const BASE_URL = 'http://172.20.10.4:8000'; // 라즈베리파이 서버 URL
-    const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
+    const BASE_URL = 'http://223.194.158.191:8000';
 
     return (
         <Container>

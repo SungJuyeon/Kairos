@@ -199,6 +199,11 @@ async def get_speech_text():
 async def post_home_control(device: str, state: bool):
     await home_control(device, state)
 
+@app.get("/video_feed/{face}")
+async def get_video_feed(face: bool):
+    return StreamingResponse(video_frame_generator(face),
+                             media_type='multipart/x-mixed-replace; boundary=frame')
+
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
     server = uvicorn.Server(config)

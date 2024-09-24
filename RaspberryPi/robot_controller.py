@@ -7,11 +7,13 @@ import video
 import ultrasonic
 import motor_control
 import audio_text
+from GPT.openai_api import process_user_input
+from audio_text import text_to_audio, audio_to_text
 
 logging.basicConfig(level=logging.INFO)
 
 # MQTT 설정
-MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
+MQTT_BROKER = "52.78.166.219"  # MQTT 브로커 주소 입력
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
@@ -55,8 +57,14 @@ async def on_message(client, topic, payload, qos, properties):
     elif command["command"] == "stop_send_audio":
         await audio_text.stop_send_audio()
     elif command["command"] == "text_to_audio":
-        await audio_text.text_to_audio(command["text"])
-        
+        speech_text = command.get("text")
+        logging.info(f"Received speech text: {speech_text}")
+        response_text = process_user_input(speech_text)
+        if response_text:  # response_text가 None이 아닌 경우
+            await text_to_audio(response_text)
+        else:
+            logging.warning("No response text received from process_user_input.")
+
     else:
         logging.warning(f"Invalid command: {command}")
 

@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 스타일 컴포넌트를 위함
 const { width } = Dimensions.get('window');
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://223.194.158.191:8000';
 
 export default function Control() {
     const { navigate } = useNavigation();
@@ -100,7 +100,7 @@ export default function Control() {
                         <img src={emotionImage} width="100%" alt="Live Stream" />
                     ) : (
                         <StyledWebView
-                            source={{ uri: `${BASE_URL}/video_feed/true` }}
+                            source={{ uri: `${BASE_URL}/video_feed/true/false` }}
                         />
                     )}
                 </ImageContainer>
