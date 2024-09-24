@@ -1,6 +1,78 @@
 import asyncio
+import time
 import logging
 import json
+from gmqtt import Client as MQTTClient
+from contextlib import asynccontextmanager
+import sounddevice as sd
+import speech_recognition as sr
+import concurrent.futures
+from gtts import gTTS
+import os
+
+from playsound import playsound
+
+
+cap = cv2.VideoCapture(0)
+# 음성 캡처 큐
+audio_queue = queue.Queue()
+
+
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+
+
+
+recognizer = sr.Recognizer()
+
+async def recognize_speech():
+    loop = asyncio.get_event_loop()
+    with sr.Microphone() as source:
+        print("음성을 듣고 있습니다... (10초 동안)")
+        recognizer.adjust_for_ambient_noise(source, duration=1)
+        try:
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                audio = await loop.run_in_executor(pool, lambda: recognizer.listen(source, timeout=10))
+            print("음성 인식 중...")
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                text = await loop.run_in_executor(pool, lambda: recognizer.recognize_google(audio, language="ko-KR"))
+            print(f"인식된 텍스트: {text}")
+            return text
+        except sr.WaitTimeoutError:
+            print("음성 입력 시간이 초과되었습니다.")
+        except sr.UnknownValueError:
+            print("음성을 인식할 수 없습니다.")
+        except sr.RequestError as e:
+            print(f"음성 인식 서비스 오류: {e}")
+        except Exception as e:
+            print(f"예상치 못한 오류 발생: {e}")
+    return None
+
+async def send_speech_text(client):
+    while True:
+        try:
+            text = await recognize_speech()
+            if text:
+                speech_message = json.dumps({"text": text})
+                client.publish(MQTT_TOPIC_SPEECH, speech_message)
+                logging.info(f"음성 텍스트 발행: {text}")
+        except Exception as e:
+            logging.error(f"send_speech_text 오류: {e}")
+        finally:
+            await asyncio.sleep(5)  # 1초 대기 후 다시 음성 인식 시작
+
+
+#############################################################################
+def text_to_speech(text, lang='ko'):
+    tts = gTTS(text=text, lang=lang, slow=False)
+    tts.save("output.mp3")
+    #os.system("start output.mp3")
+    playsound("output.mp3")
+    os.remove("output.mp3")
+
+# MQTT 설정
+MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
 
 # GPIO를 사용하는 모듈 대신 Mock 클래스 작성
 class motor_control:
@@ -55,6 +127,10 @@ MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
+#########juyeon
+# MQTT_TOPIC_SPEECH = "robot/speech"
+# MQTT_TOPIC_TEXT = "robot/text"
+######hanbin2
 MQTT_TOPIC_AUDIOTOTEXT = "robot/audio_to_text"
 MQTT_TOPIC_TEXTTOAUDIO = "robot/text_to_audio"
 
@@ -94,6 +170,9 @@ async def on_message(client, topic, payload, qos, properties):
     elif command["command"] == "text_to_audio":
         await audio_text.text_to_audio(command["text"])
 
+    # elif command.get("command") == "text_to_speech":
+    #     text_to_speech(command["text"])
+
     else:
         logging.warning(f"잘못된 명령: {command}")
 
@@ -112,7 +191,10 @@ async def on_disconnect():
 async def lifespan():
     client.on_message = on_message
     await on_connect()
-    await ultrasonic.start_send_distance(client)
+    asyncio.create_task(send_speech_text(client))
+    #############3juyeon
+    #await ultrasonic.start_send_distance(client)
+
     await video.start_generate_frames(client)
     # await audio_text.start_send_audio(client)
     yield
@@ -127,6 +209,7 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     try:
+        # asyncio.run(main())
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         logging.info("사용자에 의해 중단되었습니다.")

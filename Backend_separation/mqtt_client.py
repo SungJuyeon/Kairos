@@ -42,6 +42,10 @@ client = MQTTClient(client_id="fastapi_client")
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
     logger.info("연결: MQTT Broker")
+    #client.subscribe(MQTT_TOPIC_DISTANCE)
+    #client.subscribe(MQTT_TOPIC_VIDEO)
+    client.subscribe(MQTT_TOPIC_SPEECH)  # 음성 텍스트 토픽 구독
+    
     client.subscribe(MQTT_TOPIC_DISTANCE)
     client.subscribe(MQTT_TOPIC_VIDEO)
     client.subscribe(MQTT_TOPIC_AUDIOTOTEXT) 
@@ -49,8 +53,7 @@ async def on_connect():
 
 
 async def on_message(client, topic, payload, qos, properties):
-    global audio_data, distance_data, video_frames, speech_text
-
+    global audio_data, distance_data, video_frames
     # 비디오 데이터 처리
     if topic == MQTT_TOPIC_VIDEO:
         if len(video_frames) >= MAX_FRAMES:
@@ -60,13 +63,12 @@ async def on_message(client, topic, payload, qos, properties):
         #logger.info(f"Received video frame: {len(video_frames)}")
         return
 
-
-    # 다른 데이터 처리
     try:
         message = json.loads(payload.decode('utf-8'))  # JSON 디코딩
 
         if topic == MQTT_TOPIC_DISTANCE:
             distance_data = message.get("distance")
+<<<<<<< HEAD
             logger.info(f"Distance data received: {distance_data}")
           
         elif topic == MQTT_TOPIC_AUDIOTOTEXT:
@@ -75,12 +77,24 @@ async def on_message(client, topic, payload, qos, properties):
             # 텍스트를 GPT에 전달하고 결과를 얻음
             await process_user_input(speech_text)
                 
+=======
+            # logger.info(f"Distance data received: {distance_data}")
+        # 음성 텍스트 처리
+        elif topic == MQTT_TOPIC_TEXTTOAUDIO:
+            speech_text = message.get("speech_text")    #juyeon 브랜치에서는 text
+            logger.info(f"Received speech text: {speech_text}")
+            command = {"command": "text_to_speech", "text": speech_text}
+            # 텍스트를 GPT에 전달하고 결과를 얻음
+            response_text = process_user_input(speech_text)
+            if response_text:  # response_text가 None이 아닌 경우
+                await text_to_speech(response_text)
+            else:
+                logger.warning("No response text received from process_user_input.")
+
+>>>>>>> geonu
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
 
-    
-
-    return
 
 
 async def setup_mqtt():
@@ -116,7 +130,7 @@ async def speed(action):
 async def text_to_audio(text):
     command = json.dumps({"command": "text_to_audio", "text": text})
     client.publish(MQTT_TOPIC_COMMAND, command)
-    logger.info(f"Text to speech command sent: {command}")
+    logging.info(f"Text to speech command sent: {command}")
     return {"message": "Text to speech command sent successfully"}
 
 async def home_control(device, state):

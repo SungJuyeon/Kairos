@@ -4,6 +4,8 @@ import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const BASE_URL = 'http://223.194.139.32:8080';
+
 export default function FindId() {
     const { navigate } = useNavigation();
 
@@ -21,7 +23,7 @@ export default function FindId() {
 
         try {
 
-            const response = await fetch('http://localhost:8080/find/username', {
+            const response = await fetch(`${BASE_URL}/find/username`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

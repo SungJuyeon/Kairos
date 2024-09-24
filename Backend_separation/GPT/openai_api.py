@@ -6,6 +6,7 @@ import re
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from gtts import gTTS
+<<<<<<< HEAD:Backend_separation/GPT/openai_api.py
 from GPT.speaker import speak
 from GPT.add_schedule import add_schedule
 from GPT.delete_schedule import delete_schedule
@@ -13,6 +14,14 @@ from GPT.select_schedule import select_schedule
 #from GPT.speaker import speak
 from GPT.weather_info import get_weather_info
 from GPT.control_home import control_led, control_induction, control_relay
+=======
+from GPT.add_schedule import add_schedule
+from GPT.delete_schedule import delete_schedule
+from GPT.select_schedule import select_schedule
+from GPT.speaker import speak
+from GPT.weather_info import get_weather_info
+from GPT.control_home import control_led, control_induction, control_air_conditioner
+>>>>>>> geonu:GPT/openai_api.py
 from GPT.youtube import play_music_on_youtube
 
 # secret API 키를 가져오기 위해 .env file 로드
@@ -148,7 +157,11 @@ def handle_smart_home_control(user_input):
         elif "꺼" in user_input:
             control_relay("꺼줘")
 
+<<<<<<< HEAD:Backend_separation/GPT/openai_api.py
 async def process_user_input(user_input):
+=======
+def process_user_input(user_input):
+>>>>>>> geonu:GPT/openai_api.py
     if not user_input:
         return
 
@@ -158,7 +171,11 @@ async def process_user_input(user_input):
         return  # 함수를 즉시 종료
 
     # "히어로봇" 호출 시만 다음 명령을 처리
+<<<<<<< HEAD:Backend_separation/GPT/openai_api.py
     if "히어로봇" in user_input or "히어로" in user_input or "here" in user_input or "에어로봇" in user_input or "로봇" in user_input:
+=======
+    if "히어로봇" in user_input or "히어로" in user_input or "here" in user_input:
+>>>>>>> geonu:GPT/openai_api.py
         speak("네 무엇을 도와드릴까요?")
 
         # 날씨 요청 처리
@@ -221,4 +238,8 @@ async def process_user_input(user_input):
             speak(ai_message)
 
     else:
+<<<<<<< HEAD:Backend_separation/GPT/openai_api.py
         return  # "히어로봇"이라고 부르지 않으면 아무 작업도 하지 않음
+=======
+        return  # "히어로봇"이라고 부르지 않으면 아무 작업도 하지 않음
+>>>>>>> geonu:GPT/openai_api.py
