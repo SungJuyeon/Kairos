@@ -1,11 +1,19 @@
 # mqtt_client.py
 # MQTT 설정 및 메시지 처리를 위한 파일
 
+import sys
+import os
+
+# 프로젝트 루트 디렉토리를 Python 경로에 추가
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import numpy as np
 import json
 import logging
 import cv2
 from gmqtt import Client as MQTTClient
+
+from GPT.openai_api import process_user_input
 
 # Logging 설정
 logger = logging.getLogger(__name__)
@@ -18,8 +26,8 @@ MAX_FRAMES = 3
 current_speed = 50
 
 # MQTT 설정
-MQTT_BROKER = "223.194.157.85"
-#MQTT_BROKER = "3.27.221.93"
+#MQTT_BROKER = "223.194.129.221"
+MQTT_BROKER = "52.78.166.219"
 #MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
@@ -36,7 +44,7 @@ async def on_connect():
     logger.info("연결: MQTT Broker")
     client.subscribe(MQTT_TOPIC_DISTANCE)
     client.subscribe(MQTT_TOPIC_VIDEO)
-    client.subscribe(MQTT_TOPIC_TEXTTOAUDIO) 
+    client.subscribe(MQTT_TOPIC_AUDIOTOTEXT) 
     logger.info("구독 완료")
 
 
@@ -59,12 +67,14 @@ async def on_message(client, topic, payload, qos, properties):
 
         if topic == MQTT_TOPIC_DISTANCE:
             distance_data = message.get("distance")
-            # logger.info(f"Distance data received: {distance_data}")
-        # 음성 텍스트 처리
-        elif topic == MQTT_TOPIC_TEXTTOAUDIO:
-            speech_text = message.get("speech_text")
+            logger.info(f"Distance data received: {distance_data}")
+          
+        elif topic == MQTT_TOPIC_AUDIOTOTEXT:
+            speech_text = message.get("text")    #juyeon 브랜치에서는 text
             logger.info(f"Received speech text: {speech_text}")
-            # 텍스트를 GPT에 전달하는 함수 실행##################################
+            # 텍스트를 GPT에 전달하고 결과를 얻음
+            process_user_input(speech_text)
+                
     except Exception as e:
         logger.error(f"Error processing message on topic {topic}: {e}")
 

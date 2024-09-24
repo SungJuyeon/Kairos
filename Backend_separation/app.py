@@ -198,6 +198,10 @@ async def get_speech_text():
 @app.post("/home_control/{device}/{state}")
 async def post_home_control(device: str, state: bool):
     await home_control(device, state)
+    
+@app.get("/text_to_audio/{text}")
+async def post_text_to_audio(text: str):
+    await text_to_audio(text)
 
 @app.get("/video_feed/{face}")
 async def get_video_feed(face: bool):

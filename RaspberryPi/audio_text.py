@@ -31,7 +31,7 @@ async def send_audio(client):
         try:
             text = await audio_to_text()
             if text:
-                speech_message = json.dumps({"speech_text": text})
+                speech_message = json.dumps({"text": text})
                 from robot_controller import MQTT_TOPIC_AUDIOTOTEXT
                 client.publish(MQTT_TOPIC_AUDIOTOTEXT, speech_message)
                 logging.info(f"음성 텍스트 발행: {text}")

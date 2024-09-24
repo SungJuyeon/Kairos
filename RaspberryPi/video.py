@@ -22,12 +22,19 @@ async def generate_frames(client):
     if not cap.isOpened():
         logging.error("카메라를 열 수 없습니다.")
         return
+<<<<<<< HEAD
     try:
         while True:
+=======
+
+    try:
+        while True:
+            try:
+>>>>>>> hanbin2
                 ret, frame = cap.read()
                 if not ret:
                     logging.warning("Failed to capture frame")
-                    await asyncio.sleep(1)  # 프레임 캡처 실패 시 대기
+                    await asyncio.sleep(0.01)  # 프레임 캡처 실패 시 대기
                     continue
 
                 _, buffer = cv2.imencode('.jpg', frame)
@@ -36,9 +43,16 @@ async def generate_frames(client):
                 client.publish(MQTT_TOPIC_VIDEO, frame_data)  # 비디오 프레임 전송
                 # logging.info("Sent a video frame")
 
+<<<<<<< HEAD
                 await asyncio.sleep(0.05)  # 전송 주기 조정
     except Exception as e:
         logging.error(f"Error in generate_frames: {e}")
         await asyncio.sleep(1)  # 오류 발생 시 대기
+=======
+                await asyncio.sleep(1/30)  # 전송 주기 조정
+            except Exception as e:
+                logging.error(f"Error in generate_frames: {e}")
+                await asyncio.sleep(1)  # 오류 발생 시 대기
+>>>>>>> hanbin2
     finally:
         cap.release()  # 카메라 자원 해제

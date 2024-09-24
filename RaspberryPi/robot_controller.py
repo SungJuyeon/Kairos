@@ -19,7 +19,6 @@ MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
 MQTT_TOPIC_AUDIOTOTEXT = "robot/audio_to_text"
-MQTT_TOPIC_TEXTTOAUDIO = "robot/text_to_audio"
 
 client = MQTTClient(client_id="robot_controller")
 
@@ -57,6 +56,7 @@ async def on_message(client, topic, payload, qos, properties):
     elif command["command"] == "stop_send_audio":
         await audio_text.stop_send_audio()
     elif command["command"] == "text_to_audio":
+<<<<<<< HEAD
         speech_text = command.get("text")
         logging.info(f"Received speech text: {speech_text}")
         response_text = process_user_input(speech_text)
@@ -65,6 +65,11 @@ async def on_message(client, topic, payload, qos, properties):
         else:
             logging.warning("No response text received from process_user_input.")
 
+=======
+        await audio_text.text_to_audio(command["text"])
+        logging.info(f"Sent audio: {command['text']}")
+        
+>>>>>>> hanbin2
     else:
         logging.warning(f"Invalid command: {command}")
 
@@ -85,7 +90,8 @@ async def on_disconnect():
 async def lifespan():
     client.on_message = on_message
     await on_connect()
-
+    asyncio.create_task(video.generate_frames(client))
+    
     yield
 
     logging.info("종료")

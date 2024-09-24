@@ -9,7 +9,7 @@ model = YOLO('yolov8n.pt', verbose=False)  # YOLO 모델 로드
 
 async def follow():
     # 속도 설정 및 왼쪽으로 회전 시작
-    await speed(40)
+    await speed(100)
     await move("left")
     
     start_time = time.time()

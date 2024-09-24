@@ -6,12 +6,13 @@ import re
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from gtts import gTTS
+from GPT.speaker import speak
 from GPT.add_schedule import add_schedule
 from GPT.delete_schedule import delete_schedule
 from GPT.select_schedule import select_schedule
-from GPT.speaker import speak
+#from GPT.speaker import speak
 from GPT.weather_info import get_weather_info
-from GPT.control_home import control_led, control_induction, control_air_conditioner
+from GPT.control_home import control_led, control_induction, control_relay
 from GPT.youtube import play_music_on_youtube
 
 # secret API 키를 가져오기 위해 .env file 로드
@@ -141,11 +142,11 @@ def handle_smart_home_control(user_input):
             control_induction("켜줘")
         elif "꺼" in user_input:
             control_induction("꺼줘")
-    elif "에어컨" in user_input:
+    elif "선풍기" in user_input:
         if "켜" in user_input:
-            control_air_conditioner("켜줘")
+            control_relay("켜줘")
         elif "꺼" in user_input:
-            control_air_conditioner("꺼줘")
+            control_relay("꺼줘")
 
 def process_user_input(user_input):
     if not user_input:
@@ -157,7 +158,7 @@ def process_user_input(user_input):
         return  # 함수를 즉시 종료
 
     # "히어로봇" 호출 시만 다음 명령을 처리
-    if "히어로봇" in user_input or "히어로" in user_input or "here" in user_input:
+    if "히어로봇" in user_input or "히어로" in user_input or "here" in user_input or "에어로봇" in user_input or "로봇" in user_input:
         speak("네 무엇을 도와드릴까요?")
 
         # 날씨 요청 처리
