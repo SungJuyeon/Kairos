@@ -7,8 +7,6 @@ import video
 import ultrasonic
 import motor_control
 import audio_text
-from GPT.openai_api import process_user_input
-from audio_text import text_to_audio, audio_to_text
 
 logging.basicConfig(level=logging.INFO)
 
@@ -39,37 +37,26 @@ async def on_message(client, topic, payload, qos, properties):
     elif command["command"] in ["up", "down", "stop_actuator"]:
         motor_control.actuator_control(command["command"])
     elif command["command"] == "set_speed":
-        motor_control.set_speed(command["speed"]) 
-        
+        motor_control.set_speed(command["speed"])
+
     elif command["command"] == "start_send_distance":
         await ultrasonic.start_send_distance(client)
     elif command["command"] == "stop_send_distance":
         await ultrasonic.stop_send_distance()
-        
+
     elif command["command"] == "start_generate_frames":
         await video.start_generate_frames(client)
     elif command["command"] == "stop_generate_frames":
         await video.stop_generate_frames()
-    
+
     elif command["command"] == "start_send_audio":
         await audio_text.start_send_audio(client)
     elif command["command"] == "stop_send_audio":
         await audio_text.stop_send_audio()
     elif command["command"] == "text_to_audio":
-<<<<<<< HEAD
-        speech_text = command.get("text")
-        logging.info(f"Received speech text: {speech_text}")
-        response_text = process_user_input(speech_text)
-        if response_text:  # response_text가 None이 아닌 경우
-            await text_to_audio(response_text)
-        else:
-            logging.warning("No response text received from process_user_input.")
-
-=======
         await audio_text.text_to_audio(command["text"])
         logging.info(f"Sent audio: {command['text']}")
-        
->>>>>>> hanbin2
+
     else:
         logging.warning(f"Invalid command: {command}")
 
@@ -91,7 +78,7 @@ async def lifespan():
     client.on_message = on_message
     await on_connect()
     asyncio.create_task(video.generate_frames(client))
-    
+
     yield
 
     logging.info("종료")

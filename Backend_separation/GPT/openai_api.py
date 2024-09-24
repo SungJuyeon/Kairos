@@ -15,6 +15,8 @@ from GPT.weather_info import get_weather_info
 from GPT.control_home import control_led, control_induction, control_relay
 from GPT.youtube import play_music_on_youtube
 
+from Backend_separation.follow import follow
+
 # secret API 키를 가져오기 위해 .env file 로드
 load_dotenv()
 
@@ -148,7 +150,7 @@ def handle_smart_home_control(user_input):
         elif "꺼" in user_input:
             control_relay("꺼줘")
 
-def process_user_input(user_input):
+async def process_user_input(user_input):
     if not user_input:
         return
 
@@ -212,6 +214,11 @@ def process_user_input(user_input):
         elif "틀어 줘" in user_input or "틀어줘" in user_input:
             music = re.sub(r"(틀어줘)", "", user_input).strip()
             play_music_on_youtube(music)
+
+        # "이리" 또는 "따라" 명령 시 follow 함수 호출
+        elif "이리" in user_input or "따라" in user_input:
+            speak("따라가겠습니다.")
+            await follow()  # follow 함수 호출
 
         # 그 외 일반적인 명령 처리
         else:
