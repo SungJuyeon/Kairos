@@ -4,15 +4,19 @@ import styled from 'styled-components/native'
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 
+const BASE_URL = 'http://223.194.139.32:8000';
+
 export default function Function1() {
     const { navigate } = useNavigation();
-    
-    const BASE_URL = 'http://223.194.136.129:8000'; // 라즈베리파이 서버 URL
 
     return (
         <Container>
-            <Title>기능 1</Title>
+            <Title>Herobot의 기능 1</Title>
 
+
+            <Button onPress={() => navigate("Emotion")}>
+              <ButtonText>감정 보러가기</ButtonText>
+            </Button>
         </Container>
     );
 }

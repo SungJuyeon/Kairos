@@ -191,10 +191,6 @@ async def get_speech_text():
     #return {"speech_text": speech_text}
     return {"message": "speech_text는 MQTT를 통해 처리됩니다."}
 
-@app.post("/text_to_speech/{text}")
-async def post_text_to_speech(text: str):
-    await text_to_speech(text)
-
 @app.post("/home_control/{device}/{state}")
 async def post_home_control(device: str, state: bool):
     await home_control(device, state)
