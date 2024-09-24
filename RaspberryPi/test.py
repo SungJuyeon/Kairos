@@ -1,226 +1,218 @@
-import queue
-import cv2
 import asyncio
+import time
 import logging
 import json
-import random
 from gmqtt import Client as MQTTClient
 from contextlib import asynccontextmanager
 import sounddevice as sd
-import numpy as np
+import speech_recognition as sr
+import concurrent.futures
+from gtts import gTTS
+import os
 
-# 카메라 설정
+from playsound import playsound
+
+
 cap = cv2.VideoCapture(0)
 # 음성 캡처 큐
 audio_queue = queue.Queue()
 
-# 현재 모터 상태를 저장하는 변수
-wheel_direction = None
-actuator_direction = None
-wheel_speed = 100
+
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 
 
-# 바퀴 설정 #######################################################################
-async def wheel_control(direction):
-    global wheel_direction
-    wheel_direction = direction
-    logging.info(f"wheel {direction}, speed {wheel_speed}")
 
-    while wheel_direction == direction:
-        await asyncio.sleep(0.05)
+recognizer = sr.Recognizer()
 
-    stop_wheel()
+async def recognize_speech():
+    loop = asyncio.get_event_loop()
+    with sr.Microphone() as source:
+        print("음성을 듣고 있습니다... (10초 동안)")
+        recognizer.adjust_for_ambient_noise(source, duration=1)
+        try:
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                audio = await loop.run_in_executor(pool, lambda: recognizer.listen(source, timeout=10))
+            print("음성 인식 중...")
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                text = await loop.run_in_executor(pool, lambda: recognizer.recognize_google(audio, language="ko-KR"))
+            print(f"인식된 텍스트: {text}")
+            return text
+        except sr.WaitTimeoutError:
+            print("음성 입력 시간이 초과되었습니다.")
+        except sr.UnknownValueError:
+            print("음성을 인식할 수 없습니다.")
+        except sr.RequestError as e:
+            print(f"음성 인식 서비스 오류: {e}")
+        except Exception as e:
+            print(f"예상치 못한 오류 발생: {e}")
+    return None
 
-
-def stop_wheel():
-    logging.info("Stopping motors")
-    global wheel_direction
-    wheel_direction = None
-
-
-async def set_speed(speed):
-    global wheel_speed
-    wheel_speed = max(0, min(speed, 100))  # 속도를 0~100 사이로 제한
-    logging.info(f"wheel speed {wheel_speed}")
-    if wheel_direction is not None:
-        logging.info(f"Current direction: {wheel_direction}, speed applied: {wheel_speed}")
-
-
-#############################################################################
-
-
-# 액추에이터 설정 ###############################################################
-async def actuator_control(direction):
-    global actuator_direction
-    actuator_direction = direction
-    logging.info(f"Setting actuator state to {direction}")
-
-    while actuator_direction == direction:
-        await asyncio.sleep(0.1)
-
-    stop_actuator()
-
-
-def stop_actuator():
-    logging.info("Stopping actuator")
-    global actuator_direction
-    actuator_direction = None
-#############################################################################
-
-
-# 거리 전송 ###################################################################
-async def send_distance(client):
+async def send_speech_text(client):
     while True:
         try:
-            distance = measure_distance()
-            if distance is not None:
-                distance_message = json.dumps({"distance": distance})  # JSON 형식으로 전송
-                client.publish(MQTT_TOPIC_DISTANCE, distance_message)
-                # logging.info(f"거리 발행: {distance}")
-            await asyncio.sleep(0.1)  # 전송 주기
+            text = await recognize_speech()
+            if text:
+                speech_message = json.dumps({"text": text})
+                client.publish(MQTT_TOPIC_SPEECH, speech_message)
+                logging.info(f"음성 텍스트 발행: {text}")
         except Exception as e:
-            logging.error(f"Error in send_distance: {e}")
-            await asyncio.sleep(1)  # 오류 발생 시 대기
+            logging.error(f"send_speech_text 오류: {e}")
+        finally:
+            await asyncio.sleep(5)  # 1초 대기 후 다시 음성 인식 시작
 
 
-def measure_distance():
-    # 1~100 랜덤 거리 반환
-    distance = random.randint(1, 100)
-    # logging.info(f"Measured distance: {distance}")
-    return distance
 #############################################################################
+def text_to_speech(text, lang='ko'):
+    tts = gTTS(text=text, lang=lang, slow=False)
+    tts.save("output.mp3")
+    #os.system("start output.mp3")
+    playsound("output.mp3")
+    os.remove("output.mp3")
 
-
-# 영상, 음성 전송 ####################################################################
-async def generate_frames(client):
-    while True:
-        try:
-            ret, frame = cap.read()
-            if not ret:
-                logging.warning("Failed to capture frame")
-                await asyncio.sleep(1)  # 프레임 캡처 실패 시 대기
-                continue
-
-            _, buffer = cv2.imencode('.jpg', frame)
-            client.publish(MQTT_TOPIC_VIDEO, buffer.tobytes())  # 바이너리 형식 전송
-            # logging.info("Sent a video frame")
-
-            await asyncio.sleep(1 / 30)  # 전송 주기 조정
-        except Exception as e:
-            logging.error(f"Error in generate_frames: {e}")
-            await asyncio.sleep(1)  # 오류 발생 시 대기
-
-
-# 음성 캡처 콜백 함수
-def audio_callback(indata, frames, time, status):
-    if status:
-        logging.error(status)  # 오류 로그 남기기
-    try:
-        audio_queue.put(indata.copy())
-        # logging.info(f"Audio data added to queue, frames: {frames}")  # 큐에 추가된 오디오 데이터 프레임 수 로깅
-    except Exception as e:
-        logging.error(f"Error in audio callback: {e}")
-#############################################################################
-
-
-# 오디오 설정################################################################
-RATE = 44100
-CHANNELS = 1
-CHUNK = 1024
-
-async def send_audio(client):
-    def audio_callback(indata, frames, time, status):
-        if status:
-            logging.error(f"오디오 콜백 오류: {status}")
-        audio_data = indata.tobytes()
-        client.publish(MQTT_TOPIC_AUDIO, audio_data)
-
-    with sd.InputStream(callback=audio_callback, channels=CHANNELS, samplerate=RATE, blocksize=CHUNK):
-        while True:
-            await asyncio.sleep(0.1)
-
-##############################################################################
 # MQTT 설정
 MQTT_BROKER = "3.27.221.93"  # MQTT 브로커 주소 입력
-#MQTT_BROKER = "localhost"
+
+# GPIO를 사용하는 모듈 대신 Mock 클래스 작성
+class motor_control:
+    @staticmethod
+    def wheel_control(direction):
+        logging.info(f"모의 모터 제어: 방향 {direction}")
+
+    @staticmethod
+    def set_speed(speed=50):
+        logging.info(f"모의 모터 속도 설정: 속도 {speed}")
+
+    @staticmethod
+    def actuator_control(direction):
+        logging.info(f"모의 액추에이터 제어: 방향 {direction}")
+
+class ultrasonic:
+    send_distance_task = None
+
+    @staticmethod
+    async def start_send_distance(client):
+        logging.info("모의 거리 전송 시작")
+        ultrasonic.send_distance_task = asyncio.create_task(ultrasonic.mock_send_distance(client))
+
+    @staticmethod
+    async def stop_send_distance():
+        if ultrasonic.send_distance_task:
+            ultrasonic.send_distance_task.cancel()
+            ultrasonic.send_distance_task = None
+            logging.info("모의 거리 전송 중지")
+
+    @staticmethod
+    async def mock_send_distance(client):
+        while True:
+            await asyncio.sleep(1)
+            distance = 100  # 모의 거리 값
+            distance_message = json.dumps({"distance": distance})
+            MQTT_TOPIC_DISTANCE = "robot/distance"
+            client.publish(MQTT_TOPIC_DISTANCE, distance_message)
+            logging.info(f"모의 거리 발행: {distance}")
+
+import audio_text
+import video
+from gmqtt import Client as MQTTClient
+from contextlib import asynccontextmanager
+
+logging.basicConfig(level=logging.INFO)
+
+# MQTT 설정
+MQTT_BROKER = "localhost"
+#MQTT_BROKER = "3.27.221.93"
 MQTT_PORT = 1883
 MQTT_TOPIC_COMMAND = "robot/commands"
 MQTT_TOPIC_DISTANCE = "robot/distance"
 MQTT_TOPIC_VIDEO = "robot/video"
-MQTT_TOPIC_AUDIO = "robot/audio"
+#########juyeon
+# MQTT_TOPIC_SPEECH = "robot/speech"
+# MQTT_TOPIC_TEXT = "robot/text"
+######hanbin2
+MQTT_TOPIC_AUDIOTOTEXT = "robot/audio_to_text"
+MQTT_TOPIC_TEXTTOAUDIO = "robot/text_to_audio"
 
 client = MQTTClient(client_id="robot_controller")
 
-
 async def on_connect():
     await client.connect(MQTT_BROKER, MQTT_PORT)
-    logging.info("연결")
+    logging.info("MQTT 브로커에 연결되었습니다.")
     client.subscribe(MQTT_TOPIC_COMMAND)
-    logging.info("구독")
-
+    logging.info(f"명령어 토픽 구독: {MQTT_TOPIC_COMMAND}")
 
 async def on_message(client, topic, payload, qos, properties):
     command = json.loads(payload.decode('utf-8'))
-    logging.info(f"Received command: {command}")
+    logging.info(f"명령 수신: {command}")
 
-    if command["command"] == "stop_wheel":
-        stop_wheel()
-    elif command["command"] == "stop_actuator":
-        stop_actuator()
-    elif command["command"] in ["forward", "back", "left", "right"]:
-        await wheel_control(command["command"])
-    elif command["command"] in ["up", "down"]:
-        await actuator_control(command["command"])
+    if command["command"] in ["forward", "back", "left", "right", "stop_wheel"]:
+        motor_control.wheel_control(command["command"])
+    elif command["command"] in ["up", "down", "stop_actuator"]:
+        motor_control.actuator_control(command["command"])
     elif command["command"] == "set_speed":
-        await set_speed(command["speed"])  # 속도 조절 명령 처리
-    else:
-        logging.warning(f"Invalid command: {command}")
+        motor_control.set_speed(command["speed"]) 
 
+    elif command["command"] == "start_send_distance":
+        await ultrasonic.start_send_distance(client)
+    elif command["command"] == "stop_send_distance":
+        await ultrasonic.stop_send_distance()
+
+    elif command["command"] == "start_generate_frames":
+        await video.start_generate_frames(client)
+    elif command["command"] == "stop_generate_frames":
+        await video.stop_generate_frames()
+
+    elif command["command"] == "start_send_audio":
+        await audio_text.start_send_audio(client)
+    elif command["command"] == "stop_send_audio":
+        await audio_text.stop_send_audio()
+    elif command["command"] == "text_to_audio":
+        await audio_text.text_to_audio(command["text"])
+
+    # elif command.get("command") == "text_to_speech":
+    #     text_to_speech(command["text"])
+
+    else:
+        logging.warning(f"잘못된 명령: {command}")
 
 async def on_disconnect():
-    logging.warning("Disconnected from MQTT broker, attempting to reconnect...")
+    logging.warning("MQTT 브로커와의 연결이 끊어졌습니다. 재연결 시도 중...")
     while True:
         try:
             await client.connect(MQTT_BROKER, MQTT_PORT)
-            logging.info("Reconnected to MQTT broker")
+            logging.info("MQTT 브로커에 재연결되었습니다.")
             break
         except Exception as e:
-            logging.error(f"Reconnect failed: {e}")
-            await asyncio.sleep(5)  # 재시도 대기
-
+            logging.error(f"재연결 실패: {e}")
+            await asyncio.sleep(2)
 
 @asynccontextmanager
 async def lifespan():
     client.on_message = on_message
     await on_connect()
+    asyncio.create_task(send_speech_text(client))
+    #############3juyeon
+    #await ultrasonic.start_send_distance(client)
 
-    # 비동기 작업 시작
-    asyncio.create_task(send_distance(client))
-    asyncio.create_task(generate_frames(client))
-    asyncio.create_task(send_audio(client))####################################################
-
+    await video.start_generate_frames(client)
+    # await audio_text.start_send_audio(client)
     yield
-
-    logging.info("종료")
+    logging.info("프로그램을 종료합니다.")
     await client.disconnect()
-
 
 async def main():
     async with lifespan():
         while True:
             await asyncio.sleep(1)
 
-
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     try:
+        # asyncio.run(main())
         loop.run_until_complete(main())
     except KeyboardInterrupt:
-        logging.info("Interrupted by user, cleaning up...")
+        logging.info("사용자에 의해 중단되었습니다.")
     finally:
-        # 종료 처리
-        cap.release()
-        logging.info("Cleanup completed")
+        loop.close()
+        

@@ -2,28 +2,32 @@ import asyncio
 import logging
 import os
 import json
-import uvicorn  # uvicorn 모듈 임포트 추가
-
+import uvicorn
 from fastapi import FastAPI, Request, HTTPException, Header, WebSocket
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, StreamingResponse, FileResponse
-
 from face_recognition import recognize_periodically
+from follow import follow, generate_video_frames
+import hand_gesture_recognition
+from hand_gesture_recognition import recognize_hand_gesture_periodically
 from video_processing import generate_frames, video_frame_generator
-from mqtt_client import setup_mqtt, distance_data, move, speed, video_frames
+from mqtt_client import home_control, setup_mqtt, distance_data, move, speed, text_to_audio, video_frames
 from db_face_loader import load_faces_from_db
 from s3_uploader import list_s3_videos
-from calendar_app import get_all_schedules, add_schedule, delete_schedule, Schedule
+from calendar_app import get_all_schedules, add_schedules, delete_schedule, Schedule
 from emotion_record import get_most_emotion_pic_path, get_most_frequent_emotion
 from face_image_db import current_userId, fetch_family_photos
 from message_server import handle_connection, fetch_user_id_by_username
+import sys
+
+# Kairos 루트 디렉토리를 Python 경로에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Logging 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 
 app.add_middleware(
@@ -37,12 +41,35 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     await setup_mqtt()
-    asyncio.create_task(recognize_periodically(video_frames))
+    #get_face_recognition()
     load_faces_from_db()  # 얼굴 이미지 로드
+    #get_hand_gesture_recognition()
+        
+face_recognition_task = None
+@app.get("/face_recognition")
+async def get_face_recognition():
+    global face_recognition_task
+    face_recognition_task = asyncio.create_task(recognize_periodically())
+    return {"message": "얼굴 인식 태스크가 시작되었습니다."}
 
-@app.get("/", response_class=HTMLResponse)
-async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/face_recognition_stop")
+async def get_face_recognition_stop():
+    global face_recognition_task
+    face_recognition_task.cancel()
+    return {"message": "얼굴 인식 태스크가 종료되었습니다."}
+
+@app.get("/hand_gesture_recognition")
+async def get_hand_gesture_recognition():
+    hand_gesture_recognition.init()
+    asyncio.create_task(recognize_hand_gesture_periodically())
+    return {"message": "손동작 인식 태스크가 시작되었습니다."}
+
+@app.get("/hand_gesture_recognition_stop")
+async def get_hand_gesture_recognition_stop():
+    hand_gesture_recognition.stop()
+    return {"message": "손동작 인식 태스크가 종료되었습니다."}
+
+
 
 @app.post("/move/{direction}")
 async def post_move(direction: str):
@@ -61,9 +88,9 @@ async def get_distance():
 async def video_stream():
     return StreamingResponse(generate_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
 
-@app.get("/video_feed/{face}")
-async def get_video_feed(face: bool):
-    return StreamingResponse(video_frame_generator(face),
+@app.get("/video_feed/{face}/{hand}")
+async def get_video_feed(face: bool, hand: bool):
+    return StreamingResponse(video_frame_generator(face, hand),
                              media_type='multipart/x-mixed-replace; boundary=frame')
 
 @app.post("/load_faces")
@@ -87,7 +114,7 @@ async def calendar(token: str = Header(...)):
 
 @app.post("/schedules/add")
 async def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):
-    return add_schedule(schedule, token)
+    return add_schedules(schedule, token)
 
 @app.delete("/schedules/{schedule_id}")
 async def delete_schedule_endpoint(schedule_id: int, token: str = Header(...)):
@@ -132,6 +159,45 @@ async def get_messages(username: str):
 @app.websocket("/ws/chat")
 async def websocket_endpoint(websocket: WebSocket):
     await handle_connection(websocket)
+
+
+@app.post("/load_faces")
+async def load_faces():
+    try:
+        load_faces_from_db()
+        return {"message": "얼굴 이미지가 성공적으로 로드되었습니다."}
+    except Exception as e:
+        logger.error(f"얼굴 이미지 로드 중 오류 발생: {str(e)}")
+        return {"error": "얼굴 이미지 로드 중 오류가 발생했습니다.", "details": str(e)}, 500
+
+
+@app.get("/s3_video_list")
+async def get_video_list():
+    """
+    S3에 저장된 영상 목록을 반환하는 엔드포인트
+    """
+    video_list = await list_s3_videos()
+    return {"videos": video_list}
+
+@app.get("/follow")
+async def get_follow():
+    asyncio.create_task(follow())
+@app.get("/follow_video")
+async def get_follow_video():
+    return StreamingResponse(generate_video_frames(), media_type='multipart/x-mixed-replace; boundary=frame')
+
+@app.get("/speech_text")
+async def get_speech_text():
+    #return {"speech_text": speech_text}
+    return {"message": "speech_text는 MQTT를 통해 처리됩니다."}
+
+@app.post("/text_to_speech/{text}")
+async def post_text_to_speech(text: str):
+    await text_to_speech(text)
+
+@app.post("/home_control/{device}/{state}")
+async def post_home_control(device: str, state: bool):
+    await home_control(device, state)
 
 if __name__ == "__main__":
     config = uvicorn.Config(app, host='0.0.0.0', port=8000)
