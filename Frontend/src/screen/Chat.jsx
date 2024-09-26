@@ -4,8 +4,8 @@ import styled from 'styled-components/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwt_decode from 'jwt-decode';
 
-const BASE_URL = `http://172.30.1.68:8000`;
-const WS_BASE_URL = `ws://172.30.1.68:8000`;
+const BASE_URL = `http://172.30.1.55:8000`;
+const WS_BASE_URL = `ws://172.30.1.55:8000`;
 
 const WEBSOCKET_URL = `${WS_BASE_URL}/ws/chat`;
 const MESSAGE_API_URL = `${BASE_URL}/messages`;
@@ -113,7 +113,8 @@ export default function Chat() {
     const username = getUsernameFromToken(accessToken);
   
     // 메시지 포맷 변경
-    const newMessage = { text: `${username}: ${message}`, isUser: true };
+    const newMessage = { text: `${username}: 
+    ${message}`, isUser: true };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setMessage('');
   

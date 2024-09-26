@@ -33,36 +33,28 @@ async def follow():
         await asyncio.sleep(0.1)  # 잠시 대기
 
     # 사람 추적 시작
+    start_time = time.time()
     while True:
-        # 거리 데이터 업데이트
-        current_distance = distance_data
-
+    
         if video_frames:
             frame = video_frames[-1]
             person_detected, bbox, position = detect_person(frame)
 
-            if not person_detected:
-                # 사람을 찾지 못하면 회전하여 다시 찾기
+            if distance_data and distance_data <= 20:
+                    await move("stop_wheel")
+                    break
+            if position == "center":
+                await move("forward")
+            elif position == "left":
                 await move("left")
-                await asyncio.sleep(0.5)
-                continue
-            else:
-                # 사람의 위치에 따라 이동 조정
-                if position == "center":
-                    await move("forward")
-                    if current_distance and current_distance <= 100:
-                        await move("stop_wheel")
-                        await move("stop_actuator")
-                        break
-                elif position == "left":
-                    await move("left")
-                elif position == "right":
-                    await move("right")
-                elif position == "up":
-                    await move("up")
-                elif position == "down":
-                    await move("down")
-        await asyncio.sleep(0.1)
+            elif position == "right":
+                await move("right")
+            elif position == "up":
+                await move("up")
+            elif position == "down":
+                await move("down")
+        await asyncio.sleep(0.5)
+    await move("stop_wheel")
 
 def detect_person(frame):
     # YOLOv8을 사용하여 사람 감지

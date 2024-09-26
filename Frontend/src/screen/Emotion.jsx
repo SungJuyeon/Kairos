@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 스타일 컴포넌트를 위함
 const { width } = Dimensions.get('window');
 
-const BASE_URL = 'http://172.30.1.68:8000';
+const BASE_URL = 'http://172.30.1.55:8000';
 
 export default function Control() {
     const { navigate } = useNavigation();
@@ -47,7 +47,6 @@ export default function Control() {
             }
         } catch (error) {
             console.error('Fetch Most Emotion Error:', error); // 전체 오류 로그
-            Alert.alert('오류 발생', error.message);
         }
     };
 
@@ -72,8 +71,7 @@ export default function Control() {
             const imageUrl = URL.createObjectURL(await response.blob());
             setEmotionImage(imageUrl); // 감정 이미지를 상태에 저장
         } catch (error) {
-            console.error('Fetch Emotion Image Error:', error); // 전체 오류 로그
-            Alert.alert('오류 발생', error.message);
+            console.error('Fetch Emotion Image Error:', error);
         }
     };
 

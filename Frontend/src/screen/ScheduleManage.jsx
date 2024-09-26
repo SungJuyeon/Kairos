@@ -6,8 +6,8 @@ import { Calendar } from 'react-native-calendars';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL_8080 = 'http://172.30.1.68:8080';
-const BASE_URL_8000 = 'http://172.30.1.68:8000';
+const BASE_URL_8080 = 'http://172.30.1.55:8080';
+const BASE_URL_8000 = 'http://172.30.1.55:8000';
 
 export default function ScheduleManage() {
     const { navigate } = useNavigation();
@@ -44,9 +44,10 @@ export default function ScheduleManage() {
     };
 
     const fetchSchedules = async () => {
-        // 서버에서 일정 가져오기
         try {
             const accessToken = await AsyncStorage.getItem('token');
+            console.log('Access Token (first 10 chars):', accessToken.substring(0, 10));
+
             const response = await fetch(`${BASE_URL_8000}/calendar`, {
                 method: 'GET',
                 headers: {
@@ -56,24 +57,31 @@ export default function ScheduleManage() {
             });
 
             if (!response.ok) {
-                
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
             }
 
             const data = await response.json();
-            const formattedSchedules = Object.entries(data.schedules).flatMap(([date, tasks]) =>
-                tasks.map(task => ({
-                    id: task.id,
-                    date: new Date(`${date}T${task.time}`),
-                    task: task.task,
-                    user_name: task.user_name,
-                    time: task.time, // 추가된 time
-                }))
-            );
+            console.log('Response data:', data);
+
+            if (!data.schedules || !Array.isArray(data.schedules)) {
+                console.error('Unexpected data structure:', data);
+                throw new Error('Unexpected data structure from server');
+            }
+
+            const formattedSchedules = data.schedules.map(schedule => ({
+                id: schedule.id,
+                date: new Date(`${schedule.date}T${schedule.time}`),
+                task: schedule.task,
+                user_name: schedule.user_name,
+                time: schedule.time,
+            }));
 
             setSchedules(formattedSchedules);
         } catch (error) {
-            
             console.error('Fetch Schedules Error:', error);
+
         }
     };
 

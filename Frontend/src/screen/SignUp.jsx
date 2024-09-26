@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from 'expo-image-picker';
 
-const BASE_URL = 'http://172.30.1.68:8080';
+const BASE_URL = 'http://172.30.1.55:8080';
 
 export default function SignUp() {
     const { navigate } = useNavigation();

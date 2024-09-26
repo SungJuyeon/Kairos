@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 import { WebView } from 'react-native-webview';
 
-const BASE_URL = 'http://172.30.1.68:8000';
+const BASE_URL = 'http://172.30.1.55:8000';
 
 export default function Function4() {
     const { navigate } = useNavigation();
