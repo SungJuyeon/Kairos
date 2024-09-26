@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://172.30.1.68:8000';
 
 export default function Function3() {
     const { navigate } = useNavigation();
@@ -18,13 +18,13 @@ export default function Function3() {
                 },
             });
             if (!response.ok) {
-                throw new Error('네트워크 응답이 좋지 않습니다.');
+                
             }
             const data = await response.json();
-            Alert.alert("응답", JSON.stringify(data));
+            
         } catch (error) {
             console.error(error);
-            Alert.alert("오류", "요청 중 오류가 발생했습니다.");
+            
         }
     };
 
@@ -32,11 +32,11 @@ export default function Function3() {
         <Container>
             <Title>히어로봇 음성 감지 기능</Title>
 
-            <CaptureButtonStyle2 onPress={() => handleMove("start_send_audio")}>
+            <CaptureButtonStyle2 onPress={() => handleMove("move/start_send_audio")}>
                 <CaptureButtonText>음성 감지 시작</CaptureButtonText>
             </CaptureButtonStyle2>
 
-            <CaptureButtonStyle3 onPress={() => handleMove("sstop_send_audio")}>
+            <CaptureButtonStyle3 onPress={() => handleMove("move/stop_send_audio")}>
                 <CaptureButtonText>음성 감지 정지</CaptureButtonText>
             </CaptureButtonStyle3>
 

@@ -4,8 +4,8 @@ import styled from 'styled-components/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwt_decode from 'jwt-decode';
 
-const BASE_URL = 'http://223.194.139.32:8000';
-const WS_BASE_URL = 'ws://223.194.139.32:8000';
+const BASE_URL = `http://172.30.1.68:8000`;
+const WS_BASE_URL = `ws://172.30.1.68:8000`;
 
 const WEBSOCKET_URL = `${WS_BASE_URL}/ws/chat`;
 const MESSAGE_API_URL = `${BASE_URL}/messages`;
@@ -74,10 +74,13 @@ export default function Chat() {
     fetchMessages();
     connectWebSocket();
 
-    // 5초마다 메시지를 새로 고침하는 타이머 설정
-    const intervalId = setInterval(() => {
-      fetchMessages();
-    }, 5000);
+        // 5초마다 메시지를 새로 고침하는 타이머 설정
+        const intervalId = setInterval(() => {
+          fetchMessages();
+        }, 500000);
+    
+    
+
 
     return () => {
       if (websocketRef.current) {
@@ -103,22 +106,28 @@ export default function Chat() {
     }
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (message.trim() === '') return;
-
-    const newMessage = { text: message, isUser: true };
+  
+    const accessToken = await AsyncStorage.getItem('token');
+    const username = getUsernameFromToken(accessToken);
+  
+    // 메시지 포맷 변경
+    const newMessage = { text: `${username}: ${message}`, isUser: true };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setMessage('');
-
-    const messageData = { message };
+  
+    const messageData = { message: `${username}: ${message}` }; // 보낸 이름 포함
     if (websocketRef.current) {
       websocketRef.current.send(JSON.stringify(messageData));
     }
-
+  
     setTimeout(() => {
       flatListRef.current.scrollToEnd({ animated: true });
     }, 100);
   };
+  
+  
 
   const handleSubmit = () => {
     sendMessage();

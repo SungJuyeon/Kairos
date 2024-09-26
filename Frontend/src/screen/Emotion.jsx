@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // 스타일 컴포넌트를 위함
 const { width } = Dimensions.get('window');
 
-const BASE_URL = 'http://223.194.139.32:8000';
+const BASE_URL = 'http://172.30.1.68:8000';
 
 export default function Control() {
     const { navigate } = useNavigation();
@@ -24,16 +24,15 @@ export default function Control() {
             const response = await fetch(`${BASE_URL}/most_emotion`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'token': accessToken,
+                    'token': `${accessToken}`,
                     'Content-Type': 'application/json',
                 },
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Response Error:', errorText); // 오류 로그
-                throw new Error('네트워크 응답이 좋지 않습니다.');
+                
+
             }
 
             const data = await response.json(); // JSON으로 파싱
@@ -44,7 +43,7 @@ export default function Control() {
                 // 감정 이미지를 가져오는 함수 호출
                 fetchEmotionImage(data.most_frequent_emotion, accessToken);
             } else {
-                console.warn('most_frequent_emotion이 없습니다.');
+                
             }
         } catch (error) {
             console.error('Fetch Most Emotion Error:', error); // 전체 오류 로그
@@ -58,8 +57,7 @@ export default function Control() {
             const response = await fetch(`${BASE_URL}/most_emotion_pic`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'token': accessToken,
+                    'token': `${accessToken}`,
                     'Content-Type': 'application/json',
                 },
             });
@@ -100,7 +98,7 @@ export default function Control() {
                         <img src={emotionImage} width="100%" alt="Live Stream" />
                     ) : (
                         <StyledWebView
-                            source={{ uri: `${BASE_URL}/video_feed/true` }}
+                            source={{ uri: `${BASE_URL}/video_feed/true/false` }}
                         />
                     )}
                 </ImageContainer>

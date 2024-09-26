@@ -168,6 +168,8 @@ def draw_hand_gesture(image):
 
 
 
+
+
 #테스트
 def main():
     if init():

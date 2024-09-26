@@ -1,13 +1,12 @@
 import React, { useContext } from "react";
-import { View, Text, Image, SafeAreaView, TouchableOpacity, Alert, Platform } from "react-native";
+import { View, Text, Image, SafeAreaView, TouchableOpacity, Alert } from "react-native";
 import styled from 'styled-components/native';
 import { useNavigation } from "@react-navigation/native";
 import { AuthContext } from './AuthContext';
-import { WebView } from 'react-native-webview';
 
 const BASE_URL = 'http://172.30.1.68:8000';
 
-export default function Function4() {
+export default function Function6() {
     const { navigate } = useNavigation();
 
     const handleMove = async (start) => {
@@ -31,21 +30,16 @@ export default function Function4() {
 
     return (
         <Container>
-            <Title>히어로봇 따라오기 기능</Title>
+            <Title>히어로봇 손동작 인식 기능</Title>
 
-            <ImageContainer>
-                {Platform.OS === 'web' ? (
-                    <img src={imageURL} width="100%" alt="Live Stream" />
-                ) : (
-                    <StyledWebView
-                        source={{ uri: `${BASE_URL}/follow_video` }}
-                    />
-                )}
-            </ImageContainer>
+            <CaptureButtonStyle2 onPress={() => handleMove("hand_gesture_recognition")}>
+                <CaptureButtonText>손동작 인식 시작</CaptureButtonText>
+            </CaptureButtonStyle2>
 
-            <CaptureButtonStyle onPress={() => handleMove("follow")}>
-                <CaptureButtonText>따라오기 시작</CaptureButtonText>
-            </CaptureButtonStyle>
+            <CaptureButtonStyle3 onPress={() => handleMove("hand_gesture_recognition_stop")}>
+                <CaptureButtonText>손동작 인식 중지</CaptureButtonText>
+            </CaptureButtonStyle3>
+
         </Container>
     );
 }
@@ -55,7 +49,6 @@ const Title = styled.Text`
     font-size: 30px;
     margin-bottom: 10px;
     font-weight: bold;
-    margin-bottom: 10px;
 `;
 
 const Container = styled.SafeAreaView`
@@ -78,22 +71,6 @@ const ButtonText = styled.Text`
   font-weight: bold;
 `;
 
-const ImageContainer = styled.View`
-    width: 90%;
-    height: 34%;
-    border-width: 2px; 
-    border-color: #FFCEFF;
-    background-color: #222222; 
-`;
-
-const Margin2Container = styled.View`
-    margin-top: 2%;
-`;
-
-const StyledWebView = styled(WebView)`
-  flex: 1;
-`;
-
 const RowButtonContainer = styled.View`
     flex-direction: row;
     justify-content: center;
@@ -106,9 +83,8 @@ const CaptureButtonStyle = styled.TouchableOpacity`
     width: 200px;
     height: 100px;
     border-radius: 10px;
-    margin: 20px;
-    justify-content: center;
-    align-items: center;
+    padding: 20px 20px;
+    margin: 10px;
 `;
 
 const CaptureButtonStyle2 = styled.TouchableOpacity`

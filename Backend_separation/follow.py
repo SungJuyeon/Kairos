@@ -50,7 +50,7 @@ async def follow():
                 # 사람의 위치에 따라 이동 조정
                 if position == "center":
                     await move("forward")
-                    if current_distance and current_distance <= 30:
+                    if current_distance and current_distance <= 100:
                         await move("stop_wheel")
                         await move("stop_actuator")
                         break

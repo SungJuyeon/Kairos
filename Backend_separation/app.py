@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import json
+from typing import Dict, List
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException, Header, WebSocket
 from fastapi.templating import Jinja2Templates
@@ -54,15 +55,18 @@ async def get_face_recognition_stop():
     face_recognition_task.cancel()
     return {"message": "얼굴 인식 태스크가 종료되었습니다."}
 
+hand_gesture_recognition_task = None
 @app.get("/hand_gesture_recognition")
 async def get_hand_gesture_recognition():
+    global hand_gesture_recognition_task
     hand_gesture_recognition.init()
-    asyncio.create_task(recognize_hand_gesture_periodically())
+    hand_gesture_recognition_task = asyncio.create_task(recognize_hand_gesture_periodically())
     return {"message": "손동작 인식 태스크가 시작되었습니다."}
 
 @app.get("/hand_gesture_recognition_stop")
 async def get_hand_gesture_recognition_stop():
-    hand_gesture_recognition.stop()
+    global hand_gesture_recognition_task
+    hand_gesture_recognition_task.cancel()
     return {"message": "손동작 인식 태스크가 종료되었습니다."}
 
 
@@ -104,10 +108,14 @@ async def get_video_list():
     video_list = await list_s3_videos()
     return {"videos": video_list}
 
-@app.get("/calendar")
+@app.get("/calendar", response_model=List[Dict])
 async def calendar(token: str = Header(...)):
     schedules = get_all_schedules(token)
     return {"schedules": schedules}
+
+@app.get("/schedules", response_model=List[Dict]) 
+def read_schedules(token: str):
+    return get_all_schedules(token)
 
 @app.post("/schedules/add")
 async def add_schedule_endpoint(schedule: Schedule, token: str = Header(...)):

@@ -17,6 +17,7 @@ export default function ChatNavigator() {
         headerTitleAlign: 'center', // 타이틀 정렬을 가운데로 설정
     }}
     >
+              <ChatStack.Screen name="VoiceChat" component={VoiceChatScreen} options={{ title: '' }} />
         <ChatStack.Screen name="Chat" component={ChatScreen} options={{ title: '가족 채팅방' }} />
     </ChatStack.Navigator>
   );

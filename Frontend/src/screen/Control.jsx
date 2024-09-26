@@ -10,7 +10,7 @@ import * as MediaLibrary from 'expo-media-library';
 // 스타일 컴포넌트를 위함
 const { width, height } = Dimensions.get('window');
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://172.30.1.68:8000';
 const imageURL = `${BASE_URL}/video`;
 
 // 비율에 따른 스타일 조정
@@ -52,7 +52,7 @@ export default function Control() {
                 break;
             case 'stop':
                 setIsStopPressed(true);
-                await fetch(`${BASE_URL}/stop`, { method: 'POST' });
+                await fetch(`${BASE_URL}/move/stop_wheel`, { method: 'POST' });
                 await fetch(`${BASE_URL}/move/stop_actuator`, { method: 'POST' });
                 break;
             case 'up':
@@ -89,7 +89,7 @@ export default function Control() {
                 break;
         }
         // 모터 정지 요청
-        await fetch(`${BASE_URL}/stop`, { method: 'POST' });
+        await fetch(`${BASE_URL}/move/stop_wheel`, { method: 'POST' });
         await fetch(`${BASE_URL}/move/stop_actuator`, { method: 'POST' });
         setIsStopPressed(true);
     };
@@ -230,14 +230,27 @@ export default function Control() {
                     </SpeedSliderContainer>
 
                     <ButtonContainer>
-                        <DirectionButtonContainer>
-                            <ButtonStyle4
+                    <DirectionButtonContainer2>
+                    <ButtonStyle2
+                                onPressIn={() => handleButtonPressIn('up')}
+                                onPressOut={() => handleButtonPressOut('up')}
+                            >
+                                <ButtonText>{isLeftPressed ? 'UP' : 'UP'}</ButtonText>
+                            </ButtonStyle2>
+                        <ButtonStyle4
+                            
                                 onPressIn={() => handleButtonPressIn('forward')}
                                 onPressOut={() => handleButtonPressOut('forward')}
                             >
                                 <ButtonText>{isForwardPressed ? '▲' : '▲'}</ButtonText>
-                            </ButtonStyle4>
-                        </DirectionButtonContainer>
+                        </ButtonStyle4>
+                        <ButtonStyle5
+                                onPressIn={() => handleButtonPressIn('down')}
+                                onPressOut={() => handleButtonPressOut('down')}
+                            >
+                                <ButtonText>{isLeftPressed ? 'DW' : 'DW'}</ButtonText>
+                            </ButtonStyle5>
+                        </DirectionButtonContainer2>
                         <DirectionButtonContainer2>
                             <ButtonStyle2
                                 onPressIn={() => handleButtonPressIn('left')}
@@ -442,6 +455,17 @@ const ButtonStyle = styled.TouchableOpacity`
     align-items: center;
 `;
 
+const ButtonStyle5 = styled.TouchableOpacity`
+    background-color: white;
+    border-radius: 10px;
+    padding: 10px 10px;
+    margin-left: 20px;
+    width: 65px;
+    height: 55px;
+    justify-content: center;
+    align-items: center;
+`;
+
 const ButtonStyle2 = styled.TouchableOpacity`
     background-color: white;
     border-radius: 10px;
@@ -472,7 +496,7 @@ const ButtonStyle4 = styled.TouchableOpacity`
     height: 55px;
     justify-content: center;
     align-items: center;
-    margin-left: 115px;
+    margin-left: 20px;
 `;
 
 const StopButton = styled.TouchableOpacity`

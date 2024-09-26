@@ -10,7 +10,7 @@ export default function VoiceChat() {
   return (
     <Container>
         <ChatButton onPress={() => navigate("Chat")}>
-          <ChatButtonText>가족 채팅방</ChatButtonText>
+          <ChatButtonText>가족 채팅방 입장하기</ChatButtonText>
         </ChatButton>
     </Container>
   );

@@ -11,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 const BottomTab = createBottomTabNavigator();
 
+const URI = '172.30.1.68';
+
 export default function App() {
   return (
     <AuthProvider>

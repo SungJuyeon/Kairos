@@ -27,6 +27,12 @@ export default function Tutorial() {
                         <CaptureButtonStyle onPress={() => navigate('Function4')}>
                             <CaptureButtonText>4. 히어로봇의 따라오기 기능 </CaptureButtonText>
                         </CaptureButtonStyle>
+                        <CaptureButtonStyle onPress={() => navigate('Function5')}>
+                            <CaptureButtonText>5. 히어로봇의 감정 인식 기능 </CaptureButtonText>
+                        </CaptureButtonStyle>
+                        <CaptureButtonStyle onPress={() => navigate('Function6')}>
+                            <CaptureButtonText>6. 히어로봇의 손동작 인식 기능 </CaptureButtonText>
+                        </CaptureButtonStyle>
                     </CaptureButtonContainer>
                 </ScrollView>
             </AnimatedContainer>
